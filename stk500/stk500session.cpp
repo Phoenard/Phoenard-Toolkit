@@ -282,17 +282,17 @@ void stk500_ProcessThread::run() {
     QSerialPortInfo info(portName);
     if (info.isBusy()) {
         this->closeRequested = true;
-        this->owner->notifyStatus(this, "Serial port busy");
+        updateStatus("Serial port busy");
     }
     if (!info.isValid()) {
         this->closeRequested = true;
-        this->owner->notifyStatus(this, "Serial port invalid");
+        updateStatus("Serial port invalid");
     }
     if (!this->closeRequested) {
         /* First attempt to open the Serial port */
         QSerialPort port;
         stk500 protocol(&port);
-        this->owner->notifyStatus(this, "Opening...");
+        updateStatus("Opening...");
 
         /* Initialize the port */
         port.setPortName(portName);
@@ -439,13 +439,13 @@ void stk500_ProcessThread::run() {
         }
 
         /* Notify owner that this port is (being) closed */
-        this->owner->notifyStatus(this, "Closing...");
+        updateStatus("Closing...");
 
         /* Close the serial port; this can hang in some cases */
         port.close();
 
         /* Notify owner that port has been closed */
-        this->owner->notifyStatus(this, "Port closed");
+        updateStatus("Port closed");
     }
 
     this->isRunning = false;
