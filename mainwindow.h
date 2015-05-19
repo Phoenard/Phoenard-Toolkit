@@ -24,6 +24,7 @@ public:
     void closeEvent(QCloseEvent *event);
     void refreshSerial();
     void setSelectedTab(int index, bool forceUpdate = false);
+    int selectedTab();
     void img_updateFormat();
     void img_load(QString fileName, ImageFormat format);
 
@@ -62,8 +63,17 @@ private slots:
 
     void on_serial_timer_ticked();
 
+    void on_serial_baud_currentIndexChanged(int index);
+
+    void on_serial_running_stateChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
+    stk500Session *serial;
+    MenuButton **allButtons;
+    int allButtons_len;
+    QIcon fmt_icons[8];
+    QTimer *serial_updateTimer;
 };
 
 #endif // MAINWINDOW_H

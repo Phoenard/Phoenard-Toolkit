@@ -4,7 +4,8 @@
 #include <QSerialPortInfo>
 #include "progressdialog.h"
 
-stk500Session::stk500Session() {
+stk500Session::stk500Session(QWidget *owner)
+    : QObject(owner) {
     process = NULL;
 }
 
@@ -201,6 +202,17 @@ void stk500Session::cancelTasks() {
     process->cancelTasks();
 }
 
+void stk500Session::closeSerial() {
+    openSerial(0);
+}
+
+void stk500Session::openSerial(int baudrate) {
+    stk500_ProcessThread *thread = this->process;
+    if (thread != NULL) {
+        thread->serialBaud = baudrate;
+    }
+}
+
 int stk500Session::read(char* buff, int len) {
     stk500_ProcessThread *thread = this->process;
     if (thread == NULL) {
@@ -241,6 +253,7 @@ stk500_ProcessThread::stk500_ProcessThread(stk500Session *owner, QString portNam
     this->isRunning = true;
     this->isProcessing = false;
     this->isReady = false;
+    this->serialBaud = 0;
     this->currentTask = NULL;
     this->portName = portName;
 }
@@ -268,108 +281,127 @@ void stk500_ProcessThread::run() {
 
         /* Initialize the port */
         port.setPortName(portName);
-        port.setBaudRate(115200);
         port.setReadBufferSize(1024);
         port.setSettingsRestoredOnClose(false);
         port.open(QIODevice::ReadWrite);
         port.clearError();
 
-        //TMP: Read stuff here...
-
-        char read_buffer[1024];
+        /* Run process loop while not being closed */
+        bool needSignOn = true;
+        bool hasData = false;
+        qint64 start_time;
+        long currSerialBaud = 0;
+        char serialBuffer[1024];
         while (!this->closeRequested) {
-            /* If no data available, wait for reading to be done shortly */
-            if (!port.bytesAvailable()) {
-                port.waitForReadyRead(20);
+            if (this->serialBaud != currSerialBaud) {
+                currSerialBaud = this->serialBaud;
+                clearSerialBuffer();
+
+                if (currSerialBaud) {
+                    // Changing to a different baud rate
+                    port.setBaudRate(currSerialBaud);
+                    start_time = QDateTime::currentMSecsSinceEpoch();
+                    protocol.reset();
+
+                    /* Sign out of the bootloader to run the sketch earlier */
+                    //protocol.signOut();
+                } else {
+                    // Leaving Serial mode - sign on needed
+                    needSignOn = true;
+                }
             }
 
-            /* Read in data */
-            int cnt = port.read((char*) read_buffer, sizeof(read_buffer));
+            if (currSerialBaud) {
+                /* Serial mode: process serial I/O */
 
-            /* Copy to the read buffer */
-            this->inputBuffLock.lock();
-            this->inputBuff.append(read_buffer, cnt);
-            this->inputBuffLock.unlock();
-        }
-
-        if (this->closeRequested) {
-            /* Notify owner that this port is (being) closed */
-            this->owner->notifyClosed(this, true);
-
-            /* Close the serial port; this can hang in some cases */
-            port.close();
-
-            this->isRunning = false;
-            this->isProcessing = false;
-            this->owner->notifyClosed(this, false);
-            return;
-        }
-
-        /* Reset the port for first use */
-        protocol.reset();
-
-        /* Sign on with the bootloader */
-        if (trySignOn(&protocol)) {
-            isReady = true;
-            qDebug() << "STK500 Opened: " << protocolName;
-        } else {
-            /* Failure to initiate protocol - close port */
-            this->closeRequested = true;
-            this->closeReason = "STK500 Protocol Failed";
-        }
-
-        /* Run process loop while not being closed */
-        while (!this->closeRequested) {
-
-            // Routinely process commands, wait for commands to be passed
-
-            sync.lock();
-            if (currentTask == NULL) {
-                this->isProcessing = false;
-
-                if (port.isOpen()) {
-                    // Waited for the full interval time, ping with a signOn command
-                    // Still alive?
-                    if (!trySignOn(&protocol)) {
-                        this->closeRequested = true;
-                        this->closeReason = "Connection lost";
-                    }
-
-                    /* Wait for a short time to keep the bootloader in the right mode */
-                    cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
-                } else {
-                    /* Wait for stuff to happen, infinitely long */
-                    cond.wait(&sync);
+                /* If no data available, wait for reading to be done shortly */
+                if (!port.bytesAvailable()) {
+                    port.waitForReadyRead(20);
                 }
-                sync.unlock();
+
+                /* Read in data */
+                int cnt = port.read((char*) serialBuffer, sizeof(serialBuffer));
+
+                /* Copy to the read buffer */
+                if (cnt) {
+                    if (!hasData) {
+                        hasData = true;
+                        qDebug() << "Program started after " << (QDateTime::currentMSecsSinceEpoch() - start_time) << "ms";
+                    }
+                    this->inputBuffLock.lock();
+                    this->inputBuff.append(serialBuffer, cnt);
+                    this->inputBuffLock.unlock();
+                }
             } else {
-                // Take next task from the queue and process it
-                sync.unlock();
-                try {
-                    if (!port.isOpen()) {
-                        throw ProtocolException("Port is closed.");
-                    }
-                    // Before processing, force the Micro-SD to re-read information
-                    protocol.sd().reset();
-                    protocol.sd().discardCache();
+                /* Command mode: process bootloader I/O */
 
-                    // Process the task after setting the protocol
-                    currentTask->setProtocol(protocol);
-                    currentTask->run();
+                /* Sign on with the bootloader */
+                if (needSignOn) {
+                    needSignOn = false;
 
-                    // Flush the data on the Micro-SD now all is well
-                    protocol.sd().flushCache();
-                } catch (ProtocolException &ex) {
-                    currentTask->setError(ex);
+                    // Initialize port into bootloader mode
+                    port.setBaudRate(115200);
+                    protocol.reset();
 
-                    /* Flush here as well, but eat up any errors... */
-                    try {
-                        protocol.sd().flushCache();
-                    } catch (ProtocolException&) {
+                    if (trySignOn(&protocol)) {
+                        isReady = true;
+                        qDebug() << "STK500 Opened: " << protocolName;
+                    } else {
+                        /* Failure to initiate protocol - close port */
+                        this->closeRequested = true;
+                        this->closeReason = "STK500 Protocol Failed";
                     }
                 }
-                currentTask = NULL;
 
+                /* Routinely process commands, wait for commands to be passed */
+                sync.lock();
+                if (currentTask == NULL) {
+                    this->isProcessing = false;
+
+                    if (port.isOpen()) {
+                        // Waited for the full interval time, ping with a signOn command
+                        // Still alive?
+                        if (!trySignOn(&protocol)) {
+                            this->closeRequested = true;
+                            this->closeReason = "Connection lost";
+                        }
+
+                        /* Wait for a short time to keep the bootloader in the right mode */
+                        cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
+                    } else {
+                        /* Wait for stuff to happen, infinitely long */
+                        cond.wait(&sync);
+                    }
+                    sync.unlock();
+                } else {
+                    // Take next task from the queue and process it
+                    sync.unlock();
+                    try {
+                        if (!port.isOpen()) {
+                            throw ProtocolException("Port is closed.");
+                        }
+                        // Before processing, force the Micro-SD to re-read information
+                        protocol.sd().reset();
+                        protocol.sd().discardCache();
+
+                        // Process the task after setting the protocol
+                        currentTask->setProtocol(protocol);
+                        currentTask->run();
+
+                        // Flush the data on the Micro-SD now all is well
+                        protocol.sd().flushCache();
+                    } catch (ProtocolException &ex) {
+                        currentTask->setError(ex);
+
+                        /* Flush here as well, but eat up any errors... */
+                        try {
+                            protocol.sd().flushCache();
+                        } catch (ProtocolException&) {
+                        }
+                    }
+                    currentTask = NULL;
+
+                }
             }
         }
 
@@ -383,6 +415,12 @@ void stk500_ProcessThread::run() {
     this->isRunning = false;
     this->isProcessing = false;
     this->owner->notifyClosed(this, false);
+}
+
+void stk500_ProcessThread::clearSerialBuffer() {
+    this->inputBuffLock.lock();
+    this->inputBuff.clear();
+    this->inputBuffLock.unlock();
 }
 
 bool stk500_ProcessThread::trySignOn(stk500 *protocol) {

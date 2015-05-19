@@ -6,11 +6,12 @@
 
 class stk500_ProcessThread;
 
-class stk500Session
+class stk500Session : public QObject
 {
+    Q_OBJECT
 
 public:
-    stk500Session();
+    stk500Session(QWidget *owner);
     bool isOpen();
     void open(QString & portName);
     void close();
@@ -18,6 +19,8 @@ public:
     void execute(QWidget *owner, stk500Task *task);
     void executeAll(QWidget *owner, QList<stk500Task*> tasks);
     void cancelTasks();
+    void openSerial(int baudrate);
+    void closeSerial();
     int read(char* buff, int buffLen);
     void write(char* buff, int buffLen);
 
@@ -39,6 +42,7 @@ public:
     stk500_ProcessThread(stk500Session *owner, QString portName);
     void cancelTasks();
     void wake();
+    void clearSerialBuffer();
 
 protected:
     virtual void run();
@@ -56,6 +60,7 @@ public:
     bool isRunning;
     bool isProcessing;
     bool isReady;
+    int serialBaud;
     QString protocolName;
     QString portName;
     QString closeReason;

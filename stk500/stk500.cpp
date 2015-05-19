@@ -110,7 +110,6 @@ int stk500::command(unsigned char command, char* arguments, int argumentsLength,
     // For timing measurement purposes
     qint64 commandStartTime = QDateTime::currentMSecsSinceEpoch();
     qint64 time = commandStartTime;
-    qint64 commandStartTimeout = time;
 
     while (!processed) {
         /* If no data available, wait for reading to be done shortly */
@@ -123,7 +122,7 @@ int stk500::command(unsigned char command, char* arguments, int argumentsLength,
         totalRead += incomingRead;
 
         time = QDateTime::currentMSecsSinceEpoch();
-        if ((time - commandStartTimeout) > STK500_READ_TIMEOUT) {
+        if ((time - commandStartTime) > STK500_READ_TIMEOUT) {
             if (errorInfo == NULL) {
                 errorInfo = "Read timeout";
             }
@@ -137,8 +136,7 @@ int stk500::command(unsigned char command, char* arguments, int argumentsLength,
         // Update last command time
         lastCmdTime = time;
 
-        /* Got data, reset timeout and process bytes */
-        commandStartTimeout = time;
+        /* Got data, process received bytes */
         for (int i = 0; i < incomingRead; i++) {
             unsigned char c = (unsigned char) incomingData[i];
 
@@ -309,6 +307,10 @@ QString stk500::signOn() {
     char resp[100];
     int respLen = command(CMD_SIGN_ON, NULL, 0, resp, sizeof(resp));
     return QString::fromLocal8Bit((char*) resp, respLen);
+}
+
+void stk500::signOut() {
+    command(CMD_LEAVE_PROGMODE_ISP, NULL, 0, NULL, 0);
 }
 
 CardVolume stk500::SD_init() {

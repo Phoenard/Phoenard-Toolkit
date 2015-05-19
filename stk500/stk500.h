@@ -13,7 +13,7 @@
 
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
-#define STK500_RESET_DELAY       150   // Delay between RESET and command sending
+#define STK500_RESET_DELAY       200   // Delay between RESET and command sending
 #define STK500_CMD_MIN_INTERVAL  200   // Minimal interval of commands to stay in bootloader mode
 
 // Forward declare some classes
@@ -34,6 +34,7 @@ public:
 
     /* Commands */
     QString signOn();
+    void signOut();
     CardVolume SD_init();
     void SD_readBlock(quint32 block, char* dest, int destLen);
     void SD_writeBlock(quint32 block, char* src, int srcLen, bool isFAT = false);

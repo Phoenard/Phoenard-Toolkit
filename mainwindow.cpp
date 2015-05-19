@@ -13,17 +13,14 @@
 #include <QScrollBar>
 #include "formatselectdialog.h"
 
-stk500Session serial;
-MenuButton **allButtons;
-const int allButtons_len = 5;
-QIcon fmt_icons[8];
-QTimer *serial_updateTimer;
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // Initialize serial
+    serial = new stk500Session(this);
 
     // Set up image format icons
     fmt_icons[0] = QIcon(":/icons/fmt_lcd1.png");
@@ -35,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     fmt_icons[6] = QIcon(":/icons/fmt_bmp24.png");
 
     // Set up buttons
+    allButtons_len = 5;
     allButtons = new MenuButton*[allButtons_len];
     allButtons[0] = ui->serialButton;
     allButtons[1] = ui->sketchesButton;
@@ -46,8 +44,8 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->comboBox->addItem(info.portName());
     }
     ui->microSDWidget->setAcceptDrops(true);
-    serial.open(ui->comboBox->currentText());
-    ui->microSDWidget->setSession(&serial);
+    serial->open(ui->comboBox->currentText());
+    ui->microSDWidget->setSession(serial);
 
     QString settingStyle = " QMainWindow {\
             background-color: #980000;\
@@ -57,8 +55,6 @@ MainWindow::MainWindow(QWidget *parent) :
     }";
 
     setStyleSheet(settingStyle);
-
-
 
     // Set main menu buttons to TABs
     for (int i = 0; i < allButtons_len; i++) {
@@ -82,7 +78,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
-    if (!serial.abort()) {
+    if (!serial->abort()) {
         QMessageBox msgBox;
         msgBox.critical(this, "Closing", "Failed to close one or more open ports");
         event->ignore();
@@ -93,19 +89,40 @@ void MainWindow::closeEvent (QCloseEvent *event)
 }
 
 void MainWindow::refreshSerial() {
-    if (serial.isOpen()) {
+    if (serial->isOpen()) {
         this->ui->serial_toggleButton->setText("Close");
     } else {
         this->ui->serial_toggleButton->setText("Open");
+    }
+    if (serial->isOpen()) {
+        if (selectedTab() == 0) {
+            //TODO: Make this get triggered by the serial instead
+            // Trigger by the RESET event
+            ui->serial_outputText->clear();
+
+            if (ui->serial_running->isChecked()) {
+                QString baudSel = ui->serial_baud->currentText();
+                QString baud_pfix = " baud";
+                if (baudSel.endsWith(baud_pfix)) {
+                    baudSel.chop(baud_pfix.length());
+                }
+                serial->openSerial(baudSel.toInt());
+            } else {
+                // Close serial mode to keep program hanging
+                serial->closeSerial();
+            }
+        } else {
+            serial->closeSerial();
+        }
     }
 }
 
 void MainWindow::on_serial_toggleButton_clicked()
 {
-    if (serial.isOpen()) {
-        serial.close();
+    if (serial->isOpen()) {
+        serial->close();
     } else if (ui->comboBox->currentIndex() != -1) {
-        serial.open(ui->comboBox->currentText());
+        serial->open(ui->comboBox->currentText());
     }
     refreshSerial();
 }
@@ -120,15 +137,19 @@ void MsgBox(QString & text) {
 
 void MainWindow::on_comboBox_currentIndexChanged(int index) {
     if (index == -1) {
-        serial.close();
+        serial->close();
     } else {
-        serial.open(ui->comboBox->itemText(index));
+        serial->open(ui->comboBox->itemText(index));
     }
     refreshSerial();
 }
 
+int MainWindow::selectedTab() {
+    return ui->mainTabs->currentIndex();
+}
+
 void MainWindow::setSelectedTab(int index, bool forceUpdate) {
-    bool doEvents = forceUpdate || (index != ui->mainTabs->currentIndex());
+    bool doEvents = forceUpdate || (index != selectedTab());
     ui->optionTabs->setCurrentIndex(index);
     ui->mainTabs->setCurrentIndex(index);
     MenuButton *selectedBtn = NULL;
@@ -136,8 +157,10 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
         selectedBtn = allButtons[index];
     }
 
-    if (index == 2) {
-        if (doEvents) {
+    if (doEvents) {
+        refreshSerial();
+
+        if (index == 2) {
             ui->microSDWidget->refreshFiles();
             on_microSDWidget_itemSelectionChanged();
         }
@@ -324,14 +347,25 @@ void MainWindow::on_img_saveButton_clicked()
     ui->img_editor->saveImageTo(filePath);
 }
 
+void MainWindow::on_serial_baud_currentIndexChanged(int index)
+{
+    this->refreshSerial();
+}
+
+void MainWindow::on_serial_running_stateChanged(int arg1)
+{
+    this->refreshSerial();
+}
+
 void MainWindow::on_serial_timer_ticked()
 {
     // Read in data like woo!
-    char buff[201];
-    int len = serial.read(buff, 200);
+    char buff[1025];
+    int len = serial->read(buff, 1024);
     if (len) {
         buff[len] = 0;
         QString myString(buff);
+        myString = myString.remove('\r');
 
         if (ui->serial_autoScroll->isChecked()) {
             ui->serial_outputText->moveCursor (QTextCursor::End);
