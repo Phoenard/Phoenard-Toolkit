@@ -16,15 +16,15 @@ public:
     void open(QString & portName);
     void close();
     bool abort();
-    void execute(QWidget *owner, stk500Task *task);
-    void executeAll(QWidget *owner, QList<stk500Task*> tasks);
+    void execute(stk500Task *task);
+    void executeAll(QList<stk500Task*> tasks);
     void cancelTasks();
     void openSerial(int baudrate);
     void closeSerial();
     int read(char* buff, int buffLen);
     void write(char* buff, int buffLen);
 
-    void notifyClosed(stk500_ProcessThread *sender, bool running);
+    void notifyStatus(stk500_ProcessThread *sender, QString status);
 
 protected:
     bool cleanKilledProcesses();
@@ -59,11 +59,10 @@ public:
     bool closeRequested;
     bool isRunning;
     bool isProcessing;
-    bool isReady;
+    bool isSignedOn;
     int serialBaud;
     QString protocolName;
     QString portName;
-    QString closeReason;
 };
 
 #endif // STK500SESSION_H

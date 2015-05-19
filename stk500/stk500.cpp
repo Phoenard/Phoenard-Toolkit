@@ -31,12 +31,13 @@ void stk500::reset() {
     currentAddress = 0;
     sd_handler->reset();
 
-    /* Set device to RESET state */
+    /* Reset the device and clear the buffers */
     port->setDataTerminalReady(true);
     port->setDataTerminalReady(false);
+    port->clear();
 
     /* For the reset time, clear the incoming data buffer */
-    char reset_buff[100];
+    char reset_buff[1000];
     qint64 reset_start = QDateTime::currentMSecsSinceEpoch();
     while ((QDateTime::currentMSecsSinceEpoch() - reset_start) < STK500_RESET_DELAY) {
 

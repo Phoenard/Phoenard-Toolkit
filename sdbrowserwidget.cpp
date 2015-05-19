@@ -47,7 +47,7 @@ void SDBrowserWidget::on_itemDoubleClicked(QTreeWidgetItem *item, int column) {
 
             // Read the file
             stk500SaveFiles saveTask(sourcePath, destPath);
-            session->execute(this, &saveTask);
+            session->execute(&saveTask);
             if (!saveTask.isCancelled() && !saveTask.hasError()) {
                 QDesktopServices::openUrl(QUrl(destPath));
             }
@@ -99,7 +99,7 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
     if (isVolume) {
         // Renaming the volume label
         stk500RenameVolume renameTask(newText);
-        session->execute(this, &renameTask);
+        session->execute(&renameTask);
         success = !renameTask.hasError();
     } else if (!newText.isEmpty()) {
         // Renaming file or folder
@@ -114,7 +114,7 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
 
         // Start renaming
         stk500Rename renameTask(filePath, newText);
-        session->execute(this, &renameTask);
+        session->execute(&renameTask);
         success = !renameTask.hasError();
     }
 
@@ -222,7 +222,7 @@ void SDBrowserWidget::importFiles(QStringList filePaths, QString destFolder) {
         tasks.append(new stk500ImportFiles(sourceFile, destFile));
     }
     // Execute them all
-    session->executeAll(this, tasks);
+    session->executeAll(tasks);
     // Delete them
     for (stk500Task *task : tasks) {
         delete task;
@@ -245,7 +245,7 @@ void SDBrowserWidget::createNew(QString fileName, bool isDirectory) {
 
         // Create file or directory
         stk500ImportFiles importTask("", destPath);
-        session->execute(this, &importTask);
+        session->execute(&importTask);
         this->refreshItem(folderItem);
 
         QTreeWidgetItem *newItem = this->getItemAtPath(destPath);
@@ -367,7 +367,7 @@ void SDBrowserWidget::refreshFiles() {
     }
 
     // Process the list command
-    session->executeAll(this, listTasks);
+    session->executeAll(listTasks);
 
     // Fill the Tree widget with the results
     for (int i = 0; i < listTasks.length(); i++) {
@@ -386,7 +386,7 @@ void SDBrowserWidget::refreshFiles() {
 void SDBrowserWidget::refreshItem(QTreeWidgetItem *item) {
     // Already refreshing, don't you dare!
     stk500ListSubDirs listTask(getPath(item));
-    session->execute(this, &listTask);
+    session->execute(&listTask);
 
     // Fill the item with the resulting directories
     refreshItem(item, listTask.result);
@@ -678,7 +678,7 @@ void SDBrowserWidget::saveFilesTo() {
     }
 
     // Finally execute any tasks
-    session->executeAll(this, tasks);
+    session->executeAll(tasks);
 
     // Delete the tasks again
     for (stk500Task* task : tasks) {
@@ -765,7 +765,7 @@ void SDBrowserWidget::deleteFiles() {
     if (result == QMessageBox::Yes) {
 
         // Process all the tasks
-        session->executeAll(this, tasks);
+        session->executeAll(tasks);
 
         // Gather the results
         for (int i = 0; i < taskItems.count(); i++) {
