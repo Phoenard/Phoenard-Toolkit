@@ -22,6 +22,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void closeEvent(QCloseEvent *event);
+    void openSerial();
     void refreshSerial();
     void setSelectedTab(int index, bool forceUpdate = false);
     int selectedTab();
@@ -29,6 +30,16 @@ public:
     void img_load(QString fileName, ImageFormat format);
 
 private slots:
+    /* Custom slots */
+    void serial_statusChanged(QString status);
+
+    void serial_opened();
+
+    void serial_closed();
+
+    void serial_timer_ticked();
+
+    /* Qt-generated slots */
     void on_comboBox_currentIndexChanged(int index);
 
     void on_serialButton_clicked();
@@ -61,11 +72,9 @@ private slots:
 
     void on_serial_toggleButton_clicked();
 
-    void on_serial_timer_ticked();
-
-    void on_serial_baud_currentIndexChanged(int index);
-
     void on_serial_running_stateChanged(int arg1);
+
+    void on_serial_baud_activated(int index);
 
 private:
     Ui::MainWindow *ui;

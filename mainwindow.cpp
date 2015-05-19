@@ -22,6 +22,19 @@ MainWindow::MainWindow(QWidget *parent) :
     // Initialize serial
     serial = new stk500Session(this);
 
+    // Connect serial signal events
+    connect(serial, SIGNAL(statusChanged(QString)),
+            this,   SLOT(serial_statusChanged(QString)),
+            Qt::QueuedConnection);
+
+    connect(serial, SIGNAL(serialOpened()),
+            this,   SLOT(serial_opened()),
+            Qt::QueuedConnection);
+
+    connect(serial, SIGNAL(closed()),
+            this,   SLOT(serial_closed()),
+            Qt::QueuedConnection);
+
     // Set up image format icons
     fmt_icons[0] = QIcon(":/icons/fmt_lcd1.png");
     fmt_icons[1] = QIcon(":/icons/fmt_lcd2.png");
@@ -60,14 +73,14 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < allButtons_len; i++) {
         allButtons[i]->setIsTab(true);
     }
-    setSelectedTab(0, true);
+    setSelectedTab(2, true);
 
     // Load an image for debugging
     img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
     ui->img_editor->saveImageTo("C:/Users/QT/Desktop/tmp.lcd");
 
     serial_updateTimer = new QTimer(this);
-    connect(serial_updateTimer, SIGNAL(timeout()), this, SLOT(on_serial_timer_ticked()));
+    connect(serial_updateTimer, SIGNAL(timeout()), this, SLOT(serial_timer_ticked()));
     serial_updateTimer->start(50);
 }
 
@@ -88,35 +101,6 @@ void MainWindow::closeEvent (QCloseEvent *event)
     refreshSerial();
 }
 
-void MainWindow::refreshSerial() {
-    if (serial->isOpen()) {
-        this->ui->serial_toggleButton->setText("Close");
-    } else {
-        this->ui->serial_toggleButton->setText("Open");
-    }
-    if (serial->isOpen()) {
-        if (selectedTab() == 0) {
-            //TODO: Make this get triggered by the serial instead
-            // Trigger by the RESET event
-            ui->serial_outputText->clear();
-
-            if (ui->serial_running->isChecked()) {
-                QString baudSel = ui->serial_baud->currentText();
-                QString baud_pfix = " baud";
-                if (baudSel.endsWith(baud_pfix)) {
-                    baudSel.chop(baud_pfix.length());
-                }
-                serial->openSerial(baudSel.toInt());
-            } else {
-                // Close serial mode to keep program hanging
-                serial->closeSerial();
-            }
-        } else {
-            serial->closeSerial();
-        }
-    }
-}
-
 void MainWindow::on_serial_toggleButton_clicked()
 {
     if (serial->isOpen()) {
@@ -125,6 +109,14 @@ void MainWindow::on_serial_toggleButton_clicked()
         serial->open(ui->comboBox->currentText());
     }
     refreshSerial();
+}
+
+void MainWindow::serial_opened() {
+    ui->serial_outputText->clear();
+}
+
+void MainWindow::serial_closed() {
+    this->refreshSerial();
 }
 
 void MsgBox(QString & text) {
@@ -347,8 +339,40 @@ void MainWindow::on_img_saveButton_clicked()
     ui->img_editor->saveImageTo(filePath);
 }
 
-void MainWindow::on_serial_baud_currentIndexChanged(int index)
+void MainWindow::refreshSerial() {
+    if (serial->isOpen()) {
+        this->ui->serial_toggleButton->setText("Close");
+    } else {
+        this->ui->serial_toggleButton->setText("Open");
+    }
+    if (serial->isOpen()) {
+        if (selectedTab() == 0) {
+            if (ui->serial_running->isChecked()) {
+                if (!serial->isSerialOpen()) {
+                    openSerial();
+                }
+            } else {
+                // Close serial mode to keep program hanging
+                serial->closeSerial();
+            }
+        } else {
+            serial->closeSerial();
+        }
+    }
+}
+
+void MainWindow::openSerial() {
+    QString baudSel = ui->serial_baud->currentText();
+    QString baud_pfix = " baud";
+    if (baudSel.endsWith(baud_pfix)) {
+        baudSel.chop(baud_pfix.length());
+    }
+    serial->openSerial(baudSel.toInt());
+}
+
+void MainWindow::on_serial_baud_activated(int)
 {
+    openSerial();
     this->refreshSerial();
 }
 
@@ -357,7 +381,12 @@ void MainWindow::on_serial_running_stateChanged(int arg1)
     this->refreshSerial();
 }
 
-void MainWindow::on_serial_timer_ticked()
+void MainWindow::serial_statusChanged(QString status)
+{
+    ui->port_statusLbl->setText(status);
+}
+
+void MainWindow::serial_timer_ticked()
 {
     // Read in data like woo!
     char buff[1025];

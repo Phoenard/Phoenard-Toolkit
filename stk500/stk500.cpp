@@ -104,7 +104,7 @@ int stk500::command(unsigned char command, char* arguments, int argumentsLength,
     int msgParseState = ST_START;
     unsigned char checksum = 0x0;
     char status = 0;
-    int respLength = 0, respLength_st1 = 0;
+    quint16 respLength = 0, respLength_st1 = 0;
     bool processed = false;
     char* errorInfo = NULL;
 
