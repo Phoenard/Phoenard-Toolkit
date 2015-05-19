@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>serialmonitor.png</file>
+        <file>Icon.png</file>
+        <file>memories.png</file>
+        <file>sketches.png</file>
+        <file>microsd.png</file>
+        <file>refresh.png</file>
+        <file>delete.png</file>
+        <file>saveto.png</file>
+        <file>newfile.png</file>
+        <file>newfolder.png</file>
+        <file>Import.png</file>
+        <file>images.png</file>
+        <file>fmt_bmp8.png</file>
+        <file>fmt_bmp24.png</file>
+        <file>fmt_lcd1.png</file>
+        <file>fmt_lcd2.png</file>
+        <file>fmt_lcd4.png</file>
+        <file>fmt_lcd8.png</file>
+        <file>fmt_lcd16.png</file>
+        <file>code.png</file>
+    </qresource>
+</RCC>
