@@ -232,35 +232,49 @@ void stk500Session::openSerial(int baudrate) {
 }
 
 int stk500Session::read(char* buff, int len) {
-    stk500_ProcessThread *thread = this->process;
-    if (thread == NULL) {
+    if (!isSerialOpen()) {
         return 0;
     }
 
     // Lock the reading buffer and read from it
-    thread->inputBuffLock.lock();
-    int count = thread->inputBuff.length();
+    this->process->readBuffLock.lock();
+    int count = this->process->readBuff.length();
     int remaining = 0;
     if (count > len) {
         remaining = (count - len);
         count = len;
     }
     if (count) {
-        char* input_buff = thread->inputBuff.data();
+        char* input_buff = this->process->readBuff.data();
 
         // Read the contents
         memcpy(buff, input_buff, count);
 
         // Shift data around
         memcpy(input_buff, input_buff + count, remaining);
-        thread->inputBuff.truncate(remaining);
+        this->process->readBuff.truncate(remaining);
     }
-    thread->inputBuffLock.unlock();
+    this->process->readBuffLock.unlock();
 
     // All done!
     return count;
 }
 
+void stk500Session::write(const char* buff, int len) {
+    if (!isSerialOpen()) {
+        return;
+    }
+
+    // Lock the writing buffer and write to it
+    this->process->writeBuffLock.lock();
+    this->process->writeBuff.append(buff, len);
+    this->process->writeBuffLock.unlock();
+}
+
+void stk500Session::write(const QString &message) {
+    QByteArray messageData = message.toLatin1();
+    write(messageData.data(), messageData.length());
+}
 
 /* Task processing thread */
 
@@ -314,9 +328,12 @@ void stk500_ProcessThread::run() {
                 currSerialBaud = this->serialBaud;
 
                 /* Clear input/output buffers */
-                this->inputBuffLock.lock();
-                this->inputBuff.clear();
-                this->inputBuffLock.unlock();
+                this->readBuffLock.lock();
+                this->readBuff.clear();
+                this->readBuffLock.unlock();
+                this->writeBuffLock.lock();
+                this->writeBuff.clear();
+                this->writeBuffLock.unlock();
 
                 if (currSerialBaud) {
                     // Changing to a different baud rate
@@ -344,7 +361,29 @@ void stk500_ProcessThread::run() {
 
                 /* If no data available, wait for reading to be done shortly */
                 if (!port.bytesAvailable()) {
-                    port.waitForReadyRead(20);
+                    port.waitForReadyRead(50);
+                }
+
+                /* Write out data */
+                if (!this->writeBuff.isEmpty()) {
+                    this->writeBuffLock.lock();
+
+                    char* buff = this->writeBuff.data();
+                    int buff_len = this->writeBuff.length();
+                    int written = port.write(buff, buff_len);
+                    int remaining = (buff_len - written);
+                    if (!remaining) {
+                        this->writeBuff.clear();
+                    } else if (written == -1) {
+                        /* Do something here? Error conditions are unclear */
+                        qDebug() << "An error occurred while writing";
+                    } else {
+                        /* Not sure if overflow is allowed to happen, but it's handled */
+                        memcpy(buff, buff + written, remaining);
+                        this->writeBuff.truncate(remaining);
+                    }
+
+                    this->writeBuffLock.unlock();
                 }
 
                 /* Read in data */
@@ -356,9 +395,9 @@ void stk500_ProcessThread::run() {
                         hasData = true;
                         qDebug() << "Program started after " << (QDateTime::currentMSecsSinceEpoch() - start_time) << "ms";
                     }
-                    this->inputBuffLock.lock();
-                    this->inputBuff.append(serialBuffer, cnt);
-                    this->inputBuffLock.unlock();
+                    this->readBuffLock.lock();
+                    this->readBuff.append(serialBuffer, cnt);
+                    this->readBuffLock.unlock();
                 }
             } else {
                 /* Command mode: process bootloader I/O */

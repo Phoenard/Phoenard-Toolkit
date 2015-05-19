@@ -76,6 +76,10 @@ private slots:
 
     void on_serial_baud_activated(int index);
 
+    void on_serial_sendButton_clicked();
+
+    void on_serial_messageTxt_returnPressed();
+
 private:
     Ui::MainWindow *ui;
     stk500Session *serial;

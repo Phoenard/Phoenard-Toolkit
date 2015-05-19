@@ -555,7 +555,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLineEdit" name="lineEdit"/>
+           <widget class="QLineEdit" name="serial_messageTxt"/>
           </item>
           <item>
            <widget class="QPushButton" name="serial_sendButton">

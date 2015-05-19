@@ -26,7 +26,8 @@ public:
     void closeSerial();
     bool isSerialOpen();
     int read(char* buff, int buffLen);
-    void write(char* buff, int buffLen);
+    void write(const char* buff, int buffLen);
+    void write(const QString &message);
 
 protected:
     void notifyStatus(stk500_ProcessThread *sender, QString status);
@@ -65,8 +66,10 @@ public:
     QMutex sync;
     QWaitCondition cond;
     stk500Task *currentTask;
-    QMutex inputBuffLock;
-    QByteArray inputBuff;
+    QMutex readBuffLock;
+    QMutex writeBuffLock;
+    QByteArray readBuff;
+    QByteArray writeBuff;
     bool closeRequested;
     bool isRunning;
     bool isProcessing;

@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < allButtons_len; i++) {
         allButtons[i]->setIsTab(true);
     }
-    setSelectedTab(2, true);
+    setSelectedTab(0, true);
 
     // Load an image for debugging
     img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
@@ -376,7 +376,33 @@ void MainWindow::on_serial_baud_activated(int)
     this->refreshSerial();
 }
 
-void MainWindow::on_serial_running_stateChanged(int arg1)
+void MainWindow::on_serial_messageTxt_returnPressed()
+{
+    ui->serial_sendButton->click();
+}
+
+void MainWindow::on_serial_sendButton_clicked()
+{
+    QString message = ui->serial_messageTxt->text();
+    ui->serial_messageTxt->clear();
+    if (message.isEmpty()) {
+        return;
+    }
+
+    // Append newlines
+    int newline_idx = ui->serial_lineEnding->currentIndex();
+    if (newline_idx == 1 || newline_idx == 3) {
+        message.append('\n'); // Newline
+    }
+    if (newline_idx == 2 || newline_idx == 3) {
+        message.append('\r'); // Carriage return
+    }
+
+    // Send it to Serial
+    serial->write(message);
+}
+
+void MainWindow::on_serial_running_stateChanged(int)
 {
     this->refreshSerial();
 }
