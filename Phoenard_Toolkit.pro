@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     imageeditor.cpp \
     quantize.cpp \
     formatselectdialog.cpp \
-    colorselect.cpp
+    colorselect.cpp \
+    serialmonitorwidget.cpp
 
 HEADERS  += mainwindow.h \
     sdbrowserwidget.h \
@@ -43,11 +44,13 @@ HEADERS  += mainwindow.h \
     imageeditor.h \
     quantize.h \
     formatselectdialog.h \
-    colorselect.h
+    colorselect.h \
+    serialmonitorwidget.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \
-    formatselectdialog.ui
+    formatselectdialog.ui \
+    serialmonitorwidget.ui
 
 OTHER_FILES +=
 

@@ -74,7 +74,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QComboBox" name="comboBox">
+           <widget class="QComboBox" name="port_nameBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -90,7 +90,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="serial_toggleButton">
+           <widget class="QPushButton" name="port_toggleBtn">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -104,7 +104,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Close</string>
+             <string>Open</string>
             </property>
            </widget>
           </item>
@@ -547,158 +547,7 @@
       <widget class="QWidget" name="page_3">
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <property name="spacing">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLineEdit" name="serial_messageTxt"/>
-          </item>
-          <item>
-           <widget class="QPushButton" name="serial_sendButton">
-            <property name="text">
-             <string>Send</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QPlainTextEdit" name="serial_outputText">
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_9">
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QCheckBox" name="serial_autoScroll">
-            <property name="text">
-             <string>Autoscroll</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="serial_running">
-            <property name="text">
-             <string>Run Sketch</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_6">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QComboBox" name="serial_lineEnding">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <item>
-             <property name="text">
-              <string>No line ending</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Newline</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Carriage return</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Both NL &amp; CR</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="serial_baud">
-            <property name="currentIndex">
-             <number>3</number>
-            </property>
-            <item>
-             <property name="text">
-              <string>300 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>1200 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>4800 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>9600 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>14400 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>19200 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>28800 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>38400 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>57600 baud</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>115200 baud</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-         </layout>
+         <widget class="serialmonitorwidget" name="serialmonitor" native="true"/>
         </item>
        </layout>
       </widget>
@@ -827,6 +676,12 @@
    <class>ColorSelect</class>
    <extends>QWidget</extends>
    <header>colorselect.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>serialmonitorwidget</class>
+   <extends>QWidget</extends>
+   <header>serialmonitorwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

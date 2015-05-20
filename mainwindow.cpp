@@ -21,14 +21,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Initialize serial
     serial = new stk500Session(this);
+    ui->microSDWidget->setSession(serial);
+    ui->serialmonitor->setSession(serial);
 
     // Connect serial signal events
     connect(serial, SIGNAL(statusChanged(QString)),
             this,   SLOT(serial_statusChanged(QString)),
-            Qt::QueuedConnection);
-
-    connect(serial, SIGNAL(serialOpened()),
-            this,   SLOT(serial_opened()),
             Qt::QueuedConnection);
 
     connect(serial, SIGNAL(closed()),
@@ -54,11 +52,10 @@ MainWindow::MainWindow(QWidget *parent) :
     allButtons[4] = ui->imageEditorButton;
 
     for (QSerialPortInfo info : QSerialPortInfo::availablePorts()) {
-        ui->comboBox->addItem(info.portName());
+        ui->port_nameBox->addItem(info.portName());
     }
     ui->microSDWidget->setAcceptDrops(true);
-    serial->open(ui->comboBox->currentText());
-    ui->microSDWidget->setSession(serial);
+    this->openSerial();
 
     QString settingStyle = " QMainWindow {\
             background-color: #980000;\
@@ -78,10 +75,6 @@ MainWindow::MainWindow(QWidget *parent) :
     // Load an image for debugging
     img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
     ui->img_editor->saveImageTo("C:/Users/QT/Desktop/tmp.lcd");
-
-    serial_updateTimer = new QTimer(this);
-    connect(serial_updateTimer, SIGNAL(timeout()), this, SLOT(serial_timer_ticked()));
-    serial_updateTimer->start(50);
 }
 
 MainWindow::~MainWindow()
@@ -98,25 +91,43 @@ void MainWindow::closeEvent (QCloseEvent *event)
     } else {
         event->accept();
     }
-    refreshSerial();
 }
 
-void MainWindow::on_serial_toggleButton_clicked()
+void MainWindow::openSerial()
+{
+    int index = ui->port_nameBox->currentIndex();
+    if (index == -1) {
+        serial->close();
+    } else {
+        serial->open(ui->port_nameBox->itemText(index));
+        ui->port_toggleBtn->setText("Close");
+    }
+    /* Notify current tab */
+    setSelectedTab(this->selectedTab(), true);
+}
+
+void MainWindow::on_port_nameBox_activated(int)
+{
+    openSerial();
+}
+
+void MainWindow::on_port_toggleBtn_clicked()
 {
     if (serial->isOpen()) {
         serial->close();
-    } else if (ui->comboBox->currentIndex() != -1) {
-        serial->open(ui->comboBox->currentText());
+    } else {
+        openSerial();
     }
-    refreshSerial();
 }
 
-void MainWindow::serial_opened() {
-    ui->serial_outputText->clear();
+void MainWindow::serial_closed()
+{
+    ui->port_toggleBtn->setText("Open");
 }
 
-void MainWindow::serial_closed() {
-    this->refreshSerial();
+void MainWindow::serial_statusChanged(QString status)
+{
+    ui->port_statusLbl->setText(status);
 }
 
 void MsgBox(QString & text) {
@@ -125,15 +136,6 @@ void MsgBox(QString & text) {
     msgBox.setStandardButtons(QMessageBox::Ok);
     msgBox.setDefaultButton(QMessageBox::Ok);
     msgBox.exec();
-}
-
-void MainWindow::on_comboBox_currentIndexChanged(int index) {
-    if (index == -1) {
-        serial->close();
-    } else {
-        serial->open(ui->comboBox->itemText(index));
-    }
-    refreshSerial();
 }
 
 int MainWindow::selectedTab() {
@@ -150,8 +152,12 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
     }
 
     if (doEvents) {
-        refreshSerial();
-
+        /* First tab uses serial mode, all others rely on stk500 */
+        if (index == 0) {
+            ui->serialmonitor->openSerial();
+        } else {
+            serial->closeSerial();
+        }
         if (index == 2) {
             ui->microSDWidget->refreshFiles();
             on_microSDWidget_itemSelectionChanged();
@@ -337,102 +343,4 @@ void MainWindow::on_img_saveButton_clicked()
     }
     QString filePath = dialog.selectedFiles().at(0);
     ui->img_editor->saveImageTo(filePath);
-}
-
-void MainWindow::refreshSerial() {
-    if (serial->isOpen()) {
-        this->ui->serial_toggleButton->setText("Close");
-    } else {
-        this->ui->serial_toggleButton->setText("Open");
-    }
-    if (serial->isOpen()) {
-        if (selectedTab() == 0) {
-            if (ui->serial_running->isChecked()) {
-                if (!serial->isSerialOpen()) {
-                    openSerial();
-                }
-            } else {
-                // Close serial mode to keep program hanging
-                serial->closeSerial();
-            }
-        } else {
-            serial->closeSerial();
-        }
-    }
-}
-
-void MainWindow::openSerial() {
-    QString baudSel = ui->serial_baud->currentText();
-    QString baud_pfix = " baud";
-    if (baudSel.endsWith(baud_pfix)) {
-        baudSel.chop(baud_pfix.length());
-    }
-    serial->openSerial(baudSel.toInt());
-}
-
-void MainWindow::on_serial_baud_activated(int)
-{
-    openSerial();
-    this->refreshSerial();
-}
-
-void MainWindow::on_serial_messageTxt_returnPressed()
-{
-    ui->serial_sendButton->click();
-}
-
-void MainWindow::on_serial_sendButton_clicked()
-{
-    QString message = ui->serial_messageTxt->text();
-    ui->serial_messageTxt->clear();
-    if (message.isEmpty()) {
-        return;
-    }
-
-    // Append newlines
-    int newline_idx = ui->serial_lineEnding->currentIndex();
-    if (newline_idx == 1 || newline_idx == 3) {
-        message.append('\n'); // Newline
-    }
-    if (newline_idx == 2 || newline_idx == 3) {
-        message.append('\r'); // Carriage return
-    }
-
-    // Send it to Serial
-    serial->write(message);
-}
-
-void MainWindow::on_serial_running_stateChanged(int)
-{
-    this->refreshSerial();
-}
-
-void MainWindow::serial_statusChanged(QString status)
-{
-    ui->port_statusLbl->setText(status);
-}
-
-void MainWindow::serial_timer_ticked()
-{
-    // Read in data like woo!
-    char buff[1025];
-    int len = serial->read(buff, 1024);
-    if (len) {
-        buff[len] = 0;
-        QString myString(buff);
-        myString = myString.remove('\r');
-
-        if (ui->serial_autoScroll->isChecked()) {
-            ui->serial_outputText->moveCursor (QTextCursor::End);
-            ui->serial_outputText->insertPlainText(myString);
-            ui->serial_outputText->moveCursor (QTextCursor::End);
-        } else {
-            int old_scroll = ui->serial_outputText->verticalScrollBar()->value();
-            QTextCursor old_cursor = ui->serial_outputText->textCursor();
-            ui->serial_outputText->moveCursor (QTextCursor::End);
-            ui->serial_outputText->insertPlainText(myString);
-            ui->serial_outputText->setTextCursor(old_cursor);
-            ui->serial_outputText->verticalScrollBar()->setValue(old_scroll);
-        }
-    }
 }
