@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QDebug>
-#include "stk500/stk500session.h"
+#include "stk500/stk500serial.h"
 
 namespace Ui {
 class serialmonitorwidget;
@@ -16,7 +16,7 @@ class serialmonitorwidget : public QWidget
 public:
     serialmonitorwidget(QWidget *parent = 0);
     ~serialmonitorwidget();
-    void setSession(stk500Session *session);
+    void setSerial(stk500Serial *serial);
     void openSerial();
 
 private slots:
@@ -33,7 +33,7 @@ private slots:
 
 private:
     Ui::serialmonitorwidget *ui;
-    stk500Session *session;
+    stk500Serial *serial;
     QTimer *updateTimer;
 };
 

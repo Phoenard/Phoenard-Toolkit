@@ -20,8 +20,8 @@ SOURCES += main.cpp\
     menubutton.cpp \
     qmultifiledialog.cpp \
     stk500/stk500.cpp \
-    stk500/stk500session.cpp \
     stk500/stk500task.cpp \
+    stk500/stk500serial.cpp \
     stk500/longfilenamegen.cpp \
     stk500/progressdialog.cpp \
     imageeditor.cpp \
@@ -36,8 +36,8 @@ HEADERS  += mainwindow.h \
     qmultifiledialog.h \
     stk500/stk500.h \
     stk500/stk500_fat.h \
-    stk500/stk500session.h \
     stk500/stk500task.h \
+    stk500/stk500serial.h \
     stk500/longfilenamegen.h \
     stk500/stk500command.h \
     stk500/progressdialog.h \

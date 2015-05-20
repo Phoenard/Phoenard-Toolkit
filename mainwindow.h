@@ -68,7 +68,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    stk500Session *serial;
+    stk500Serial *serial;
     MenuButton **allButtons;
     int allButtons_len;
     QIcon fmt_icons[8];

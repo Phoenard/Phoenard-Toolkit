@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
-#include "stk500/stk500Session.h"
+#include "stk500/stk500serial.h"
 #include <QSerialPortInfo>
 #include <QTimer>
 #include <QMessageBox>
@@ -20,9 +20,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     // Initialize serial
-    serial = new stk500Session(this);
-    ui->microSDWidget->setSession(serial);
-    ui->serialmonitor->setSession(serial);
+    serial = new stk500Serial(this);
+    ui->microSDWidget->setSerial(serial);
+    ui->serialmonitor->setSerial(serial);
 
     // Connect serial signal events
     connect(serial, SIGNAL(statusChanged(QString)),

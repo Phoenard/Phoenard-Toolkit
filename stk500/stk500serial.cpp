@@ -1,23 +1,23 @@
-#include "stk500session.h"
+#include "stk500serial.h"
 #include <QDebug>
 #include <QApplication>
 #include <QSerialPortInfo>
 #include "progressdialog.h"
 
-stk500Session::stk500Session(QWidget *owner)
+stk500Serial::stk500Serial(QWidget *owner)
     : QObject(owner) {
     process = NULL;
 }
 
-bool stk500Session::isOpen() {
+bool stk500Serial::isOpen() {
     return (process != NULL && !process->closeRequested);
 }
 
-bool stk500Session::isSerialOpen() {
+bool stk500Serial::isSerialOpen() {
     return isOpen() && process->serialBaud;
 }
 
-void stk500Session::open(QString & portName) {
+void stk500Serial::open(QString & portName) {
     // If already opened; ignore
     if (isOpen() && (process->portName == portName)) {
         return;
@@ -30,7 +30,7 @@ void stk500Session::open(QString & portName) {
     process->start();
 }
 
-void stk500Session::close() {
+void stk500Serial::close() {
     if (isOpen()) {
         // Tell the process to quit if running
         if (process->isRunning) {
@@ -47,7 +47,7 @@ void stk500Session::close() {
     }
 }
 
-bool stk500Session::abort() {
+bool stk500Serial::abort() {
     close();
 
     // Wait for a maximum of 1 second until all processes are killed
@@ -58,7 +58,7 @@ bool stk500Session::abort() {
     return cleanKilledProcesses();
 }
 
-bool stk500Session::cleanKilledProcesses() {
+bool stk500Serial::cleanKilledProcesses() {
     if (killedProcesses.isEmpty()) {
         return true;
     }
@@ -78,25 +78,25 @@ bool stk500Session::cleanKilledProcesses() {
     return isAllKilled;
 }
 
-void stk500Session::notifyStatus(stk500_ProcessThread*, QString status) {
+void stk500Serial::notifyStatus(stk500_ProcessThread*, QString status) {
     emit statusChanged(status);
 }
 
-void stk500Session::notifyClosed(stk500_ProcessThread *) {
+void stk500Serial::notifyClosed(stk500_ProcessThread *) {
     emit closed();
 }
 
-void stk500Session::notifySerialOpened(stk500_ProcessThread *) {
+void stk500Serial::notifySerialOpened(stk500_ProcessThread *) {
     emit serialOpened();
 }
 
-void stk500Session::execute(stk500Task *task) {
+void stk500Serial::execute(stk500Task *task) {
     QList<stk500Task*> tasks;
     tasks.append(task);
     executeAll(tasks);
 }
 
-void stk500Session::executeAll(QList<stk500Task*> tasks) {
+void stk500Serial::executeAll(QList<stk500Task*> tasks) {
     /* No tasks - don't do anything */
     if (tasks.isEmpty()) return;
 
@@ -209,15 +209,15 @@ void stk500Session::executeAll(QList<stk500Task*> tasks) {
     }
 }
 
-void stk500Session::cancelTasks() {
+void stk500Serial::cancelTasks() {
     process->cancelTasks();
 }
 
-void stk500Session::closeSerial() {
+void stk500Serial::closeSerial() {
     openSerial(0);
 }
 
-void stk500Session::openSerial(int baudrate) {
+void stk500Serial::openSerial(int baudrate) {
     // Don't do anything if not open
     if (!isOpen()) {
         return;
@@ -231,7 +231,7 @@ void stk500Session::openSerial(int baudrate) {
     this->process->isBaudChanged = true;
 }
 
-int stk500Session::read(char* buff, int len) {
+int stk500Serial::read(char* buff, int len) {
     if (!isSerialOpen()) {
         return 0;
     }
@@ -260,7 +260,7 @@ int stk500Session::read(char* buff, int len) {
     return count;
 }
 
-void stk500Session::write(const char* buff, int len) {
+void stk500Serial::write(const char* buff, int len) {
     if (!isSerialOpen()) {
         return;
     }
@@ -271,14 +271,14 @@ void stk500Session::write(const char* buff, int len) {
     this->process->writeBuffLock.unlock();
 }
 
-void stk500Session::write(const QString &message) {
+void stk500Serial::write(const QString &message) {
     QByteArray messageData = message.toLatin1();
     write(messageData.data(), messageData.length());
 }
 
 /* Task processing thread */
 
-stk500_ProcessThread::stk500_ProcessThread(stk500Session *owner, QString portName) {
+stk500_ProcessThread::stk500_ProcessThread(stk500Serial *owner, QString portName) {
     this->owner = owner;
     this->closeRequested = false;
     this->isRunning = true;

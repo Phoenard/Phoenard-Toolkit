@@ -18,11 +18,11 @@ serialmonitorwidget::~serialmonitorwidget()
     delete ui;
 }
 
-void serialmonitorwidget::setSession(stk500Session *session)
+void serialmonitorwidget::setSerial(stk500Serial *serial)
 {
-    this->session = session;
+    this->serial = serial;
 
-    connect(session, SIGNAL(serialOpened()),
+    connect(serial, SIGNAL(serialOpened()),
             this,    SLOT(clearOutputText()),
             Qt::QueuedConnection);
 }
@@ -30,14 +30,14 @@ void serialmonitorwidget::setSession(stk500Session *session)
 void serialmonitorwidget::openSerial()
 {
     if (!ui->runSketchCheck->isChecked()) {
-        session->closeSerial();
+        serial->closeSerial();
     } else {
         QString baudSel = ui->baudrateBox->currentText();
         QString baud_pfix = " baud";
         if (baudSel.endsWith(baud_pfix)) {
             baudSel.chop(baud_pfix.length());
         }
-        session->openSerial(baudSel.toInt());
+        serial->openSerial(baudSel.toInt());
     }
 }
 
@@ -78,7 +78,7 @@ void serialmonitorwidget::on_sendButton_clicked()
     }
 
     // Send it to Serial
-    session->write(message);
+    serial->write(message);
 }
 
 /* Clear output text - when serial opens */
@@ -90,7 +90,7 @@ void serialmonitorwidget::clearOutputText() {
 void serialmonitorwidget::readSerialOutput()
 {
     char buff[1025];
-    int len = session->read(buff, 1024);
+    int len = serial->read(buff, 1024);
     if (len) {
         buff[len] = 0;
         QString myString(buff);

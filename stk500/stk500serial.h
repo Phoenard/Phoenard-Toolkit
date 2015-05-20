@@ -1,12 +1,12 @@
-#ifndef STK500SESSION_H
-#define STK500SESSION_H
+#ifndef STK500SERIAL_H
+#define STK500SERIAL_H
 
 #include "stk500.h"
 #include "stk500task.h"
 
 class stk500_ProcessThread;
 
-class stk500Session : public QObject
+class stk500Serial : public QObject
 {
     Q_OBJECT
 
@@ -14,7 +14,7 @@ class stk500Session : public QObject
     friend class stk500_ProcessThread;
 
 public:
-    stk500Session(QWidget *owner);
+    stk500Serial(QWidget *owner);
     bool isOpen();
     void open(QString & portName);
     void close();
@@ -52,7 +52,7 @@ class stk500_ProcessThread : public QThread {
    Q_OBJECT
 
 public:
-    stk500_ProcessThread(stk500Session *owner, QString portName);
+    stk500_ProcessThread(stk500Serial *owner, QString portName);
     void cancelTasks();
     void wake();
 
@@ -62,7 +62,7 @@ protected:
     void updateStatus(QString status);
 
 public:
-    stk500Session *owner;
+    stk500Serial *owner;
     QMutex sync;
     QWaitCondition cond;
     stk500Task *currentTask;
@@ -81,4 +81,4 @@ public:
     QString status;
 };
 
-#endif // STK500SESSION_H
+#endif // stk500Serial_H
