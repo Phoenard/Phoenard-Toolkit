@@ -244,6 +244,7 @@
 #define QUANTIZE_H
 
 #include <QImage>
+#include <QColor>
 
 namespace Quantize {
 
@@ -409,6 +410,10 @@ public:
      * Obtains the value of a single pixel
      */
     Pixel pixel(int x, int y);
+    /*
+     * Sets the value of a single pixel (true color only)
+     */
+    void setPixel(int x, int y, QColor color);
 
 private:
     /*

@@ -66,6 +66,8 @@ private slots:
 
     void on_img_saveButton_clicked();
 
+    void on_serial_shareMode_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;

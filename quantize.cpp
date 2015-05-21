@@ -213,6 +213,13 @@ Pixel Cube::pixel(int x, int y) {
     }
 }
 
+void Cube::setPixel(int x, int y, QColor color) {
+    if (trueColor) {
+        pixels[x][y].value = (uint) color.rgb();
+    }
+    this->output.setPixel(x, y, color.rgb());
+}
+
 void Cube::classification() {
     // convert to indexed color
     for (int x = width; --x >= 0; ) {

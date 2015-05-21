@@ -344,3 +344,8 @@ void MainWindow::on_img_saveButton_clicked()
     QString filePath = dialog.selectedFiles().at(0);
     ui->img_editor->saveImageTo(filePath);
 }
+
+void MainWindow::on_serial_shareMode_toggled(bool checked)
+{
+    ui->serialmonitor->setScreenShare(checked);
+}

@@ -34,21 +34,12 @@ void stk500::reset() {
     /* Reset the device and clear the buffers */
     port->setDataTerminalReady(true);
     port->setDataTerminalReady(false);
+
+    /* Wait for the reset time */
+    QThread::msleep(STK500_RESET_DELAY);
+
+    /* Clear serial buffers */
     port->clear();
-
-    /* For the reset time, clear the incoming data buffer */
-    char reset_buff[1000];
-    qint64 reset_start = QDateTime::currentMSecsSinceEpoch();
-    while ((QDateTime::currentMSecsSinceEpoch() - reset_start) < STK500_RESET_DELAY) {
-
-        /* If no data available, wait for reading to be done shortly */
-        if (!port->bytesAvailable()) {
-            port->waitForReadyRead(20);
-        }
-
-        /* Read in data */
-        port->read((char*) reset_buff, sizeof(reset_buff));
-    }
 
     /* Reset timeout to prevent successive resetting */
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();

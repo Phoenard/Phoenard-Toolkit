@@ -10,6 +10,8 @@ QString getFormatName(ImageFormat format);
 int getFormatColors(ImageFormat format);
 bool isLCDColor(ImageFormat format);
 bool isTrueColor(ImageFormat format);
+QColor color565_to_rgb(quint16 color565);
+quint16 rgb_to_color565(QColor &color);
 
 class ImageEditor : public QWidget
 {
@@ -32,6 +34,8 @@ public:
     QColor getColor(int index);
     const int getColorCount() { return quant.colors; }
     void setColor(int index, QColor color);
+    void setPixel(int x, int y, QColor color);
+    void fill(QColor color);
     void paintEvent(QPaintEvent *e);
 private:
     QImage sourceImage;

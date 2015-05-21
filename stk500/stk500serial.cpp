@@ -310,7 +310,7 @@ void stk500_ProcessThread::run() {
 
         /* Initialize the port */
         port.setPortName(portName);
-        port.setReadBufferSize(1024);
+        port.setReadBufferSize(4096);
         port.setSettingsRestoredOnClose(false);
         port.open(QIODevice::ReadWrite);
         port.clearError();
@@ -361,7 +361,7 @@ void stk500_ProcessThread::run() {
 
                 /* If no data available, wait for reading to be done shortly */
                 if (!port.bytesAvailable()) {
-                    port.waitForReadyRead(50);
+                    port.waitForReadyRead(20);
                 }
 
                 /* Write out data */

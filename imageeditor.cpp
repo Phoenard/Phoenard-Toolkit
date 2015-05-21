@@ -286,6 +286,20 @@ void ImageEditor::setColor(int index, QColor color) {
     this->quant.colormap[index].value = (uint) color.rgb();
 }
 
+void ImageEditor::setPixel(int x, int y, QColor color) {
+    this->quant.setPixel(x, y, color);
+    this->update();
+}
+
+void ImageEditor::fill(QColor color) {
+    for (int x = 0; x < quant.width; x++) {
+        for (int y = 0; y < quant.height; y++) {
+            this->quant.setPixel(x, y, color);
+        }
+    }
+    this->update();
+}
+
 QByteArray ImageEditor::saveImage(bool saveHeader) {
     QByteArray dataArray;
     QDataStream out(&dataArray, QIODevice::WriteOnly);
@@ -407,7 +421,7 @@ void ImageEditor::saveImageTo(QString destFilePath) {
     }
 }
 
-void ImageEditor::paintEvent(QPaintEvent *e) {
+void ImageEditor::paintEvent(QPaintEvent *) {
     QPainter painter(this);
     if (!sourceImageValid) return;
 
@@ -424,5 +438,5 @@ void ImageEditor::paintEvent(QPaintEvent *e) {
 
     // Draw the actual image
     drawnImageBounds = dest;
-    painter.drawPixmap(dest, preview);
+    painter.drawPixmap(dest, QPixmap::fromImage(quant.output));
 }

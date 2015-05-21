@@ -9,6 +9,20 @@ namespace Ui {
 class serialmonitorwidget;
 }
 
+typedef struct {
+    quint16 cur_x;
+    quint16 cur_y;
+    quint16 entrymode;
+    quint16 view_ha;
+    quint16 view_hb;
+    quint16 view_va;
+    quint16 view_vb;
+    quint8 cmd;
+    quint8 cmd_len;
+    quint8 cmd_buff[50];
+    quint8 cmd_buff_index;
+} ScreenRegisters;
+
 class serialmonitorwidget : public QWidget
 {
     Q_OBJECT
@@ -18,6 +32,13 @@ public:
     ~serialmonitorwidget();
     void setSerial(stk500Serial *serial);
     void openSerial();
+    void setScreenShare(bool enabled);
+
+private:
+    void receiveScreen(quint8 byte);
+    void receivePixel(quint16 color);
+    bool moveCursor_x(qint8 dx);
+    bool moveCursor_y(qint8 dy);
 
 private slots:
     void readSerialOutput();
@@ -35,6 +56,8 @@ private:
     Ui::serialmonitorwidget *ui;
     stk500Serial *serial;
     QTimer *updateTimer;
+    ScreenRegisters screen;
+    bool screenEnabled;
 };
 
 #endif // SERIALMONITORWIDGET_H
