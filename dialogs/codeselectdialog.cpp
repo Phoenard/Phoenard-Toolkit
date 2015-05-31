@@ -143,20 +143,24 @@ void CodeSelectDialog::detect_settings() {
     if (is_progmem) header.remove("PROGMEM");
     QString data_tbl[4][4] = {
         {"byte", "short", "", ""},
-        {"char ", "int ", "", "long "},
-        {"int8_t ", "int16_t ", "", "int32_t "},
-        {"uint8_t ", "uint16_t ", "", "uint32_t "}
+        {"char", "int", "", "long"},
+        {"int8_t", "int16_t", "", "int32_t"},
+        {"uint8_t", "uint16_t", "", "uint32_t"}
     };
     for (int i = 0; i < 4; i++) {
         for (int d = 0; d < 4; d++) {
             QString &t = data_tbl[i][d];
             if (t.length() == 0) continue;
             int idx = header.indexOf(t);
+            int idx_a = idx + t.length();
             if (idx == -1) continue;
 
-            /* Verify there is a space in front of the keyword */
+            /* Verify there is a space in front and after the keyword */
             QChar b = (idx == 0) ? ' ' : header.at(idx-1);
-            if (b == ' ' || b == '\t' || b == '\n' || b == '\r') {
+            QChar a = (idx_a >= header.length() ? ' ' : header.at(idx_a));
+            if ((b == ' ' || b == '\t' || b == '\n' || b == '\r') &&
+                (a == ' ' || a == '\t' || a == '\n' || a == '\r')){
+
                 data_size = d+1;
             }
         }
