@@ -11,7 +11,8 @@
 #include <QMenu>
 #include <QPoint>
 #include <QScrollBar>
-#include "formatselectdialog.h"
+#include "dialogs/formatselectdialog.h"
+#include "dialogs/codeselectdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -73,8 +74,8 @@ MainWindow::MainWindow(QWidget *parent) :
     setSelectedTab(0, true);
 
     // Load an image for debugging
-    img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
-    ui->img_editor->saveImageTo("C:/Users/QT/Desktop/tmp.lcd");
+    //img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
+    //ui->img_editor->saveImageTo("C:/Users/QT/Desktop/tmp.lcd");
 }
 
 MainWindow::~MainWindow()
@@ -299,6 +300,7 @@ void MainWindow::on_img_loadButton_clicked()
 
     QByteArray data;
     if (result == fileOpt) {
+        /* Browse a file on the local filesystem */
         QFileDialog dialog(this);
         dialog.setWindowTitle("Select the image file to load");
         if (!dialog.exec()) {
@@ -317,8 +319,13 @@ void MainWindow::on_img_loadButton_clicked()
         //TODO: Show dialog for browsing on the micro-SD
         return;
     } else if (result == codeOpt) {
-        //TODO: Show dialog for copy-pasting data
-        return;
+        /* Allow the user to paste code to load in */
+        CodeSelectDialog dialog(this);
+        if (dialog.exec()) {
+            data = dialog.getData();
+        } else {
+            return;
+        }
     } else {
         // No selection
         return;

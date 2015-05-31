@@ -26,9 +26,10 @@ SOURCES += main.cpp\
     stk500/progressdialog.cpp \
     imageeditor.cpp \
     quantize.cpp \
-    formatselectdialog.cpp \
     colorselect.cpp \
-    serialmonitorwidget.cpp
+    serialmonitorwidget.cpp \
+    dialogs/formatselectdialog.cpp \
+    dialogs/codeselectdialog.cpp
 
 HEADERS  += mainwindow.h \
     sdbrowserwidget.h \
@@ -43,14 +44,16 @@ HEADERS  += mainwindow.h \
     stk500/progressdialog.h \
     imageeditor.h \
     quantize.h \
-    formatselectdialog.h \
     colorselect.h \
-    serialmonitorwidget.h
+    serialmonitorwidget.h \
+    dialogs/formatselectdialog.h \
+    dialogs/codeselectdialog.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \
-    formatselectdialog.ui \
-    serialmonitorwidget.ui
+    serialmonitorwidget.ui \
+    dialogs/formatselectdialog.ui \
+    dialogs/codeselectdialog.ui
 
 OTHER_FILES +=
 
