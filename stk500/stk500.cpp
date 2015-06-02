@@ -297,8 +297,11 @@ void stk500::writeData(unsigned char data_command, quint32 address, char* src, i
 
 QString stk500::signOn() {
     char resp[100];
-    int respLen = command(CMD_SIGN_ON, NULL, 0, resp, sizeof(resp));
-    return QString::fromLocal8Bit((char*) resp, respLen);
+    int name_length = command(CMD_SIGN_ON, NULL, 0, resp, sizeof(resp)) - 1;
+    if (resp[0] < name_length) {
+        name_length = resp[0];
+    }
+    return QString::fromLocal8Bit(resp + 1, name_length);
 }
 
 void stk500::signOut() {

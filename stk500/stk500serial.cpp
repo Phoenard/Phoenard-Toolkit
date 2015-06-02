@@ -413,7 +413,9 @@ void stk500_ProcessThread::run() {
                     needSignOn = false;
                     updateStatus("[STK500] Signing on");
                     isSignedOn = trySignOn(&protocol);
-                    if (!isSignedOn) {
+                    if (isSignedOn) {
+                        qDebug() << "[STK500] Protocol: " << protocolName;
+                    } else {
                         updateStatus("[STK500] Sign-on error");
                     }
                 }
