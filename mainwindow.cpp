@@ -321,6 +321,7 @@ void MainWindow::on_img_loadButton_clicked()
     } else if (result == codeOpt) {
         /* Allow the user to paste code to load in */
         CodeSelectDialog dialog(this);
+        dialog.setMode(CodeSelectDialog::OPEN);
         if (dialog.exec()) {
             data = dialog.getData();
         } else {
@@ -342,14 +343,45 @@ void MainWindow::on_img_loadButton_clicked()
 
 void MainWindow::on_img_saveButton_clicked()
 {
-    QFileDialog dialog(this);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setWindowTitle("Select the destination location to save to");
-    if (!dialog.exec()) {
+
+    //TODO: Make a set of buttons when clicked, expand to show the browser for the type specified
+    //For example, pressing the micro-sd button slider opens it and shows an SD browser widget
+
+    QIcon icon_file(":/icons/newfile.png");
+    QIcon icon_sd(":/icons/microsd.png");
+    QIcon icon_code(":/icons/code.png");
+    QMenu menu;
+    QAction *fileOpt = menu.addAction(icon_file, "Save to file");
+    QAction *sdOpt = menu.addAction(icon_sd, "Save to Micro-SD");
+    QAction *codeOpt = menu.addAction(icon_code, "Save as code");
+    QAction *result = showMenu(ui->img_loadButton, menu);
+
+    QByteArray data;
+    if (result == fileOpt) {
+        /* Browse a file on the local filesystem */
+        QFileDialog dialog(this);
+        dialog.setAcceptMode(QFileDialog::AcceptSave);
+        dialog.setWindowTitle("Select the destination location to save to");
+        if (!dialog.exec()) {
+            return;
+        }
+        QString filePath = dialog.selectedFiles().at(0);
+        ui->img_editor->saveImageTo(filePath);
+    } else if (result == sdOpt) {
+        //TODO: Show dialog for browsing on the micro-SD
+        return;
+    } else if (result == codeOpt) {
+        QByteArray data = ui->img_editor->saveImage(false);
+
+        /* Allow the user to copy code  */
+        CodeSelectDialog dialog(this);
+        dialog.setMode(CodeSelectDialog::SAVE);
+        dialog.setData(data);
+        dialog.exec();
+    } else {
+        // No selection
         return;
     }
-    QString filePath = dialog.selectedFiles().at(0);
-    ui->img_editor->saveImageTo(filePath);
 }
 
 void MainWindow::on_serial_shareMode_toggled(bool checked)

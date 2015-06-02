@@ -11,9 +11,9 @@ class CodeSelectDialog : public QDialog
 {
     Q_OBJECT
 
+public:
     enum Mode { OPEN, SAVE };
 
-public:
     explicit CodeSelectDialog(QWidget *parent = 0);
     ~CodeSelectDialog();
     void setMode(Mode mode);

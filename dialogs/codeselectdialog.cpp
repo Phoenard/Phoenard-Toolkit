@@ -81,8 +81,29 @@ void CodeSelectDialog::detect_settings() {
     QString text = ui->codeEdit->toPlainText();
     text = text.trimmed();
 
+    /* Remove all comments from the input text */
+    bool in_line_comment = false;
+    bool in_block_comment = false;
+    QString text_uncommented;
+    for (int i = 0; i < text.length() ;i++) {
+        QChar c = text.at(i);
+        if ((c == '/') && i < (text.length() - 1) && (text.at(i + 1) == '/')) {
+            in_line_comment = true;
+        }
+        if (in_line_comment && (c == '\n' || c == '\r')) {
+            in_line_comment = false;
+        }
+        if (!in_block_comment && !in_line_comment) {
+            text_uncommented.append(c);
+        }
+        if (in_block_comment && (c == '/') && (text.at(i -1) == '*')) {
+            in_block_comment = false;
+        }
+    }
+    text = text_uncommented;
+
     /*
-     * First of all, trim the header of the text data looking for information
+     * Trim the header of the text data looking for information
      * In case none is found, the largest found hexidecimal size is used instead
      */
     QString header;
@@ -117,6 +138,9 @@ void CodeSelectDialog::detect_settings() {
             if (entry_buff.startsWith("0x")) {
                 entry_buff.remove(0, 2);
                 value = (quint32) entry_buff.toLong(&ok, 16);
+            } else if (entry_buff.startsWith("0b")) {
+                entry_buff.remove(0, 2);
+                value = (quint32) entry_buff.toLong(&ok, 2);
             } else {
                 value = (quint32) entry_buff.toLong(&ok, 10);
             }
