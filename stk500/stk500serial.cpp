@@ -415,6 +415,22 @@ void stk500_ProcessThread::run() {
                     isSignedOn = trySignOn(&protocol);
                     if (isSignedOn) {
                         qDebug() << "[STK500] Protocol: " << protocolName;
+
+                        /* RAM Debug test: blink pin 13 a few times */
+                        try {
+                            /* Set DDRB7 to OUTPUT */
+                            protocol.RAM_writeByte(0x24, 0xFF, 1 << 7);
+
+                            /* Set PORTB7 alternating */
+                            for (int i = 0; i < 5; i++) {
+                                QThread::msleep(50);
+                                protocol.RAM_writeByte(0x25, 0x00, 1 << 7);
+                                QThread::msleep(50);
+                                protocol.RAM_writeByte(0x25, 0xFF, 1 << 7);
+                            }
+                        } catch (ProtocolException &ex) {
+                            qDebug() << ex.what();
+                        }
                     } else {
                         updateStatus("[STK500] Sign-on error");
                     }

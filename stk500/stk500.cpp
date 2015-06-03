@@ -376,6 +376,36 @@ void stk500::EEPROM_write(quint32 address, char* src, int srcLen) {
     currentAddress += srcLen;
 }
 
+void stk500::RAM_read(quint16 address, char* dest, int destLen) {
+    readData(CMD_READ_RAM_ISP, address, dest, destLen);
+    currentAddress += destLen;
+}
+
+void stk500::RAM_write(quint16 address, char* src, int srcLen) {
+    writeData(CMD_PROGRAM_RAM_ISP, address, src, srcLen);
+    currentAddress += srcLen;
+}
+
+char stk500::RAM_readByte(quint16 address) {
+    char output = 0x00;
+    char arguments[2];
+    arguments[0] = (char) ((address >> 8) & 0xFF);
+    arguments[1] = (char) ((address >> 0) & 0xFF);
+    command(CMD_READ_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
+    return output;
+}
+
+char stk500::RAM_writeByte(quint16 address, char value, char mask) {
+    char output = 0x00;
+    char arguments[4];
+    arguments[0] = (char) ((address >> 8) & 0xFF);
+    arguments[1] = (char) ((address >> 0) & 0xFF);
+    arguments[2] = mask;
+    arguments[3] = value;
+    command(CMD_PROGRAM_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
+    return output;
+}
+
 /* ===================== Micro-SD Access ====================== */
 
 stk500_sd::stk500_sd(stk500 *handler) {

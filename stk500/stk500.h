@@ -42,6 +42,10 @@ public:
     void FLASH_writePage(quint32 address, char* src, int srcLen);
     void EEPROM_read(quint32 address, char* dest, int destLen);
     void EEPROM_write(quint32 address, char* src, int srcLen);
+    void RAM_read(quint16 address, char* dest, int destLen);
+    void RAM_write(quint16 address, char* src, int srcLen);
+    char RAM_readByte(quint16 address);
+    char RAM_writeByte(quint16 address, char value, char mask = 0xFF);
 
     static QString getFileName(QString filePath);
     static QString getSizeText(quint32 size);
