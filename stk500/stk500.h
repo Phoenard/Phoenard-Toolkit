@@ -44,8 +44,9 @@ public:
     void EEPROM_write(quint32 address, char* src, int srcLen);
     void RAM_read(quint16 address, char* dest, int destLen);
     void RAM_write(quint16 address, char* src, int srcLen);
-    char RAM_readByte(quint16 address);
-    char RAM_writeByte(quint16 address, char value, char mask = 0xFF);
+    quint8 RAM_readByte(quint16 address);
+    quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
+    quint16 ANALOG_read(quint8 adc);
 
     static QString getFileName(QString filePath);
     static QString getSizeText(quint32 size);

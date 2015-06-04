@@ -386,7 +386,7 @@ void stk500::RAM_write(quint16 address, char* src, int srcLen) {
     currentAddress += srcLen;
 }
 
-char stk500::RAM_readByte(quint16 address) {
+quint8 stk500::RAM_readByte(quint16 address) {
     char output = 0x00;
     char arguments[2];
     arguments[0] = (char) ((address >> 8) & 0xFF);
@@ -395,7 +395,7 @@ char stk500::RAM_readByte(quint16 address) {
     return output;
 }
 
-char stk500::RAM_writeByte(quint16 address, char value, char mask) {
+quint8 stk500::RAM_writeByte(quint16 address, quint8 value, quint8 mask) {
     char output = 0x00;
     char arguments[4];
     arguments[0] = (char) ((address >> 8) & 0xFF);
@@ -404,6 +404,28 @@ char stk500::RAM_writeByte(quint16 address, char value, char mask) {
     arguments[3] = value;
     command(CMD_PROGRAM_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
     return output;
+}
+
+quint16 stk500::ANALOG_read(quint8 adc) {
+    char arguments[3];
+    char output[2];
+
+    /* Setup the ADC registers to start a measurement */
+    arguments[0] = 0xC7 | (adc & 0xF); /* ADCSRA(0x7A) */
+    arguments[1] = 0x00;               /* ADCSRB(0x7B) */
+    arguments[2] = 0x40;               /* ADMUX (0x7C) */
+
+    const bool USE_ADC_CMD = true;
+    if (USE_ADC_CMD) {
+        /* Use the analog read command */
+        command(CMD_READ_ANALOG_ISP, arguments, sizeof(arguments), output, sizeof(output));
+        return (output[0] << 8) | (output[1] & 0xFF);
+    } else {
+        /* Write to the register and read the ADCL/ADCH registers */
+        RAM_write(0x7A, arguments, sizeof(arguments));
+        RAM_read(0x78, output, sizeof(output));
+        return (output[0] & 0xFF) | (output[1] << 8);
+    }
 }
 
 /* ===================== Micro-SD Access ====================== */

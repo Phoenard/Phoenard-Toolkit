@@ -416,6 +416,17 @@ void stk500_ProcessThread::run() {
                     if (isSignedOn) {
                         qDebug() << "[STK500] Protocol: " << protocolName;
 
+                        /* Analog read test */
+                        try {
+                            for (int i = 0; i < 5; i++) {
+                                qDebug() << "ADC: " << protocol.ANALOG_read(0);
+                                QThread::msleep(30);
+                            }
+                        } catch (ProtocolException &ex) {
+                            qDebug() << ex.what();
+                        }
+
+
                         /* RAM Debug test: blink pin 13 a few times */
                         try {
                             /* Set DDRB7 to OUTPUT */
