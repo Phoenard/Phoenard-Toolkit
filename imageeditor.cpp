@@ -96,6 +96,7 @@ void ImageEditor::loadImage(QByteArray &data) {
     sourceImageValid = false;
     sourceImageFormat = INVALID;
     destImageColors = 0;
+    destImageHeader = true;
 
     // Fails instantly if the length is below header size
     if (data.size() < 10) {
@@ -178,6 +179,7 @@ void ImageEditor::loadImageRaw(int width, int height, int bpp, QByteArray &data,
     sourceImage = QImage(width, height, QImage::Format_ARGB32);
     sourceImageValid = true;
     destImageColors = 0;
+    destImageHeader = false;
     switch (bpp) {
     case 1:
         sourceImageFormat = LCD1;
@@ -311,7 +313,7 @@ void ImageEditor::fill(QColor color) {
     this->update();
 }
 
-QByteArray ImageEditor::saveImage(bool saveHeader) {
+QByteArray ImageEditor::saveImage() {
     QByteArray dataArray;
     QDataStream out(&dataArray, QIODevice::WriteOnly);
     int x, y;
@@ -357,7 +359,7 @@ QByteArray ImageEditor::saveImage(bool saveHeader) {
             lcd_header.colors = 0;
 
             // Write out the header
-            if (saveHeader) {
+            if (destImageHeader) {
                 out.writeRawData((char*) &lcd_header, sizeof(lcd_header));
             }
 
@@ -385,7 +387,7 @@ QByteArray ImageEditor::saveImage(bool saveHeader) {
             // All below code relies on a properly updated quantized object!
             lcd_header.colors = quant.colors;
 
-            if (saveHeader) {
+            if (destImageHeader) {
                 out.writeRawData((char*) &lcd_header, sizeof(lcd_header));
 
                 // Write out pixelmap

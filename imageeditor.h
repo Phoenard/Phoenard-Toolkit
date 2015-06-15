@@ -22,7 +22,7 @@ public:
     void loadImage(QByteArray &data);
     void loadImageRaw(int width, int height, int bpp, QByteArray &data);
     void loadImageRaw(int width, int height, int bpp, QByteArray &data, QList<QColor> &pixelmap);
-    QByteArray saveImage(bool saveHeader = true);
+    QByteArray saveImage();
     void saveImageTo(QString destFilePath);
     const ImageFormat imageFormat() { return sourceImageFormat; }
     const ImageFormat outputImageFormat() { return destImageFormat; }
@@ -31,6 +31,8 @@ public:
     const QSize imageSize() { return sourceImage.size(); }
     const bool outputImageTrueColor() { return isTrueColor(destImageFormat); }
     void setFormat(ImageFormat format, int colorCount = -1);
+    void setHeader(bool header) { this->destImageHeader = header; }
+    bool hasHeader() { return this->destImageHeader; }
     QColor getColor(int index);
     const int getColorCount() { return quant.colors; }
     void setColor(int index, QColor color);
@@ -43,6 +45,7 @@ private:
     ImageFormat sourceImageFormat;
     int destImageColors;
     ImageFormat destImageFormat;
+    bool destImageHeader;
     Quantize::Cube quant;
     QPixmap preview;
     QRect drawnImageBounds;

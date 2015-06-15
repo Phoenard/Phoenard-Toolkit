@@ -267,14 +267,27 @@ void MainWindow::on_img_formatButton_clicked()
     for (int i = 0; i < 7; i++) {
         actions[i] = myMenu.addAction(fmt_icons[i], getFormatName((ImageFormat) i));
     }
+    QString useHeaderTitle = "Use image header";
+    QAction *useHeaderItem;
+    if (ui->img_editor->hasHeader()) {
+        QIcon useHeaderIcon(":/icons/checkbox_checked.png");
+        useHeaderItem = myMenu.addAction(useHeaderIcon, useHeaderTitle);
+    } else {
+        QIcon useHeaderIcon(":/icons/checkbox_unchecked.png");
+        useHeaderItem = myMenu.addAction(useHeaderIcon, useHeaderTitle);
+    }
 
     QAction *clicked = showMenu(ui->img_formatButton, myMenu);
-    for (int i = 0; i < 7; i++) {
-        if (actions[i] == clicked) {
-            ui->img_editor->setFormat((ImageFormat) i);
+    if (clicked == useHeaderItem) {
+        ui->img_editor->setHeader(!ui->img_editor->hasHeader());
+    } else {
+        for (int i = 0; i < 7; i++) {
+            if (actions[i] == clicked) {
+                ui->img_editor->setFormat((ImageFormat) i);
+            }
         }
+        img_updateFormat();
     }
-    img_updateFormat();
 }
 
 void MainWindow::img_load(QString fileName, ImageFormat format)
@@ -371,7 +384,7 @@ void MainWindow::on_img_saveButton_clicked()
         //TODO: Show dialog for browsing on the micro-SD
         return;
     } else if (result == codeOpt) {
-        QByteArray data = ui->img_editor->saveImage(false);
+        QByteArray data = ui->img_editor->saveImage();
 
         /* Allow the user to copy code  */
         CodeSelectDialog dialog(this);
