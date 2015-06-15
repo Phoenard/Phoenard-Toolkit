@@ -264,6 +264,17 @@ void ImageEditor::setFormat(ImageFormat format, int colorCount) {
     }
     destImageColors = quant.colors;
 
+    // For colormapped images, we need to sort the color indices
+    if (!isTrueColor(destImageFormat)) {
+        if (isTrueColor(sourceImageFormat)) {
+            // For source images of true color, this is done from dark to light colors
+            quant.sortColors();
+        } else {
+            // For source colormapped images, this is done by stay close to the original indices
+            //TODO
+        }
+    }
+
     qDebug() << "Quantization to" << colorCount << "colors"
              << "; format =" << getFormatName(destImageFormat)
              << "; time =" << myTimer.elapsed() << "ms"

@@ -191,7 +191,7 @@ void Cube::loadPixels(QImage &image, int max_colors, bool convertColor565) {
     int x, y;
     for (x = 0; x < width; x++) {
         for (y = 0; y < height; y++) {
-            this->pixels[x][y].value = (uint) image.pixel(x, y);
+            this->pixels[x][y].rgb = image.pixel(x, y);
         }
     }
 
@@ -215,7 +215,7 @@ Pixel Cube::pixel(int x, int y) {
 
 void Cube::setPixel(int x, int y, QColor color) {
     if (trueColor) {
-        pixels[x][y].value = (uint) color.rgb();
+        pixels[x][y].rgb = color.rgb();
     }
     this->output.setPixel(x, y, color.rgb());
 }
@@ -301,6 +301,45 @@ void Cube::assignment() {
             pixels[x][y].value = search.color_number;
         }
     }
+}
+
+int compareColors(const void * r_a, const void * r_b) {
+    Pixel_RGB &a = ((Pixel*) r_a)->color;
+    Pixel_RGB &b = ((Pixel*) r_b)->color;
+    int d = (int) (a.r + a.g + a.b) - (int) (b.r + b.g + b.b);
+    return (d > 0) ? 1 : ((d < 0) ? -1 : 0);
+}
+
+void Cube::sortColors() {
+    // Generate a sorted version of the color map
+    Pixel* map_pixels = new Pixel[colors];
+    memcpy(map_pixels, colormap, colors * sizeof(Pixel));
+    qsort(map_pixels, colors, sizeof(Pixel), compareColors);
+
+    // Update all individual pixels to the right color
+    // This is done by first computing a translation table
+    uint *map_translation = new uint[colors];
+    for (int i = 0; i < colors; i++) {
+        uint c = map_pixels[i].value;
+        for (int j = 0; j < colors; j++) {
+            // Found our color? Store translation.
+            if (colormap[j].value == c) {
+                map_translation[j] = i;
+                break;
+            }
+        }
+    }
+
+    // Finally, transfer over the sorted data
+    memcpy(this->colormap, map_pixels, colors * sizeof(Pixel));
+    for (int x = width; --x >= 0; ) {
+        for (int y = height; --y >= 0; ) {
+            Pixel &p = this->pixels[x][y];
+            p.value = map_translation[p.value];
+        }
+    }
+    delete[] map_pixels;
+    delete[] map_translation;
 }
 
 /*

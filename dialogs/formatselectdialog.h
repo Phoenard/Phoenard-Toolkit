@@ -2,7 +2,7 @@
 #define FORMATSELECTDIALOG_H
 
 #include <QDialog>
-#include "imageeditor.h"
+#include "../imageeditor.h"
 
 namespace Ui {
 class FormatSelectDialog;

@@ -268,6 +268,7 @@ typedef struct Pixel_ARGB {
 typedef union Pixel {
     Pixel_ARGB color;
     uint value;
+    QRgb rgb;
 } Pixel;
 
 /**
@@ -406,6 +407,11 @@ public:
      * the index of this node's mean color in the color map.
      */
     void assignment();
+    /*
+     * Sorts the colors in the colormap on hue, from dark to light.
+     */
+    void sortColors();
+
     /*
      * Obtains the value of a single pixel
      */
