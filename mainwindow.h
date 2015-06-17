@@ -76,4 +76,6 @@ private:
     QIcon fmt_icons[8];
 };
 
+/* Global functions used during startup */
+
 #endif // MAINWINDOW_H
