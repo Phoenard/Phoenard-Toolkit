@@ -22,6 +22,7 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
         tmp.append((char) 0);
     }
     this->ui->outputImage->loadImageRaw(320, 240, 16, tmp, colors);
+    this->ui->outputImage->setFormat(BMP24);
 }
 
 serialmonitorwidget::~serialmonitorwidget()
@@ -139,6 +140,10 @@ void serialmonitorwidget::readSerialOutput()
             }
         }
     }
+}
+
+ImageEditor* serialmonitorwidget::getImageEditor() {
+    return ui->outputImage;
 }
 
 /* Receives a single byte as part of the screen serial protocol */

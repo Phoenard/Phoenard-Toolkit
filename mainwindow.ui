@@ -287,6 +287,23 @@
              </widget>
             </item>
             <item>
+             <widget class="MenuButton" name="serial_saveImage">
+              <property name="text">
+               <string>Screen</string>
+              </property>
+              <property name="icon">
+               <iconset resource="icons/icons.qrc">
+                <normaloff>:/icons/saveto.png</normaloff>:/icons/saveto.png</iconset>
+              </property>
+              <property name="checkable">
+               <bool>false</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_6">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>

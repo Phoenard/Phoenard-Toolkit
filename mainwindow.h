@@ -27,6 +27,7 @@ public:
     int selectedTab();
     void img_updateFormat();
     void img_load(QString fileName, ImageFormat format);
+    void showSaveDialog(QWidget *at, ImageEditor *editorDialog);
 
 private slots:
     /* Custom slots */
@@ -67,6 +68,8 @@ private slots:
     void on_img_saveButton_clicked();
 
     void on_serial_shareMode_toggled(bool checked);
+
+    void on_serial_saveImage_clicked();
 
 private:
     Ui::MainWindow *ui;

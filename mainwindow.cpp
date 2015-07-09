@@ -354,12 +354,7 @@ void MainWindow::on_img_loadButton_clicked()
     img_updateFormat();
 }
 
-void MainWindow::on_img_saveButton_clicked()
-{
-
-    //TODO: Make a set of buttons when clicked, expand to show the browser for the type specified
-    //For example, pressing the micro-sd button slider opens it and shows an SD browser widget
-
+void MainWindow::showSaveDialog(QWidget *at, ImageEditor *editorDialog) {
     QIcon icon_file(":/icons/newfile.png");
     QIcon icon_sd(":/icons/microsd.png");
     QIcon icon_code(":/icons/code.png");
@@ -367,9 +362,8 @@ void MainWindow::on_img_saveButton_clicked()
     QAction *fileOpt = menu.addAction(icon_file, "Save to file");
     QAction *sdOpt = menu.addAction(icon_sd, "Save to Micro-SD");
     QAction *codeOpt = menu.addAction(icon_code, "Save as code");
-    QAction *result = showMenu(ui->img_loadButton, menu);
+    QAction *result = showMenu(at, menu);
 
-    QByteArray data;
     if (result == fileOpt) {
         /* Browse a file on the local filesystem */
         QFileDialog dialog(this);
@@ -379,12 +373,12 @@ void MainWindow::on_img_saveButton_clicked()
             return;
         }
         QString filePath = dialog.selectedFiles().at(0);
-        ui->img_editor->saveImageTo(filePath);
+        editorDialog->saveImageTo(filePath);
     } else if (result == sdOpt) {
         //TODO: Show dialog for browsing on the micro-SD
         return;
     } else if (result == codeOpt) {
-        QByteArray data = ui->img_editor->saveImage();
+        QByteArray data = editorDialog->saveImage();
 
         /* Allow the user to copy code  */
         CodeSelectDialog dialog(this);
@@ -397,7 +391,17 @@ void MainWindow::on_img_saveButton_clicked()
     }
 }
 
+void MainWindow::on_img_saveButton_clicked()
+{
+    showSaveDialog(ui->img_loadButton, ui->img_editor);
+}
+
 void MainWindow::on_serial_shareMode_toggled(bool checked)
 {
     ui->serialmonitor->setScreenShare(checked);
+}
+
+void MainWindow::on_serial_saveImage_clicked()
+{
+    showSaveDialog(ui->serial_saveImage, ui->serialmonitor->getImageEditor());
 }

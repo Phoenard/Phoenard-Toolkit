@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QDebug>
 #include "stk500/stk500serial.h"
+#include "imageeditor.h"
 
 namespace Ui {
 class serialmonitorwidget;
@@ -33,6 +34,7 @@ public:
     void setSerial(stk500Serial *serial);
     void openSerial();
     void setScreenShare(bool enabled);
+    ImageEditor* getImageEditor();
 
 private:
     void receiveScreen(quint8 byte);
