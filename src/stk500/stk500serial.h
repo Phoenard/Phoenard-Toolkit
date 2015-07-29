@@ -18,7 +18,6 @@ public:
     bool isOpen();
     void open(QString & portName);
     void close();
-    bool abort();
     void execute(stk500Task *task);
     void executeAll(QList<stk500Task*> tasks);
     void cancelTasks();
@@ -44,7 +43,6 @@ protected:
 
 private:
     stk500_ProcessThread *process;
-    QList<stk500_ProcessThread*> killedProcesses;
 };
 
 // Thread that processes stk500 tasks

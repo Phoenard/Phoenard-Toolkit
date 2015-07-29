@@ -83,15 +83,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::closeEvent (QCloseEvent *event)
+void MainWindow::closeEvent (QCloseEvent *)
 {
-    if (!serial->abort()) {
-        QMessageBox msgBox;
-        msgBox.critical(this, "Closing", "Failed to close one or more open ports");
-        event->ignore();
-    } else {
-        event->accept();
-    }
+    serial->close();
 }
 
 void MainWindow::openSerial()

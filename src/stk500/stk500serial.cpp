@@ -37,45 +37,20 @@ void stk500Serial::close() {
             process->closeRequested = true;
             process->cancelTasks();
 
-            // Add process to the processes being killed
-            killedProcesses.append(process);
-            process = NULL;
-        } else {
-            delete process;
-            process = NULL;
+            // Wait with 1s timeout for the process to exit
+            for (int i = 0; process->isRunning && i < 100; i++) {
+                QThread::msleep(10);
+            }
+
+            // Force-terminate the thread if still running (locked)
+            if (process->isRunning) {
+                process->terminate();
+            }
         }
+
+        delete process;
+        process = NULL;
     }
-}
-
-bool stk500Serial::abort() {
-    close();
-
-    // Wait for a maximum of 1 second until all processes are killed
-    for (int i = 0; i < 20 && !cleanKilledProcesses(); i++) {
-        QThread::msleep(50);
-    }
-
-    return cleanKilledProcesses();
-}
-
-bool stk500Serial::cleanKilledProcesses() {
-    if (killedProcesses.isEmpty()) {
-        return true;
-    }
-
-    int i = 0;
-    bool isAllKilled = true;
-    while (i < killedProcesses.length()) {
-        stk500_ProcessThread *process = killedProcesses.at(i);
-        if (process->isRunning) {
-            isAllKilled = false;
-            i++;
-        } else {
-            delete process;
-            killedProcesses.removeAt(i);
-        }
-    }
-    return isAllKilled;
 }
 
 void stk500Serial::notifyStatus(stk500_ProcessThread*, QString status) {

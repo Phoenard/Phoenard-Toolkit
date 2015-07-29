@@ -21,7 +21,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *);
     void openSerial();
     void setSelectedTab(int index, bool forceUpdate = false);
     int selectedTab();
