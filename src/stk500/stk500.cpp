@@ -49,7 +49,7 @@ bool stk500::isTimeout() {
     return (QDateTime::currentMSecsSinceEpoch() - lastCmdTime) > STK500_DEVICE_TIMEOUT;
 }
 
-int stk500::command(unsigned char command, char* arguments, int argumentsLength, char* response, int responseMaxLength) {
+int stk500::command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
     // If bootloader timed out, reset the device first
     if (isTimeout()) {
         reset();
@@ -66,26 +66,26 @@ int stk500::command(unsigned char command, char* arguments, int argumentsLength,
     quint16 total_length = message_length + 6;
 
     // Build up a message to send out
-    unsigned char* data = new unsigned char[total_length];
+    char* data = new char[total_length];
     data[0] = MESSAGE_START;
-    data[1] = (unsigned char) (sequenceNumber & 0xFF);
-    data[2] = (unsigned char) ((message_length >> 8) & 0xFF);
-    data[3] = (unsigned char) (message_length & 0xFF);
+    data[1] = (char) (sequenceNumber & 0xFF);
+    data[2] = (char) ((message_length >> 8) & 0xFF);
+    data[3] = (char) (message_length & 0xFF);
     data[4] = TOKEN;
-    data[5] = (unsigned char) command;
+    data[5] = (char) command;
 
     // Fill with message data
     memcpy(data + 6, arguments, argumentsLength);
 
     // Calculate and append CRC
-    unsigned char crc = 0x0;
+    char crc = 0x0;
     for (int i = 0; i < (total_length - 1); i++) {
         crc ^= data[i];
     }
     data[total_length - 1] = crc;
 
     // Send out the data, then discard it once sent
-    port->write((char*) data, total_length);
+    port->write(data, total_length);
     delete[] data;
 
     // Read the response
@@ -263,11 +263,11 @@ void stk500::loadAddress(quint32 address) {
     arguments[1] = (char) ((address >> 16) & 0xFF);
     arguments[2] = (char) ((address >> 8) & 0xFF);
     arguments[3] = (char) ((address >> 0) & 0xFF);
-    command(CMD_LOAD_ADDRESS, arguments, sizeof(arguments), NULL, 0);
+    command(LOAD_ADDRESS, arguments, sizeof(arguments), NULL, 0);
     currentAddress = address;
 }
 
-void stk500::readData(unsigned char data_command, quint32 address, char* dest, int destLen) {
+void stk500::readData(STK_CMD data_command, quint32 address, char* dest, int destLen) {
     /* Load the address (if needed) */
     loadAddress(address);
 
@@ -278,7 +278,7 @@ void stk500::readData(unsigned char data_command, quint32 address, char* dest, i
     command(data_command, arguments, sizeof(arguments), dest, destLen);
 }
 
-void stk500::writeData(unsigned char data_command, quint32 address, char* src, int srcLen) {
+void stk500::writeData(STK_CMD data_command, quint32 address, char* src, int srcLen) {
     /* Load the address (if needed) */
     loadAddress(address);
 
@@ -297,7 +297,7 @@ void stk500::writeData(unsigned char data_command, quint32 address, char* src, i
 
 QString stk500::signOn() {
     char resp[100];
-    int name_length = command(CMD_SIGN_ON, NULL, 0, resp, sizeof(resp)) - 1;
+    int name_length = command(SIGN_ON, NULL, 0, resp, sizeof(resp)) - 1;
     if (resp[0] < name_length) {
         name_length = resp[0];
     }
@@ -305,12 +305,12 @@ QString stk500::signOn() {
 }
 
 void stk500::signOut() {
-    command(CMD_LEAVE_PROGMODE_ISP, NULL, 0, NULL, 0);
+    command(LEAVE_PROGMODE_ISP, NULL, 0, NULL, 0);
 }
 
 CardVolume stk500::SD_init() {
     CardVolume volume;
-    int respLen = command(CMD_INIT_SD_ISP, NULL, 0, (char*) &volume, sizeof(CardVolume));
+    int respLen = command(INIT_SD_ISP, NULL, 0, (char*) &volume, sizeof(CardVolume));
     if (respLen != sizeof(CardVolume)) {
         /* Wrong size received */
         QString errorMessage;
@@ -325,12 +325,12 @@ CardVolume stk500::SD_init() {
 }
 
 void stk500::SD_readBlock(quint32 block, char* dest, int destLen) {
-    readData(CMD_READ_SD_ISP, block, dest, destLen);
+    readData(READ_SD_ISP, block, dest, destLen);
     currentAddress++;
 }
 
 void stk500::SD_writeBlock(quint32 block, char* src, int srcLen, bool isFAT) {
-    writeData(isFAT ? CMD_PROGRAM_SD_FAT_ISP : CMD_PROGRAM_SD_ISP, block, src, srcLen);
+    writeData(isFAT ? PROGRAM_SD_FAT_ISP : PROGRAM_SD_ISP, block, src, srcLen);
     currentAddress++;
 
 return;
@@ -357,32 +357,32 @@ return;
 }
 
 void stk500::FLASH_readPage(quint32 address, char* dest, int destLen) {
-    readData(CMD_READ_FLASH_ISP, address, dest, destLen);
+    readData(READ_FLASH_ISP, address, dest, destLen);
     currentAddress += destLen / 2;
 }
 
 void stk500::FLASH_writePage(quint32 address, char* src, int srcLen) {
-    writeData(CMD_PROGRAM_FLASH_ISP, address, src, srcLen);
+    writeData(PROGRAM_FLASH_ISP, address, src, srcLen);
     currentAddress += srcLen / 2;
 }
 
 void stk500::EEPROM_read(quint32 address, char* dest, int destLen) {
-    readData(CMD_READ_EEPROM_ISP, address, dest, destLen);
+    readData(READ_EEPROM_ISP, address, dest, destLen);
     currentAddress += destLen;
 }
 
 void stk500::EEPROM_write(quint32 address, char* src, int srcLen) {
-    writeData(CMD_PROGRAM_EEPROM_ISP, address, src, srcLen);
+    writeData(PROGRAM_EEPROM_ISP, address, src, srcLen);
     currentAddress += srcLen;
 }
 
 void stk500::RAM_read(quint16 address, char* dest, int destLen) {
-    readData(CMD_READ_RAM_ISP, address, dest, destLen);
+    readData(READ_RAM_ISP, address, dest, destLen);
     currentAddress += destLen;
 }
 
 void stk500::RAM_write(quint16 address, char* src, int srcLen) {
-    writeData(CMD_PROGRAM_RAM_ISP, address, src, srcLen);
+    writeData(PROGRAM_RAM_ISP, address, src, srcLen);
     currentAddress += srcLen;
 }
 
@@ -391,7 +391,7 @@ quint8 stk500::RAM_readByte(quint16 address) {
     char arguments[2];
     arguments[0] = (char) ((address >> 8) & 0xFF);
     arguments[1] = (char) ((address >> 0) & 0xFF);
-    command(CMD_READ_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
+    command(READ_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
     return output;
 }
 
@@ -402,7 +402,7 @@ quint8 stk500::RAM_writeByte(quint16 address, quint8 value, quint8 mask) {
     arguments[1] = (char) ((address >> 0) & 0xFF);
     arguments[2] = mask;
     arguments[3] = value;
-    command(CMD_PROGRAM_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
+    command(PROGRAM_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
     return output;
 }
 
@@ -418,7 +418,7 @@ quint16 stk500::ANALOG_read(quint8 adc) {
     const bool USE_ADC_CMD = true;
     if (USE_ADC_CMD) {
         /* Use the analog read command */
-        command(CMD_READ_ANALOG_ISP, arguments, sizeof(arguments), output, sizeof(output));
+        command(READ_ANALOG_ISP, arguments, sizeof(arguments), output, sizeof(output));
         return (output[0] << 8) | (output[1] & 0xFF);
     } else {
         /* Write to the register and read the ADCL/ADCH registers */

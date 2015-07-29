@@ -55,10 +55,10 @@ public:
 
 private:
     /* Private commands used internally */
-    int command(unsigned char command, char* arguments, int argumentsLength, char* response, int responseMaxLength);
+    int command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength);
     void loadAddress(quint32 address);
-    void readData(unsigned char data_command, quint32 address, char* dest, int destLen);
-    void writeData(unsigned char data_command, quint32 address, char* src, int srcLen);
+    void readData(STK_CMD data_command, quint32 address, char* dest, int destLen);
+    void writeData(STK_CMD data_command, quint32 address, char* src, int srcLen);
 
     QSerialPort *port;
     QTimer *aliveTimer;

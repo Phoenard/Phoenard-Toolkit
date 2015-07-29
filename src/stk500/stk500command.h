@@ -27,79 +27,78 @@ const unsigned char ST_PROCESS      = 9;
 const unsigned char MESSAGE_START                        = 0x1B;        //= ESC = 27 decimal
 const unsigned char  TOKEN                               = 0x0E;
 
-// *****************[ STK general command constants ]**************************
+// *****************[ STK Commands enumeration ]************************
 
-const unsigned char  CMD_SIGN_ON                         = 0x01;
-const unsigned char  CMD_SET_PARAMETER                   = 0x02;
-const unsigned char  CMD_GET_PARAMETER                   = 0x03;
-const unsigned char  CMD_SET_DEVICE_PARAMETERS           = 0x04;
-const unsigned char  CMD_OSCCAL                          = 0x05;
-const unsigned char  CMD_LOAD_ADDRESS                    = 0x06;
-const unsigned char  CMD_FIRMWARE_UPGRADE                = 0x07;
+enum STK_CMD : unsigned char {
+
+    // *****************[ STK general commands ]*****************
+    SIGN_ON                         = 0x01,
+    SET_PARAMETER                   = 0x02,
+    GET_PARAMETER                   = 0x03,
+    SET_DEVICE_PARAMETERS           = 0x04,
+    OSCCAL                          = 0x05,
+    LOAD_ADDRESS                    = 0x06,
+    FIRMWARE_UPGRADE                = 0x07,
 
 
-// *****************[ STK ISP command constants ]******************************
+    // *****************[ STK ISP commands ]*****************
+    ENTER_PROGMODE_ISP              = 0x10,
+    LEAVE_PROGMODE_ISP              = 0x11,
+    CHIP_ERASE_ISP                  = 0x12,
+    PROGRAM_FLASH_ISP               = 0x13,
+    READ_FLASH_ISP                  = 0x14,
+    PROGRAM_EEPROM_ISP              = 0x15,
+    READ_EEPROM_ISP                 = 0x16,
+    PROGRAM_FUSE_ISP                = 0x17,
+    READ_FUSE_ISP                   = 0x18,
+    PROGRAM_LOCK_ISP                = 0x19,
+    READ_LOCK_ISP                   = 0x1A,
+    READ_SIGNATURE_ISP              = 0x1B,
+    READ_OSCCAL_ISP                 = 0x1C,
+    SPI_MULTI                       = 0x1D,
 
-const unsigned char  CMD_ENTER_PROGMODE_ISP              = 0x10;
-const unsigned char  CMD_LEAVE_PROGMODE_ISP              = 0x11;
-const unsigned char  CMD_CHIP_ERASE_ISP                  = 0x12;
-const unsigned char  CMD_PROGRAM_FLASH_ISP               = 0x13;
-const unsigned char  CMD_READ_FLASH_ISP                  = 0x14;
-const unsigned char  CMD_PROGRAM_EEPROM_ISP              = 0x15;
-const unsigned char  CMD_READ_EEPROM_ISP                 = 0x16;
-const unsigned char  CMD_PROGRAM_FUSE_ISP                = 0x17;
-const unsigned char  CMD_READ_FUSE_ISP                   = 0x18;
-const unsigned char  CMD_PROGRAM_LOCK_ISP                = 0x19;
-const unsigned char  CMD_READ_LOCK_ISP                   = 0x1A;
-const unsigned char  CMD_READ_SIGNATURE_ISP              = 0x1B;
-const unsigned char  CMD_READ_OSCCAL_ISP                 = 0x1C;
-const unsigned char  CMD_SPI_MULTI                       = 0x1D;
+    // *****************[ STK PP commands ]*****************
+    ENTER_PROGMODE_PP               = 0x20,
+    LEAVE_PROGMODE_PP               = 0x21,
+    CHIP_ERASE_PP                   = 0x22,
+    PROGRAM_FLASH_PP                = 0x23,
+    READ_FLASH_PP                   = 0x24,
+    PROGRAM_EEPROM_PP               = 0x25,
+    READ_EEPROM_PP                  = 0x26,
+    PROGRAM_FUSE_PP                 = 0x27,
+    READ_FUSE_PP                    = 0x28,
+    PROGRAM_LOCK_PP                 = 0x29,
+    READ_LOCK_PP                    = 0x2A,
+    READ_SIGNATURE_PP               = 0x2B,
+    READ_OSCCAL_PP                  = 0x2C,
+    SET_CONTROL_STACK               = 0x2D,
 
-// *****************[ STK PP command constants ]*******************************
+    // *****************[ STK HVSP commands ]*****************
+    ENTER_PROGMODE_HVSP             = 0x30,
+    LEAVE_PROGMODE_HVSP             = 0x31,
+    CHIP_ERASE_HVSP                 = 0x32,
+    PROGRAM_FLASH_HVSP              = 0x33,
+    READ_FLASH_HVSP                 = 0x34,
+    PROGRAM_EEPROM_HVSP             = 0x35,
+    READ_EEPROM_HVSP                = 0x36,
+    PROGRAM_FUSE_HVSP               = 0x37,
+    READ_FUSE_HVSP                  = 0x38,
+    PROGRAM_LOCK_HVSP               = 0x39,
+    READ_LOCK_HVSP                  = 0x3A,
+    READ_SIGNATURE_HVSP             = 0x3B,
+    READ_OSCCAL_HVSP                = 0x3C,
 
-const unsigned char  CMD_ENTER_PROGMODE_PP               = 0x20;
-const unsigned char  CMD_LEAVE_PROGMODE_PP               = 0x21;
-const unsigned char  CMD_CHIP_ERASE_PP                   = 0x22;
-const unsigned char  CMD_PROGRAM_FLASH_PP                = 0x23;
-const unsigned char  CMD_READ_FLASH_PP                   = 0x24;
-const unsigned char  CMD_PROGRAM_EEPROM_PP               = 0x25;
-const unsigned char  CMD_READ_EEPROM_PP                  = 0x26;
-const unsigned char  CMD_PROGRAM_FUSE_PP                 = 0x27;
-const unsigned char  CMD_READ_FUSE_PP                    = 0x28;
-const unsigned char  CMD_PROGRAM_LOCK_PP                 = 0x29;
-const unsigned char  CMD_READ_LOCK_PP                    = 0x2A;
-const unsigned char  CMD_READ_SIGNATURE_PP               = 0x2B;
-const unsigned char  CMD_READ_OSCCAL_PP                  = 0x2C;
-
-const unsigned char  CMD_SET_CONTROL_STACK               = 0x2D;
-
-// *****************[ STK HVSP command constants ]*****************************
-
-const unsigned char  CMD_ENTER_PROGMODE_HVSP             = 0x30;
-const unsigned char  CMD_LEAVE_PROGMODE_HVSP             = 0x31;
-const unsigned char  CMD_CHIP_ERASE_HVSP                 = 0x32;
-const unsigned char  CMD_PROGRAM_FLASH_HVSP              = 0x33;
-const unsigned char  CMD_READ_FLASH_HVSP                 = 0x34;
-const unsigned char  CMD_PROGRAM_EEPROM_HVSP             = 0x35;
-const unsigned char  CMD_READ_EEPROM_HVSP                = 0x36;
-const unsigned char  CMD_PROGRAM_FUSE_HVSP               = 0x37;
-const unsigned char  CMD_READ_FUSE_HVSP                  = 0x38;
-const unsigned char  CMD_PROGRAM_LOCK_HVSP               = 0x39;
-const unsigned char  CMD_READ_LOCK_HVSP                  = 0x3A;
-const unsigned char  CMD_READ_SIGNATURE_HVSP             = 0x3B;
-const unsigned char  CMD_READ_OSCCAL_HVSP                = 0x3C;
-
-// ***************[ Custom commands for Phoenard Bootloader ]***************
-
-const unsigned char  CMD_READ_RAM_BYTE_ISP               = 0xE0;
-const unsigned char  CMD_PROGRAM_RAM_BYTE_ISP            = 0xE1;
-const unsigned char  CMD_READ_RAM_ISP                    = 0xE2;
-const unsigned char  CMD_PROGRAM_RAM_ISP                 = 0xE3;
-const unsigned char  CMD_INIT_SD_ISP                     = 0xE6;
-const unsigned char  CMD_PROGRAM_SD_ISP                  = 0xE7;
-const unsigned char  CMD_READ_SD_ISP                     = 0xE8;
-const unsigned char  CMD_PROGRAM_SD_FAT_ISP              = 0xE9;
-const unsigned char  CMD_READ_ANALOG_ISP                 = 0xEA;
+    // ***************[ Phoenboot commands ]*****************
+    READ_RAM_BYTE_ISP               = 0xE0,
+    PROGRAM_RAM_BYTE_ISP            = 0xE1,
+    READ_RAM_ISP                    = 0xE2,
+    PROGRAM_RAM_ISP                 = 0xE3,
+    INIT_SD_ISP                     = 0xE6,
+    PROGRAM_SD_ISP                  = 0xE7,
+    READ_SD_ISP                     = 0xE8,
+    PROGRAM_SD_FAT_ISP              = 0xE9,
+    READ_ANALOG_ISP                 = 0xEA,
+};
 
 // *****************[ STK status constants ]***************************
 

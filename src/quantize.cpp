@@ -214,10 +214,32 @@ Pixel Cube::pixel(int x, int y) {
 }
 
 void Cube::setPixel(int x, int y, QColor color) {
+    Pixel color_pixel = {color.rgb()};
     if (trueColor) {
-        pixels[x][y].rgb = color.rgb();
+        // True color: simply set the pixel
+        pixels[x][y] = color_pixel;
+
+    } else {
+        // Color mapped
+        // Find out what index is closest to the color
+        // If equal, we are done entirely
+        int minDist = INT_MAX;
+        uint mapIdx = 0;
+        for (int i = 0; i < this->colors; i++) {
+            int dist = calc_distance(this->colormap[i], color_pixel);
+            if (dist < minDist) {
+                minDist = dist;
+                mapIdx = i;
+                if (dist == 0) break;
+            }
+        }
+        // Store color index and change color to the mapped value
+        pixels[x][y].value = mapIdx;
+        color_pixel = this->colormap[mapIdx];
     }
-    this->output.setPixel(x, y, color.rgb());
+
+    // Update the output preview buffer image
+    this->output.setPixel(x, y, color_pixel.rgb);
 }
 
 void Cube::classification() {
