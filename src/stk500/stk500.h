@@ -29,6 +29,7 @@ public:
     stk500(QSerialPort *port = NULL);
     void reset();
     void resetDelayed();
+    quint64 idleTime();
     bool isTimeout();
     stk500_sd& sd() { return *sd_handler; }
 

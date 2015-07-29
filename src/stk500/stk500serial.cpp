@@ -422,26 +422,7 @@ void stk500_ProcessThread::run() {
                     }
                 }
 
-                if (task == NULL) {
-                    /* No task - wait for tasks to be sent our way */
-                    this->isProcessing = false;
-
-                    // Waited for the full interval time, ping with a signOn command
-                    // Still alive?
-                    if (isSignedOn) {
-                        updateStatus("[STK500] Idle");
-
-                        isSignedOn = trySignOn(&protocol);
-                        if (!isSignedOn) {
-                            updateStatus("[STK500] Session lost");
-                        }
-                    }
-
-                    /* Wait for a short time to keep the bootloader in the right mode */
-                    sync.lock();
-                    cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
-                    sync.unlock();
-                } else {
+                if (task != NULL) {
                     /* Update status */
                     updateStatus("[STK500] Busy");
 
@@ -472,6 +453,26 @@ void stk500_ProcessThread::run() {
 
                     // Clear the currently executed task
                     currentTask = NULL;
+                    isProcessing = false;
+
+                } else if (protocol.idleTime() >= STK500_CMD_MIN_INTERVAL) {
+                    /* No task and protocol inactive - ping while waiting for tasks to be sent our way */
+
+                    // Waited for the full interval time, ping with a signOn command
+                    // Still alive?
+                    if (isSignedOn) {
+                        updateStatus("[STK500] Idle");
+
+                        isSignedOn = trySignOn(&protocol);
+                        if (!isSignedOn) {
+                            updateStatus("[STK500] Session lost");
+                        }
+                    }
+
+                    /* Wait for a short time to keep the bootloader in the right mode */
+                    sync.lock();
+                    cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
+                    sync.unlock();
                 }
             }
 

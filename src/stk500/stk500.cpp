@@ -45,8 +45,12 @@ void stk500::reset() {
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();
 }
 
+quint64 stk500::idleTime() {
+    return (QDateTime::currentMSecsSinceEpoch() - lastCmdTime);
+}
+
 bool stk500::isTimeout() {
-    return (QDateTime::currentMSecsSinceEpoch() - lastCmdTime) > STK500_DEVICE_TIMEOUT;
+    return idleTime() > STK500_DEVICE_TIMEOUT;
 }
 
 int stk500::command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
