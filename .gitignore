@@ -22,9 +22,8 @@ Makefile*
 *-build-*
 
 # Build directories
-Debug/*
-Release/*
+debug/*
+release/*
 
 # QtCreator
 *.autosave
-Phoenard_Toolkit.pro.user
