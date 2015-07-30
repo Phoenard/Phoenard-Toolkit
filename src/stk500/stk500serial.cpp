@@ -83,13 +83,6 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks) {
         return;
     }
 
-    /* Show just a wait cursor for processing < 1000ms */
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    for (int i = 0; i < 20 && process->isProcessing; i++) {
-        QThread::msleep(50);
-    }
-    QApplication::restoreOverrideCursor();
-
     ProgressDialog *dialog = NULL;
     qint64 currentTime;
     qint64 startTime = QDateTime::currentMSecsSinceEpoch();

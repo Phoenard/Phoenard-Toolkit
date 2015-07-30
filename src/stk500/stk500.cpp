@@ -54,6 +54,7 @@ bool stk500::isTimeout() {
 }
 
 int stk500::command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
+
     // If bootloader timed out, reset the device first
     if (isTimeout()) {
         reset();
@@ -108,15 +109,12 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
     qint64 time = commandStartTime;
 
     while (!processed) {
-        /* If no data available, wait for reading to be done shortly */
-        if (!port->bytesAvailable()) {
-            port->waitForReadyRead(50);
-        }
 
-        /* Read data, if available. If an error occurred, only read in the data */
+        /* Read in received response data */
         incomingRead = port->read((char*) incomingData, sizeof(incomingData));
         totalRead += incomingRead;
 
+        /* Handle command read timeout */
         time = QDateTime::currentMSecsSinceEpoch();
         if ((time - commandStartTime) > STK500_READ_TIMEOUT) {
             if (errorInfo == NULL) {
@@ -125,7 +123,14 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             break;
         }
 
-        if (!incomingRead || errorInfo != NULL) {
+        /* If nothing read, wait shortly and try again */
+        if (!incomingRead) {
+            port->waitForReadyRead(50);
+            continue;
+        }
+
+        /* On error, skip further processing */
+        if (errorInfo != NULL) {
             continue;
         }
 
@@ -228,6 +233,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             /* ============================== */
         }
     }
+
     QString cmdCode = QString("%1").arg((uint) command, 0, 16).toUpper();
     if (cmdCode.length() == 1) {
         cmdCode.insert(0, '0');
