@@ -2,6 +2,7 @@
 #define STK500TASK_H
 
 #include "stk500.h"
+#include "sketchinfo.h"
 #include <QStringList>
 #include <QList>
 
@@ -121,6 +122,14 @@ class stk500Test : public stk500Task {
 public:
     stk500Test() : stk500Task("Testing") {}
     virtual void run();
+};
+
+class stk500ListSketches : public stk500Task {
+public:
+    stk500ListSketches() : stk500Task("Listing sketches") {}
+    virtual void run();
+
+    QList<SketchInfo> sketches;
 };
 
 #endif // STK500TASK_H

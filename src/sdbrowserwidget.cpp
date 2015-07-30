@@ -47,7 +47,7 @@ void SDBrowserWidget::on_itemDoubleClicked(QTreeWidgetItem *item, int column) {
 
             // Read the file
             stk500SaveFiles saveTask(sourcePath, destPath);
-            serial->execute(&saveTask);
+            serial->execute(saveTask);
             if (!saveTask.isCancelled() && !saveTask.hasError()) {
                 QDesktopServices::openUrl(QUrl(destPath));
             }
@@ -99,7 +99,7 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
     if (isVolume) {
         // Renaming the volume label
         stk500RenameVolume renameTask(newText);
-        serial->execute(&renameTask);
+        serial->execute(renameTask);
         success = !renameTask.hasError();
     } else if (!newText.isEmpty()) {
         // Renaming file or folder
@@ -114,7 +114,7 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
 
         // Start renaming
         stk500Rename renameTask(filePath, newText);
-        serial->execute(&renameTask);
+        serial->execute(renameTask);
         success = !renameTask.hasError();
     }
 
@@ -127,10 +127,6 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
     } else {
         item->setText(0, oldText);
     }
-}
-
-void SDBrowserWidget::setSerial(stk500Serial *serial) {
-    this->serial = serial;
 }
 
 void SDBrowserWidget::dragEnterEvent(QDragEnterEvent *event) {
@@ -245,7 +241,7 @@ void SDBrowserWidget::createNew(QString fileName, bool isDirectory) {
 
         // Create file or directory
         stk500ImportFiles importTask("", destPath);
-        serial->execute(&importTask);
+        serial->execute(importTask);
         this->refreshItem(folderItem);
 
         QTreeWidgetItem *newItem = this->getItemAtPath(destPath);
@@ -386,7 +382,7 @@ void SDBrowserWidget::refreshFiles() {
 void SDBrowserWidget::refreshItem(QTreeWidgetItem *item) {
     // Already refreshing, don't you dare!
     stk500ListSubDirs listTask(getPath(item));
-    serial->execute(&listTask);
+    serial->execute(listTask);
 
     // Fill the item with the resulting directories
     refreshItem(item, listTask.result);

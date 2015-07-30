@@ -5,6 +5,7 @@
 #include <QDebug>
 #include "stk500/stk500serial.h"
 #include "imageeditor.h"
+#include "mainmenutab.h"
 
 namespace Ui {
 class serialmonitorwidget;
@@ -24,17 +25,17 @@ typedef struct {
     quint8 cmd_buff_index;
 } ScreenRegisters;
 
-class serialmonitorwidget : public QWidget
+class serialmonitorwidget : public QWidget, public MainMenuTab
 {
     Q_OBJECT
 
 public:
     serialmonitorwidget(QWidget *parent = 0);
     ~serialmonitorwidget();
-    void setSerial(stk500Serial *serial);
     void openSerial();
     void setScreenShare(bool enabled);
     ImageEditor* getImageEditor();
+    virtual void setSerial(stk500Serial *serial);
 
 private:
     void receiveScreen(quint8 byte);
@@ -56,7 +57,6 @@ private slots:
 
 private:
     Ui::serialmonitorwidget *ui;
-    stk500Serial *serial;
     QTimer *updateTimer;
     ScreenRegisters screen;
     bool screenEnabled;

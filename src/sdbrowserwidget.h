@@ -8,14 +8,14 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include "stk500/stk500serial.h"
+#include "mainmenutab.h"
 
-class SDBrowserWidget : public QTreeWidget
+class SDBrowserWidget : public QTreeWidget, public MainMenuTab
 {
     Q_OBJECT
 
 public:
     SDBrowserWidget(QWidget *parent = 0);
-    void setSerial(stk500Serial *serial);
     void refreshFiles();
     void deleteFiles();
     void saveFilesTo();
@@ -48,7 +48,6 @@ private slots:
     void on_itemDoubleClicked(QTreeWidgetItem *item, int column);
 
 private:
-    stk500Serial *serial;
     bool _isRefreshing;
 };
 

@@ -65,9 +65,9 @@ void stk500Serial::notifySerialOpened(stk500_ProcessThread *) {
     emit serialOpened();
 }
 
-void stk500Serial::execute(stk500Task *task) {
+void stk500Serial::execute(stk500Task &task) {
     QList<stk500Task*> tasks;
-    tasks.append(task);
+    tasks.append(&task);
     executeAll(tasks);
 }
 

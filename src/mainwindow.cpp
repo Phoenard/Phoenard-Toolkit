@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     serial = new stk500Serial(this);
     ui->microSDWidget->setSerial(serial);
     ui->serialmonitor->setSerial(serial);
+    ui->sketchesWidget->setSerial(serial);
 
     // Connect serial signal events
     connect(serial, SIGNAL(statusChanged(QString)),
@@ -56,7 +57,6 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->port_nameBox->addItem(info.portName());
     }
     ui->microSDWidget->setAcceptDrops(true);
-    this->openSerial();
 
     QString settingStyle = " QMainWindow {\
             background-color: #980000;\
@@ -72,6 +72,8 @@ MainWindow::MainWindow(QWidget *parent) :
         allButtons[i]->setIsTab(true);
     }
     setSelectedTab(0, true);
+
+    this->openSerial();
 
     // Load an image for debugging
     //img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
@@ -153,12 +155,18 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
         } else {
             serial->closeSerial();
         }
+
+        /* Load sketches when opening sketches tab */
+        if (index == 1) {
+            ui->sketchesWidget->refreshSketches();
+        }
+
+        /* Refresh when opening SD tab */
         if (index == 2) {
             ui->microSDWidget->refreshFiles();
             on_microSDWidget_itemSelectionChanged();
         }
     }
-
 
     for (int i = 0; i < allButtons_len; i++) {
         allButtons[i]->setChecked(allButtons[i] == selectedBtn);

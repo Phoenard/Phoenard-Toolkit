@@ -18,7 +18,7 @@ public:
     bool isOpen();
     void open(QString & portName);
     void close();
-    void execute(stk500Task *task);
+    void execute(stk500Task &task);
     void executeAll(QList<stk500Task*> tasks);
     void cancelTasks();
     void openSerial(int baudrate);

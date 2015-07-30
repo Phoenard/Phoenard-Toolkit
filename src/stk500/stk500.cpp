@@ -837,6 +837,19 @@ QString stk500::getFileName(QString filePath) {
     return fileName;
 }
 
+QString stk500::getFileExt(QString filePath) {
+    /* Find last dot in path */
+    int dotIdx = filePath.lastIndexOf('.');
+    if (dotIdx == -1) return "";
+
+    /* Check that no file separator is put after the dot */
+    if (filePath.indexOf('/', dotIdx) != -1) return "";
+    if (filePath.indexOf('\\', dotIdx) != -1) return "";
+
+    /* Valid extension */
+    return filePath.remove(0, dotIdx+1);
+}
+
 QString stk500::getSizeText(quint32 size) {
     float size_trunc = 0.0F;
     char* unit = "";

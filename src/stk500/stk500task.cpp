@@ -1263,3 +1263,68 @@ void stk500Rename::run() {
     newEntry.reservedNT = (newEntry.reservedNT & ~0x18) | (oldEntry.reservedNT & 0x18);
     protocol.sd().writeDirectory(newPtr, newEntry);
 }
+
+void stk500ListSketches::run() {
+    /* List all file entries in the root directory */
+    QList<DirectoryInfo> rootEntries = sd_list(protocol.sd().getDirPtrFromCluster(0));
+    if (isCancelled()) return;
+
+    /* Go by all entries and find all icons, or use the defaults */
+    for (int entryIdx = 0; entryIdx < rootEntries.length(); entryIdx++) {
+        DirectoryInfo &info = rootEntries[entryIdx];
+        DirectoryEntry entry = info.entry();
+        QString shortName = info.shortName();
+        QString shortExt = stk500::getFileExt(shortName);
+        bool isIcon = (shortExt == "SKI");
+
+        /* Update current progress */
+        setProgress((double) entryIdx / (double) rootEntries.length());
+
+        /* Check if this entry is a HEX or SKI file */
+        if (info.isDirectory() || (!isIcon && (shortExt != "HEX"))) {
+            continue;
+        }
+
+        /* Generate a temporary entry for comparison and adding */
+        SketchInfo sketch;
+        int tmpLen = 0;
+        for (; tmpLen < 8 && (entry.name_raw[tmpLen] != ' '); tmpLen++) {
+            sketch.name[tmpLen] = entry.name_raw[tmpLen];
+        }
+        sketch.name[tmpLen] = 0;
+
+        /* Locate this entry in the current results, or add if not found */
+        int sketchIndex = -1;
+        for (int i = 0; i < sketches.length(); i++) {
+            SketchInfo &other = sketches[i];
+            if (!strcmp(sketch.name, other.name)) {
+                sketchIndex = i;
+                sketch = other;
+                break;
+            }
+        }
+        if (sketchIndex == -1) {
+            sketchIndex = sketches.length();
+            sketches.append(sketch);
+        }
+
+        /* If icon, load the icon data */
+        quint32 firstCluster = entry.firstCluster();
+        if (isIcon) {
+            if (firstCluster == 0) {
+                sketch.iconBlock = 0;
+            } else {
+                sketch.iconBlock = protocol.sd().getClusterBlock(firstCluster);
+            }
+
+            // Temporary: load icon too
+            sketch.setIcon(protocol.sd().cacheBlock(sketch.iconBlock, true, false, false));
+        }
+
+        /* Update entry */
+        sketches[sketchIndex] = sketch;
+    }
+
+    /* Completed */
+    setProgress(1.0);
+}

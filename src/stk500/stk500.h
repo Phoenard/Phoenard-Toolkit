@@ -50,6 +50,7 @@ public:
     quint16 ANALOG_read(quint8 adc);
 
     static QString getFileName(QString filePath);
+    static QString getFileExt(QString filePath);
     static QString getSizeText(quint32 size);
     static QString getTimeText(qint64 timeMillis);
     static void printData(char* title, char* data, int len);

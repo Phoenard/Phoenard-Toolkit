@@ -608,7 +608,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page_3">
        <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -617,7 +617,13 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="page"/>
+      <widget class="QWidget" name="page">
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <widget class="SketchListWidget" name="sketchesWidget" native="true"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="page_4">
        <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
         <property name="spacing">
@@ -748,6 +754,12 @@
    <class>serialmonitorwidget</class>
    <extends>QWidget</extends>
    <header>serialmonitorwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SketchListWidget</class>
+   <extends>QWidget</extends>
+   <header>sketchlistwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

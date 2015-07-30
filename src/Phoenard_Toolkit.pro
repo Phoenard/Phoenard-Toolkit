@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     colorselect.cpp \
     serialmonitorwidget.cpp \
     dialogs/formatselectdialog.cpp \
-    dialogs/codeselectdialog.cpp
+    dialogs/codeselectdialog.cpp \
+    sketchlistwidget.cpp
 
 HEADERS  += mainwindow.h \
     sdbrowserwidget.h \
@@ -47,13 +48,17 @@ HEADERS  += mainwindow.h \
     colorselect.h \
     serialmonitorwidget.h \
     dialogs/formatselectdialog.h \
-    dialogs/codeselectdialog.h
+    dialogs/codeselectdialog.h \
+    stk500/sketchinfo.h \
+    mainmenutab.h \
+    sketchlistwidget.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \
     serialmonitorwidget.ui \
     dialogs/formatselectdialog.ui \
-    dialogs/codeselectdialog.ui
+    dialogs/codeselectdialog.ui \
+    sketchlistwidget.ui
 
 OTHER_FILES +=
 
