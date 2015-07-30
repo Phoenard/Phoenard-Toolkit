@@ -95,14 +95,14 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
 
     // Read the response
     char incomingData[256];
-    int incomingRead;
-    int totalRead = 0;
+    qint64 incomingRead;
+    qint64 totalRead = 0;
     int msgParseState = ST_START;
     unsigned char checksum = 0x0;
     char status = 0;
     quint16 respLength = 0, respLength_st1 = 0;
     bool processed = false;
-    char* errorInfo = NULL;
+    QString errorInfo = "";
 
     // For timing measurement purposes
     qint64 commandStartTime = QDateTime::currentMSecsSinceEpoch();
@@ -112,12 +112,18 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
 
         /* Read in received response data */
         incomingRead = port->read((char*) incomingData, sizeof(incomingData));
+        if (incomingRead == -1) {
+            errorInfo = port->errorString();
+            break;
+        }
+
+        /* Increment total received bytes counter */
         totalRead += incomingRead;
 
         /* Handle command read timeout */
         time = QDateTime::currentMSecsSinceEpoch();
         if ((time - commandStartTime) > STK500_READ_TIMEOUT) {
-            if (errorInfo == NULL) {
+            if (errorInfo.isEmpty()) {
                 errorInfo = "Read timeout";
             }
             break;
@@ -130,7 +136,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
         }
 
         /* On error, skip further processing */
-        if (errorInfo != NULL) {
+        if (!errorInfo.isEmpty()) {
             continue;
         }
 
@@ -241,7 +247,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
     cmdCode.insert(0, "0x");
     if (!processed) {
         // Log the error
-        if (errorInfo == NULL) {
+        if (errorInfo.isEmpty()) {
             errorInfo = "None";
         }
         QString errorMessage;
