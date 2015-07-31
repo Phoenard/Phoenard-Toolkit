@@ -731,7 +731,7 @@
   <customwidget>
    <class>SDBrowserWidget</class>
    <extends>QTreeWidget</extends>
-   <header>sdbrowserwidget.h</header>
+   <header>controls/sdbrowserwidget.h</header>
   </customwidget>
   <customwidget>
    <class>MenuButton</class>
@@ -753,13 +753,13 @@
   <customwidget>
    <class>serialmonitorwidget</class>
    <extends>QWidget</extends>
-   <header>serialmonitorwidget.h</header>
+   <header>controls/serialmonitorwidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>SketchListWidget</class>
    <extends>QWidget</extends>
-   <header>sketchlistwidget.h</header>
+   <header>controls/sketchlistwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

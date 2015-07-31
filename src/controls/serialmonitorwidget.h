@@ -3,9 +3,8 @@
 
 #include <QWidget>
 #include <QDebug>
-#include "stk500/stk500serial.h"
-#include "imageeditor.h"
-#include "mainmenutab.h"
+#include "../imageeditor.h"
+#include "../mainmenutab.h"
 
 namespace Ui {
 class serialmonitorwidget;

@@ -16,49 +16,49 @@ win32:RC_ICONS += App_Icon.ico
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    sdbrowserwidget.cpp \
     menubutton.cpp \
-    qmultifiledialog.cpp \
     stk500/stk500.cpp \
     stk500/stk500task.cpp \
     stk500/stk500serial.cpp \
     stk500/longfilenamegen.cpp \
-    stk500/progressdialog.cpp \
     imageeditor.cpp \
     quantize.cpp \
     colorselect.cpp \
-    serialmonitorwidget.cpp \
+    controls/sdbrowserwidget.cpp \
+    controls/serialmonitorwidget.cpp \
+    controls/sketchlistwidget.cpp \
+    dialogs/progressdialog.cpp \
+    dialogs/qmultifiledialog.cpp \
     dialogs/formatselectdialog.cpp \
-    dialogs/codeselectdialog.cpp \
-    sketchlistwidget.cpp
+    dialogs/codeselectdialog.cpp
 
 HEADERS  += mainwindow.h \
-    sdbrowserwidget.h \
     menubutton.h \
-    qmultifiledialog.h \
     stk500/stk500.h \
     stk500/stk500_fat.h \
     stk500/stk500task.h \
     stk500/stk500serial.h \
     stk500/longfilenamegen.h \
     stk500/stk500command.h \
-    stk500/progressdialog.h \
     imageeditor.h \
     quantize.h \
     colorselect.h \
-    serialmonitorwidget.h \
+    controls/sdbrowserwidget.h \
+    controls/serialmonitorwidget.h \
+    controls/sketchlistwidget.h \
+    dialogs/progressdialog.h \
+    dialogs/qmultifiledialog.h \
     dialogs/formatselectdialog.h \
     dialogs/codeselectdialog.h \
     stk500/sketchinfo.h \
-    mainmenutab.h \
-    sketchlistwidget.h
+    mainmenutab.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \
-    serialmonitorwidget.ui \
     dialogs/formatselectdialog.ui \
     dialogs/codeselectdialog.ui \
-    sketchlistwidget.ui
+    controls/serialmonitorwidget.ui \
+    controls/sketchlistwidget.ui
 
 OTHER_FILES +=
 

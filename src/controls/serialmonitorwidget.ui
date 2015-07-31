@@ -202,7 +202,7 @@
   <customwidget>
    <class>ImageEditor</class>
    <extends>QWidget</extends>
-   <header>imageeditor.h</header>
+   <header>../imageeditor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

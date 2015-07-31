@@ -5,7 +5,7 @@
 #include <QHeaderView>
 #include <QFileDialog>
 #include <QDesktopServices>
-#include "qmultifiledialog.h"
+#include "../dialogs/qmultifiledialog.h"
 
 const QString DEFAULT_VOLUME_NAME = "SD";
 

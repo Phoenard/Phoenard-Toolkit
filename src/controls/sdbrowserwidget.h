@@ -7,8 +7,7 @@
 #include <QDragMoveEvent>
 #include <QDragLeaveEvent>
 #include <QDropEvent>
-#include "stk500/stk500serial.h"
-#include "mainmenutab.h"
+#include "../mainmenutab.h"
 
 class SDBrowserWidget : public QTreeWidget, public MainMenuTab
 {

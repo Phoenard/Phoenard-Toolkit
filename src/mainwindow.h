@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QTreeWidgetItem>
-#include "sdbrowserwidget.h"
+#include "controls/sdbrowserwidget.h"
 #include "menubutton.h"
 #include "imageeditor.h"
 #include <QListView>

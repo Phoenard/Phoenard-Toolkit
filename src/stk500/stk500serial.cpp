@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QApplication>
 #include <QSerialPortInfo>
-#include "progressdialog.h"
+#include "../dialogs/progressdialog.h"
 
 stk500Serial::stk500Serial(QWidget *owner)
     : QObject(owner) {

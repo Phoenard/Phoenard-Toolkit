@@ -2,7 +2,7 @@
 #define SKETCHLISTWIDGET_H
 
 #include <QWidget>
-#include "mainmenutab.h"
+#include "../mainmenutab.h"
 
 namespace Ui {
 class SketchListWidget;
