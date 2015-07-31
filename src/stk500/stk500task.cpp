@@ -57,7 +57,7 @@ QList<DirectoryInfo> stk500Task::sd_list(DirectoryEntryPtr startPtr) {
     DirectoryEntryPtr curPtr = startPtr;
     LongFileNameGen lfn_gen;
     do {
-        DirectoryEntry entry = protocol.sd().readDirectory(curPtr);
+        DirectoryEntry entry = protocol->sd().readDirectory(curPtr);
         if (entry.isFree()) break;
 
         if (lfn_gen.handle(curPtr, entry)) {
@@ -73,7 +73,7 @@ QList<DirectoryInfo> stk500Task::sd_list(DirectoryEntryPtr startPtr) {
                 result.append(info);
             }
         }
-        curPtr = protocol.sd().nextDirectory(curPtr);
+        curPtr = protocol->sd().nextDirectory(curPtr);
     } while (!isCancelled() && curPtr.isValid());
     return result;
 }
@@ -93,8 +93,8 @@ void stk500Task::sd_allocEntries(DirectoryEntryPtr startPos, int oldLength, int 
     DirectoryEntryPtr pos_b = startPos;
 
     // Skip the ptr ahead
-    pos_a = protocol.sd().nextDirectory(pos_a, oldLength);
-    pos_b = protocol.sd().nextDirectory(pos_b, newLength);
+    pos_a = protocol->sd().nextDirectory(pos_a, oldLength);
+    pos_b = protocol->sd().nextDirectory(pos_b, newLength);
 
     if (newLength > oldLength) {
         // NEW > OLD - Expand
@@ -103,23 +103,23 @@ void stk500Task::sd_allocEntries(DirectoryEntryPtr startPos, int oldLength, int 
         // Start by loading in the entries between a and b into a buffer
         QList<DirectoryEntry> buffer;
         for (int i = 0; i < diff && pos_a.isValid(); i++) {
-            buffer.append(protocol.sd().readDirectory(pos_a));
-            pos_a = protocol.sd().nextDirectory(pos_a);
+            buffer.append(protocol->sd().readDirectory(pos_a));
+            pos_a = protocol->sd().nextDirectory(pos_a);
         }
 
         // Read the current entry at pos_b and add to the buffer, poll first and write that
         bool needsReading = pos_b.isValid();
         while (true) {
             if (needsReading) {
-                DirectoryEntry entry = protocol.sd().readDirectory(pos_b);
+                DirectoryEntry entry = protocol->sd().readDirectory(pos_b);
                 needsReading = !entry.isFree();
                 buffer.append(entry);
-                protocol.sd().writeDirectory(pos_b, buffer.takeFirst());
-                pos_b = protocol.sd().nextDirectory(pos_b, 1, true);
+                protocol->sd().writeDirectory(pos_b, buffer.takeFirst());
+                pos_b = protocol->sd().nextDirectory(pos_b, 1, true);
             } else if (buffer.isEmpty()) {
                 break;
             } else {
-                protocol.sd().writeDirectory(pos_b, buffer.takeFirst());
+                protocol->sd().writeDirectory(pos_b, buffer.takeFirst());
             }
         }
     } else {
@@ -128,10 +128,10 @@ void stk500Task::sd_allocEntries(DirectoryEntryPtr startPos, int oldLength, int 
         // Transfer entries at pos_a to pos_b
         // Increment both pointers
         while (pos_a.isValid()) {
-            DirectoryEntry entry = protocol.sd().readDirectory(pos_a);
-            protocol.sd().writeDirectory(pos_b, entry);
-            pos_a = protocol.sd().nextDirectory(pos_a);
-            pos_b = protocol.sd().nextDirectory(pos_b);
+            DirectoryEntry entry = protocol->sd().readDirectory(pos_a);
+            protocol->sd().writeDirectory(pos_b, entry);
+            pos_a = protocol->sd().nextDirectory(pos_a);
+            pos_b = protocol->sd().nextDirectory(pos_b);
             if (entry.isFree()) {
                 break;
             }
@@ -139,12 +139,12 @@ void stk500Task::sd_allocEntries(DirectoryEntryPtr startPos, int oldLength, int 
 
         // While the current entry at pos_b is not free, wipe the entries
         while (pos_b.isValid()) {
-            DirectoryEntry entry = protocol.sd().readDirectory(pos_b);
+            DirectoryEntry entry = protocol->sd().readDirectory(pos_b);
             if (entry.isFree()) {
                 break;
             }
-            protocol.sd().wipeDirectory(pos_b);
-            pos_b = protocol.sd().nextDirectory(pos_b);
+            protocol->sd().wipeDirectory(pos_b);
+            pos_b = protocol->sd().nextDirectory(pos_b);
         }
     }
 }
@@ -164,14 +164,14 @@ bool stk500Task::sd_remove(QString filePath, bool fileIsDir) {
     }
     DirectoryEntryPtr dirFirstPtr;
     if (fileDir.isEmpty()) {
-        dirFirstPtr = protocol.sd().getRootPtr();
+        dirFirstPtr = protocol->sd().getRootPtr();
     } else {
         DirectoryEntryPtr dir_ptr = sd_findEntry(fileDir, true, false);
         if (!dir_ptr.isValid()) {
             return false;
         }
-        DirectoryEntry entry = protocol.sd().readDirectory(dir_ptr);
-        dirFirstPtr = DirectoryEntryPtr(protocol.sd().getClusterBlock(entry.firstCluster()), 0);
+        DirectoryEntry entry = protocol->sd().readDirectory(dir_ptr);
+        dirFirstPtr = DirectoryEntryPtr(protocol->sd().getClusterBlock(entry.firstCluster()), 0);
     }
 
     QList<DirectoryInfo> allFiles = sd_list(dirFirstPtr);
@@ -187,7 +187,7 @@ bool stk500Task::sd_remove(QString filePath, bool fileIsDir) {
         if ((info.name() == fileName) && (info.isDirectory() == fileIsDir)) {
             // File found, start by erasing the data clusters
             if (info.firstCluster()) {
-                protocol.sd().wipeClusterChain(info.firstCluster());
+                protocol->sd().wipeClusterChain(info.firstCluster());
             }
             // Proceed to erase the file entry
             sd_allocEntries(info.firstPtr(), info.entryCount(), 0);
@@ -200,16 +200,16 @@ bool stk500Task::sd_remove(QString filePath, bool fileIsDir) {
 
 DirectoryEntryPtr stk500Task::sd_findDirstart(QString directoryPath) {
     DirectoryEntryPtr dirEntryPtr = sd_findEntry(directoryPath, true, false);
-    if (!dirEntryPtr.isValid() || (protocol.sd().getRootPtr() == dirEntryPtr)) {
+    if (!dirEntryPtr.isValid() || (protocol->sd().getRootPtr() == dirEntryPtr)) {
         return dirEntryPtr;
     } else {
-        DirectoryEntry dirEntry = protocol.sd().readDirectory(dirEntryPtr);
-        return protocol.sd().getDirPtrFromCluster(dirEntry.firstCluster());
+        DirectoryEntry dirEntry = protocol->sd().readDirectory(dirEntryPtr);
+        return protocol->sd().getDirPtrFromCluster(dirEntry.firstCluster());
     }
 }
 
 DirectoryEntryPtr stk500Task::sd_findEntry(QString path, bool isDirectory, bool create) {
-    DirectoryEntryPtr subDir = protocol.sd().getRootPtr(); // Start at ROOT
+    DirectoryEntryPtr subDir = protocol->sd().getRootPtr(); // Start at ROOT
 
     /* Shortcut for ROOT */
     if (path.isEmpty()) {
@@ -230,8 +230,8 @@ DirectoryEntryPtr stk500Task::sd_findEntry(QString path, bool isDirectory, bool 
             }
 
             // Move to the first directory pointer of the found directory
-            DirectoryEntry subDirEntry = protocol.sd().readDirectory(subDir);
-            subDir = protocol.sd().getDirPtrFromCluster(subDirEntry.firstCluster());
+            DirectoryEntry subDirEntry = protocol->sd().readDirectory(subDir);
+            subDir = protocol->sd().getDirPtrFromCluster(subDirEntry.firstCluster());
         }
     }
     /* Finally navigate to the exact file in it's sub-directory */
@@ -268,11 +268,11 @@ DirectoryEntryPtr stk500Task::sd_findEntry(DirectoryEntryPtr dirStartPtr, QStrin
 
     // Move the start position to the first free entry
     while (true) {
-        DirectoryEntry entry = protocol.sd().readDirectory(create_startPtr);
+        DirectoryEntry entry = protocol->sd().readDirectory(create_startPtr);
         if (entry.isFree()) {
             break;
         }
-        create_startPtr = protocol.sd().nextDirectory(create_startPtr);
+        create_startPtr = protocol->sd().nextDirectory(create_startPtr);
         if (!create_startPtr.isValid()) {
             throw ProtocolException("Directory has unexpected end");
         }
@@ -281,39 +281,39 @@ DirectoryEntryPtr stk500Task::sd_findEntry(DirectoryEntryPtr dirStartPtr, QStrin
     DirectoryEntryPtr resultPtr = sd_createEntry(create_startPtr, name, isDirectory, foundShortNames);
     if (resultPtr.isValid() && isDirectory) {
         // Obtain parent start cluster
-        quint32 parentCluster = protocol.sd().getClusterFromBlock(dirStartPtr.block);
+        quint32 parentCluster = protocol->sd().getClusterFromBlock(dirStartPtr.block);
 
         // Write out the skeleton of the directory
-        DirectoryEntry mainEntry = protocol.sd().readDirectory(resultPtr);
+        DirectoryEntry mainEntry = protocol->sd().readDirectory(resultPtr);
 
-        quint32 dirCluster = protocol.sd().getClusterFromBlock(resultPtr.block);
-        quint32 firstCluster = protocol.sd().findFreeCluster(dirCluster);
-        quint32 firstBlock = protocol.sd().getClusterBlock(firstCluster);
-        protocol.sd().fatPut(firstCluster, CLUSTER_EOC);
+        quint32 dirCluster = protocol->sd().getClusterFromBlock(resultPtr.block);
+        quint32 firstCluster = protocol->sd().findFreeCluster(dirCluster);
+        quint32 firstBlock = protocol->sd().getClusterBlock(firstCluster);
+        protocol->sd().fatPut(firstCluster, CLUSTER_EOC);
         mainEntry.setFirstCluster(firstCluster);
 
         /* Wipe the first block; then write out the '.' and '..' entries */
-        protocol.sd().wipeBlock(firstBlock);
+        protocol->sd().wipeBlock(firstBlock);
 
         DirectoryEntry e_dot;
         memset(&e_dot, 0, sizeof(DirectoryEntry));
         memcpy(e_dot.name_raw, ".          ", 11);
         e_dot.attributes = DIR_ATT_DIRECTORY;
         e_dot.setFirstCluster(firstCluster);
-        protocol.sd().writeDirectory(DirectoryEntryPtr(firstBlock, 0), e_dot);
+        protocol->sd().writeDirectory(DirectoryEntryPtr(firstBlock, 0), e_dot);
 
         DirectoryEntry e_dot_dot;
         memset(&e_dot_dot, 0, sizeof(DirectoryEntry));
         memcpy(e_dot_dot.name_raw, "..         ", 11);
         e_dot_dot.attributes = DIR_ATT_DIRECTORY;
         e_dot_dot.setFirstCluster(parentCluster);
-        protocol.sd().writeDirectory(DirectoryEntryPtr(firstBlock, 1), e_dot_dot);
+        protocol->sd().writeDirectory(DirectoryEntryPtr(firstBlock, 1), e_dot_dot);
 
-        protocol.sd().writeDirectory(resultPtr, mainEntry);
+        protocol->sd().writeDirectory(resultPtr, mainEntry);
     }
 
     /* Having done all this, it's best to flush some data out */
-    protocol.sd().flushCache();
+    protocol->sd().flushCache();
 
     return resultPtr;
 }
@@ -522,7 +522,7 @@ DirectoryEntryPtr stk500Task::sd_createEntry(DirectoryEntryPtr dirPtr, QString n
     DirectoryEntryPtr tmpPtr = dirPtr;
     int oldCount = 0;
     do {
-        DirectoryEntry entry = protocol.sd().readDirectory(tmpPtr);
+        DirectoryEntry entry = protocol->sd().readDirectory(tmpPtr);
         if (entry.isFree()) {
             break;
         }
@@ -530,7 +530,7 @@ DirectoryEntryPtr stk500Task::sd_createEntry(DirectoryEntryPtr dirPtr, QString n
         if (!entry.isDeleted() && (entry.isFile() || entry.isDirectory())) {
             break;
         }
-        tmpPtr = protocol.sd().nextDirectory(tmpPtr);
+        tmpPtr = protocol->sd().nextDirectory(tmpPtr);
     } while (tmpPtr.isValid());
 
     // Allocate the memory needed to write the entry
@@ -540,8 +540,8 @@ DirectoryEntryPtr stk500Task::sd_createEntry(DirectoryEntryPtr dirPtr, QString n
     DirectoryEntryPtr mainEntryPtr;
     for (int i = 0; i < entryCount; i++) {
         mainEntryPtr = dirPtr;
-        protocol.sd().writeDirectory(dirPtr, entriesToWrite[i]);
-        dirPtr = protocol.sd().nextDirectory(dirPtr, 1, true);
+        protocol->sd().writeDirectory(dirPtr, entriesToWrite[i]);
+        dirPtr = protocol->sd().nextDirectory(dirPtr, 1, true);
     }
 
     // All done! Return the pointer to the current entry
@@ -586,10 +586,10 @@ void stk500ListSubDirs::run() {
             // Folder not found - return empty list
             return;
         }
-        DirectoryEntry entry = protocol.sd().readDirectory(dirPtr);
+        DirectoryEntry entry = protocol->sd().readDirectory(dirPtr);
         firstCluster = entry.firstCluster();
     }
-    result = sd_list(protocol.sd().getDirPtrFromCluster(firstCluster));
+    result = sd_list(protocol->sd().getDirPtrFromCluster(firstCluster));
 }
 
 void stk500SaveFiles::saveFile(DirectoryEntry fileEntry, QString sourceFilePath, QString destFilePath, double progStart, double progTotal) {
@@ -618,9 +618,9 @@ void stk500SaveFiles::saveFile(DirectoryEntry fileEntry, QString sourceFilePath,
         qint64 time = startTime;
         qint64 timeElapsed = 0;
         while (remaining > 0) {
-            quint32 block = protocol.sd().getClusterBlock(cluster);
-            for (int i = 0; i < protocol.sd().volume().blocksPerCluster; i++) {
-                protocol.sd().read(block + i, 0, buff, 512);
+            quint32 block = protocol->sd().getClusterBlock(cluster);
+            for (int i = 0; i < protocol->sd().volume().blocksPerCluster; i++) {
+                protocol->sd().read(block + i, 0, buff, 512);
 
                 /* If cancelled, stop reading/writing by setting remaining to 0 */
                 if (isCancelled()) {
@@ -658,8 +658,8 @@ void stk500SaveFiles::saveFile(DirectoryEntry fileEntry, QString sourceFilePath,
             }
 
             // Next cluster, if end of chain no more clusters follow
-            cluster = protocol.sd().fatGet(cluster);
-            if (protocol.sd().isEOC(cluster)) {
+            cluster = protocol->sd().fatGet(cluster);
+            if (protocol->sd().isEOC(cluster)) {
                 break;
             }
         }
@@ -715,7 +715,7 @@ void stk500SaveFiles::saveFolder(DirectoryEntryPtr dirStartPtr, QString sourceFi
         QString subDestPath = destFilePath + '/' + info.name();
         double subProgStart = progStart + progTotal * ((double) fileIdx / (double) totalFiles);
         if (info.isDirectory()) {
-            DirectoryEntryPtr dirStartPtr = protocol.sd().getDirPtrFromCluster(info.firstCluster());
+            DirectoryEntryPtr dirStartPtr = protocol->sd().getDirPtrFromCluster(info.firstCluster());
             saveFolder(dirStartPtr, subSrcPath, subDestPath, subProgStart, subProgTotal);
         } else {
             saveFile(info.entry(), subSrcPath, subDestPath, subProgStart, subProgTotal);
@@ -736,7 +736,7 @@ void stk500SaveFiles::run() {
 
         DirectoryEntryPtr dirStartPtr;
         if (dirPath.isEmpty()) {
-            dirStartPtr = protocol.sd().getRootPtr();
+            dirStartPtr = protocol->sd().getRootPtr();
         } else {
             DirectoryEntryPtr dirEntryPtr = sd_findEntry(dirPath, true, false);
             if (isCancelled()) {
@@ -746,9 +746,9 @@ void stk500SaveFiles::run() {
                 // Should not happen, but just in case...
                 throw ProtocolException("Folder not found");
             }
-            DirectoryEntry folderEntry = protocol.sd().readDirectory(dirEntryPtr);
+            DirectoryEntry folderEntry = protocol->sd().readDirectory(dirEntryPtr);
             if (folderEntry.firstCluster()) {
-                dirStartPtr = protocol.sd().getDirPtrFromCluster(folderEntry.firstCluster());
+                dirStartPtr = protocol->sd().getDirPtrFromCluster(folderEntry.firstCluster());
             } else {
                 dirStartPtr = DirectoryEntryPtr(0, 0);
             }
@@ -763,7 +763,7 @@ void stk500SaveFiles::run() {
         if (!filePtr.isValid()) {
             throw ProtocolException("File not found");
         }
-        DirectoryEntry fileEntry = protocol.sd().readDirectory(filePtr);
+        DirectoryEntry fileEntry = protocol->sd().readDirectory(filePtr);
         saveFile(fileEntry, this->sourceFile, this->destFile, 0.0, 1.0);
     }
 }
@@ -792,7 +792,7 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
     }
 
     // Set up the dest file entry information
-    DirectoryEntry fileEntry = protocol.sd().readDirectory(filePtr);
+    DirectoryEntry fileEntry = protocol->sd().readDirectory(filePtr);
     if (sourceFile.isOpen()) {
         fileEntry.fileSize = sourceFile.size();
     } else {
@@ -800,14 +800,14 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
     }
 
     // Calculate how many clusters will be needed to store the file's contents
-    int clusterCount = qCeil((qreal) fileEntry.fileSize / (qreal) (512 * protocol.sd().volume().blocksPerCluster));
+    int clusterCount = qCeil((qreal) fileEntry.fileSize / (qreal) (512 * protocol->sd().volume().blocksPerCluster));
 
     // Pre-allocate the clusters
     if (clusterCount) {
         // If no first cluster allocated, do that first
         quint32 cluster = fileEntry.firstCluster();
         if (!cluster) {
-            cluster = protocol.sd().findFreeCluster(protocol.sd().getClusterFromBlock(filePtr.block));
+            cluster = protocol->sd().findFreeCluster(protocol->sd().getClusterFromBlock(filePtr.block));
             fileEntry.setFirstCluster(cluster);
         }
 
@@ -815,10 +815,10 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
         quint32 cluster_next;
         int clustersRemaining = clusterCount;
         while (--clustersRemaining) {
-            cluster_next = protocol.sd().fatGet(cluster);
-            if (protocol.sd().isEOC(cluster_next)) {
-                cluster_next = protocol.sd().findFreeCluster(cluster);
-                protocol.sd().fatPut(cluster, cluster_next);
+            cluster_next = protocol->sd().fatGet(cluster);
+            if (protocol->sd().isEOC(cluster_next)) {
+                cluster_next = protocol->sd().findFreeCluster(cluster);
+                protocol->sd().fatPut(cluster, cluster_next);
             }
             cluster = cluster_next;
 
@@ -831,23 +831,23 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
         }
 
         // If current cluster has further chains, delete them
-        cluster_next = protocol.sd().fatGet(cluster);
-        if (!protocol.sd().isEOC(cluster_next)) {
-            protocol.sd().wipeClusterChain(cluster_next);
+        cluster_next = protocol->sd().fatGet(cluster);
+        if (!protocol->sd().isEOC(cluster_next)) {
+            protocol->sd().wipeClusterChain(cluster_next);
         }
-        protocol.sd().fatPut(cluster, CLUSTER_EOC);
+        protocol->sd().fatPut(cluster, CLUSTER_EOC);
     } else {
         // Wipe all clusters if specified
         if (fileEntry.firstCluster() != 0) {
-            protocol.sd().wipeClusterChain(fileEntry.firstCluster());
+            protocol->sd().wipeClusterChain(fileEntry.firstCluster());
             fileEntry.setFirstCluster(0);
         }
     }
 
     // With the start entry prepared, write it out right now
     // This also flushes out any pending FAT writes
-    protocol.sd().writeDirectory(filePtr, fileEntry);
-    protocol.sd().flushCache();
+    protocol->sd().writeDirectory(filePtr, fileEntry);
+    protocol->sd().flushCache();
 
     bool hasReadError = false;
     if (fileEntry.fileSize) {
@@ -876,8 +876,8 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
 
                 quint32 cluster_next = cluster;
                 while (cluster_remaining < cluster_buffer_len) {
-                    cluster_next = protocol.sd().fatGet(cluster_next);
-                    if (protocol.sd().isEOC(cluster_next)) {
+                    cluster_next = protocol->sd().fatGet(cluster_next);
+                    if (protocol->sd().isEOC(cluster_next)) {
                         break;
                     } else {
                         cluster_buffer[cluster_remaining++] = cluster_next;
@@ -894,8 +894,8 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
             cluster_remaining--;
             memcpy(cluster_buffer, cluster_buffer + 1, cluster_remaining * sizeof(quint32));
 
-            quint32 block = protocol.sd().getClusterBlock(cluster);
-            for (int i = 0; i < protocol.sd().volume().blocksPerCluster; i++) {
+            quint32 block = protocol->sd().getClusterBlock(cluster);
+            for (int i = 0; i < protocol->sd().volume().blocksPerCluster; i++) {
                 int read = sourceFile.read(buff, 512);
                 if (read == -1) {
                     hasReadError = true;
@@ -930,7 +930,7 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
                 setStatus(newStatus);
 
                 /* Write the full block of data to the Micro-SD */
-                protocol.sd().write(block + i, 0, buff, 512);
+                protocol->sd().write(block + i, 0, buff, 512);
                 if (remaining < 512) {
                     remaining = 0;
                     break;
@@ -942,7 +942,7 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
     }
 
     /* Flush data to the Micro-SD */
-    protocol.sd().flushCache();
+    protocol->sd().flushCache();
 
     /* Close eventually - is also done by the deconstructor when errors occur */
     if (sourceFile.isOpen()) {
@@ -989,8 +989,8 @@ void stk500ImportFiles::importFolder(DirectoryEntryPtr dirStartPtr, QString sour
     }
 
     /* Read the directory first cluster */
-    DirectoryEntry folderEntry = protocol.sd().readDirectory(folderPtr);
-    DirectoryEntryPtr folderStartPtr = protocol.sd().getDirPtrFromCluster(folderEntry.firstCluster());
+    DirectoryEntry folderEntry = protocol->sd().readDirectory(folderPtr);
+    DirectoryEntryPtr folderStartPtr = protocol->sd().getDirPtrFromCluster(folderEntry.firstCluster());
 
     /* Start processing all the files/folders inside */
     double progStep = progTotal * (1.0 / (double) subFiles.length());
@@ -1026,7 +1026,7 @@ void stk500ImportFiles::run() {
     int destDirIdx = destPath.lastIndexOf('/');
     if (destDirIdx == -1) {
         // ROOT
-        rootPtr = protocol.sd().getRootPtr();
+        rootPtr = protocol->sd().getRootPtr();
     } else {
         // Sub-directory, create it
         QString destDirPath = destPath;
@@ -1039,8 +1039,8 @@ void stk500ImportFiles::run() {
             throw ProtocolException("Folder not found");
         }
         // Read root ptr
-        DirectoryEntry entry = protocol.sd().readDirectory(eptr);
-        rootPtr = protocol.sd().getDirPtrFromCluster(entry.firstCluster());
+        DirectoryEntry entry = protocol->sd().readDirectory(eptr);
+        rootPtr = protocol->sd().getDirPtrFromCluster(entry.firstCluster());
     }
     if (isDirectory) {
         importFolder(rootPtr, sourcePath, destPath, 0.0, 1.0);
@@ -1069,14 +1069,14 @@ void stk500Delete::deleteInFolder(DirectoryEntryPtr dirStartPtr, QStringList fil
     DirectoryEntryPtr writePtr = dirStartPtr;
     LongFileNameGen lfn_gen;
     while (true) {
-        DirectoryEntry entry = protocol.sd().readDirectory(curPtr);
+        DirectoryEntry entry = protocol->sd().readDirectory(curPtr);
         if (entry.isFree()) break;
 
         // Volume labels need to be written at all times
         if (entry.isVolume() && !entry.isLFN()) {
-            protocol.sd().writeDirectory(writePtr, entry);
-            writePtr = protocol.sd().nextDirectory(writePtr);
-            curPtr = protocol.sd().nextDirectory(curPtr);
+            protocol->sd().writeDirectory(writePtr, entry);
+            writePtr = protocol->sd().nextDirectory(writePtr);
+            curPtr = protocol->sd().nextDirectory(curPtr);
             continue;
         }
 
@@ -1094,7 +1094,7 @@ void stk500Delete::deleteInFolder(DirectoryEntryPtr dirStartPtr, QStringList fil
                 } else {
                     // Got data, need to wipe that first...
                     if (entry.isDirectory()) {
-                        DirectoryEntryPtr ptr = protocol.sd().getDirPtrFromCluster(entry.firstCluster());
+                        DirectoryEntryPtr ptr = protocol->sd().getDirPtrFromCluster(entry.firstCluster());
                         QStringList empty;
                         deleteInFolder(ptr, empty, true, false);
 
@@ -1104,7 +1104,7 @@ void stk500Delete::deleteInFolder(DirectoryEntryPtr dirStartPtr, QStringList fil
                         isDeleted = true;
                     }
                     if (isDeleted) {
-                        protocol.sd().wipeClusterChain(entry.firstCluster());
+                        protocol->sd().wipeClusterChain(entry.firstCluster());
                     }
                 }
             }
@@ -1119,11 +1119,11 @@ void stk500Delete::deleteInFolder(DirectoryEntryPtr dirStartPtr, QStringList fil
                 DirectoryEntryPtr e_curPtr = e_firstPtr;
                 while (e_entryCount--) {
                     if (writePtr == e_curPtr) {
-                        e_curPtr = writePtr = protocol.sd().nextDirectory(writePtr);
+                        e_curPtr = writePtr = protocol->sd().nextDirectory(writePtr);
                     } else {
-                        protocol.sd().writeDirectory(writePtr, protocol.sd().readDirectory(e_curPtr));
-                        writePtr = protocol.sd().nextDirectory(writePtr);
-                        e_curPtr = protocol.sd().nextDirectory(e_curPtr);
+                        protocol->sd().writeDirectory(writePtr, protocol->sd().readDirectory(e_curPtr));
+                        writePtr = protocol->sd().nextDirectory(writePtr);
+                        e_curPtr = protocol->sd().nextDirectory(e_curPtr);
                     }
                 }
 
@@ -1134,36 +1134,36 @@ void stk500Delete::deleteInFolder(DirectoryEntryPtr dirStartPtr, QStringList fil
                 }
             }
         }
-        curPtr = protocol.sd().nextDirectory(curPtr, true);
+        curPtr = protocol->sd().nextDirectory(curPtr, true);
     }
 
     // curPtr stores the pointer to the last entry read in
     // writePtr stores the pointer to the last entry written + 1
     // While the writePtr is lower than curPtr, wipe the blocks
     // If a new cluster is opened, we can wipe the entire cluster chain
-    quint32 oldCluster = protocol.sd().getClusterFromBlock(writePtr.block);
+    quint32 oldCluster = protocol->sd().getClusterFromBlock(writePtr.block);
     while (writePtr != curPtr) {
         // Wipe the block
-        protocol.sd().wipeDirectory(writePtr);
-        writePtr = protocol.sd().nextDirectory(writePtr);
+        protocol->sd().wipeDirectory(writePtr);
+        writePtr = protocol->sd().nextDirectory(writePtr);
 
         // If new write ptr is a different cluster; wipe the entire cluster chain
-        quint32 newCluster = protocol.sd().getClusterFromBlock(writePtr.block);
+        quint32 newCluster = protocol->sd().getClusterFromBlock(writePtr.block);
         if (newCluster != oldCluster) {
-            protocol.sd().wipeClusterChain(newCluster);
-            protocol.sd().fatPut(oldCluster, CLUSTER_EOC);
+            protocol->sd().wipeClusterChain(newCluster);
+            protocol->sd().fatPut(oldCluster, CLUSTER_EOC);
             break;
         }
     }
 }
 
 void stk500RenameVolume::run() {
-    DirectoryEntryPtr firstPtr = protocol.sd().getRootPtr();
+    DirectoryEntryPtr firstPtr = protocol->sd().getRootPtr();
     DirectoryEntryPtr curPtr = firstPtr;
 
     // Find the first volume entry
     do {
-        DirectoryEntry entry = protocol.sd().readDirectory(curPtr);
+        DirectoryEntry entry = protocol->sd().readDirectory(curPtr);
         if (entry.isFree()) {
             curPtr = DirectoryEntryPtr(0, 0);
             break;
@@ -1171,7 +1171,7 @@ void stk500RenameVolume::run() {
         if (!entry.isDeleted() && entry.isVolume() && !entry.isLFN()) {
             break;
         }
-        curPtr = protocol.sd().nextDirectory(curPtr);
+        curPtr = protocol->sd().nextDirectory(curPtr);
     } while (curPtr.isValid());
 
     // If found and marked empty - delete the entry
@@ -1188,13 +1188,13 @@ void stk500RenameVolume::run() {
         DirectoryEntry volumeEntry;
         memset(&volumeEntry, 0, sizeof(DirectoryEntry));
         volumeEntry.attributes = DIR_ATT_VOLUME_ID;
-        protocol.sd().writeDirectory(curPtr, volumeEntry);
+        protocol->sd().writeDirectory(curPtr, volumeEntry);
     }
 
     // Read entry and update the name
-    DirectoryEntry volumeEntry = protocol.sd().readDirectory(curPtr);
+    DirectoryEntry volumeEntry = protocol->sd().readDirectory(curPtr);
     volumeEntry.setName(volumeName);
-    protocol.sd().writeDirectory(curPtr, volumeEntry);
+    protocol->sd().writeDirectory(curPtr, volumeEntry);
 }
 
 void stk500Rename::run() {
@@ -1257,16 +1257,19 @@ void stk500Rename::run() {
     DirectoryEntryPtr newPtr = sd_createEntry(oldFileFirstPtr, newFileName, fileIsDir, existingShortNames);
 
     // Write the original entry properties to the new entry
-    DirectoryEntry oldEntry = protocol.sd().readDirectory(newPtr);
+    DirectoryEntry oldEntry = protocol->sd().readDirectory(newPtr);
     DirectoryEntry newEntry = oldFileEntry;
     memcpy(newEntry.name_raw, oldEntry.name_raw, 11);
     newEntry.reservedNT = (newEntry.reservedNT & ~0x18) | (oldEntry.reservedNT & 0x18);
-    protocol.sd().writeDirectory(newPtr, newEntry);
+    protocol->sd().writeDirectory(newPtr, newEntry);
 }
 
 void stk500ListSketches::run() {
+    /* Read the currently loaded sketch from EEPROM */
+    currentSketch = protocol->readSettings().getCurrent();
+
     /* List all file entries in the root directory */
-    QList<DirectoryInfo> rootEntries = sd_list(protocol.sd().getDirPtrFromCluster(0));
+    QList<DirectoryInfo> rootEntries = sd_list(protocol->sd().getDirPtrFromCluster(0));
     if (isCancelled()) return;
 
     /* Go by all entries and find all icons, or use the defaults */
@@ -1314,11 +1317,11 @@ void stk500ListSketches::run() {
             if (firstCluster == 0) {
                 sketch.iconBlock = 0;
             } else {
-                sketch.iconBlock = protocol.sd().getClusterBlock(firstCluster);
+                sketch.iconBlock = protocol->sd().getClusterBlock(firstCluster);
             }
 
             // Temporary: load icon too
-            sketch.setIcon(protocol.sd().cacheBlock(sketch.iconBlock, true, false, false));
+            sketch.setIcon(protocol->sd().cacheBlock(sketch.iconBlock, true, false, false));
         }
 
         /* Update entry */
@@ -1327,4 +1330,14 @@ void stk500ListSketches::run() {
 
     /* Completed */
     setProgress(1.0);
+}
+
+void stk500LaunchSketch::run() {
+    PHN_Settings settings = protocol->readSettings();
+    if (settings.getCurrent() != sketchName) {
+        settings.setToload(sketchName);
+        settings.flags |= SETTINGS_LOAD;
+        protocol->writeSettings(settings);
+        protocol->resetDelayed();
+    }
 }

@@ -71,6 +71,8 @@ private slots:
 
     void on_serial_saveImage_clicked();
 
+    void on_sketches_runBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;

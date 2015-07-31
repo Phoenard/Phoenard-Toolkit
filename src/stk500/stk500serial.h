@@ -71,7 +71,6 @@ public:
     bool closeRequested;
     bool isRunning;
     bool isProcessing;
-    bool isSignedOn;
     bool isBaudChanged;
     int serialBaud;
     QString protocolName;

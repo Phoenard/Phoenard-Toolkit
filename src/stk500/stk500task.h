@@ -9,9 +9,11 @@
 class stk500Task
 {
 public:
-    stk500Task(QString title = "") : _hasError(false), _isCancelled(false), _progress(-1.0), _status(title + "..."), _title(title), _cancelSuppress(false) {}
+    stk500Task(QString title = "") : _hasError(false), _isCancelled(false), _progress(-1.0),
+        _status(title + "..."), _title(title), _cancelSuppress(false) {}
+
     virtual void run() = 0;
-    void setProtocol(stk500 protocol) { this->protocol = protocol; }
+    void setProtocol(stk500 *protocol) { this->protocol = protocol; }
     const bool hasError() { return _hasError; }
     const bool isCancelled() { return (_isCancelled && !_cancelSuppress); }
     void suppressCancel(bool suppress) { _cancelSuppress = suppress; }
@@ -40,7 +42,7 @@ public:
     DirectoryEntryPtr sd_findOrCreate(DirectoryWalker walker, QString fileName);
     DirectoryEntryPtr sd_rename(DirectoryWalker walker, QString oldName, QString newName);
 protected:
-    stk500 protocol;
+    stk500 *protocol;
 
 private:
     ProtocolException _exception;
@@ -130,6 +132,15 @@ public:
     virtual void run();
 
     QList<SketchInfo> sketches;
+    QString currentSketch;
+};
+
+class stk500LaunchSketch : public stk500Task {
+public:
+    stk500LaunchSketch(QString sketchName) : stk500Task("Launching sketch"), sketchName(sketchName) {}
+    virtual void run();
+
+    QString sketchName;
 };
 
 #endif // STK500TASK_H

@@ -89,10 +89,7 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks) {
     bool isWaitCursor = true;
     int totalTaskCount = tasks.count();
     int processedCount = 0;
-    qint64 waitTimeout = 1000;
-    if (!process->isSignedOn) {
-        waitTimeout += 300; // Give 300 MS to open port
-    }
+    qint64 waitTimeout = 1200;
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
@@ -251,7 +248,6 @@ stk500_ProcessThread::stk500_ProcessThread(stk500Serial *owner, QString portName
     this->closeRequested = false;
     this->isRunning = true;
     this->isProcessing = false;
-    this->isSignedOn = false;
     this->isBaudChanged = false;
     this->serialBaud = 0;
     this->currentTask = NULL;
@@ -308,15 +304,16 @@ void stk500_ProcessThread::run() {
                     start_time = QDateTime::currentMSecsSinceEpoch();
 
                     // If currently signed on the reset can be skipped
-                    this->owner->notifySerialOpened(this);
-                    if (isSignedOn) {
-                        isSignedOn = false;
+                    if (protocol.isSignedOn()) {
                         protocol.signOut();
                     } else {
                         protocol.reset();
                     }
+
+                    this->owner->notifySerialOpened(this);
                     port.setBaudRate(currSerialBaud);
                     updateStatus("[Serial] Active");
+
                 } else {
                     // Leaving Serial mode - sign on needed
                     needSignOn = true;
@@ -372,7 +369,7 @@ void stk500_ProcessThread::run() {
                 stk500Task *task = this->currentTask;
 
                 /* If not signed on and a task is to be handled, sign on first */
-                if (task != NULL && !isSignedOn) {
+                if (task != NULL && !protocol.isSignedOn()) {
                     needSignOn = true;
                 }
 
@@ -380,11 +377,22 @@ void stk500_ProcessThread::run() {
                 if (needSignOn) {
                     needSignOn = false;
                     updateStatus("[STK500] Signing on");
-                    isSignedOn = trySignOn(&protocol);
-                    if (isSignedOn) {
+                    if (trySignOn(&protocol)) {
                         qDebug() << "[STK500] Protocol: " << protocolName;
 
+                        /* EEPROM Settings reading test */
+                        /*
+                        try {
+                            PHN_Settings settings = protocol.readSettings();
+                            qDebug() << "Current: " << settings.getCurrent();
+                            qDebug() << "Sketch size: " << settings.sketch_size;
+                        } catch (ProtocolException &ex) {
+                            qDebug() << ex.what();
+                        }
+                        */
+
                         /* Analog read test */
+                        /*
                         try {
                             for (int i = 0; i < 5; i++) {
                                 qDebug() << "ADC: " << protocol.ANALOG_read(0);
@@ -393,14 +401,16 @@ void stk500_ProcessThread::run() {
                         } catch (ProtocolException &ex) {
                             qDebug() << ex.what();
                         }
+                        */
 
 
                         /* RAM Debug test: blink pin 13 a few times */
+                        /*
                         try {
-                            /* Set DDRB7 to OUTPUT */
+                            // Set DDRB7 to OUTPUT
                             protocol.RAM_writeByte(0x24, 0xFF, 1 << 7);
 
-                            /* Set PORTB7 alternating */
+                            // Set PORTB7 alternating
                             for (int i = 0; i < 5; i++) {
                                 QThread::msleep(50);
                                 protocol.RAM_writeByte(0x25, 0x00, 1 << 7);
@@ -410,6 +420,7 @@ void stk500_ProcessThread::run() {
                         } catch (ProtocolException &ex) {
                             qDebug() << ex.what();
                         }
+                        */
                     } else {
                         updateStatus("[STK500] Sign-on error");
                     }
@@ -421,7 +432,7 @@ void stk500_ProcessThread::run() {
 
                     /* Process the current task */
                     try {
-                        if (!isSignedOn) {
+                        if (!protocol.isSignedOn()) {
                             throw ProtocolException("Could not communicate with device");
                         }
                         // Before processing, force the Micro-SD to re-read information
@@ -429,7 +440,7 @@ void stk500_ProcessThread::run() {
                         protocol.sd().discardCache();
 
                         // Process the task after setting the protocol
-                        task->setProtocol(protocol);
+                        task->setProtocol(&protocol);
                         task->run();
 
                         // Flush the data on the Micro-SD now all is well
@@ -453,11 +464,10 @@ void stk500_ProcessThread::run() {
 
                     // Waited for the full interval time, ping with a signOn command
                     // Still alive?
-                    if (isSignedOn) {
+                    if (protocol.isSignedOn()) {
                         updateStatus("[STK500] Idle");
 
-                        isSignedOn = trySignOn(&protocol);
-                        if (!isSignedOn) {
+                        if (!trySignOn(&protocol)) {
                             updateStatus("[STK500] Session lost");
                         }
                     }

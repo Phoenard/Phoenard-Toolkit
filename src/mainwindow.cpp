@@ -35,6 +35,11 @@ MainWindow::MainWindow(QWidget *parent) :
             this,   SLOT(serial_closed()),
             Qt::QueuedConnection);
 
+    // Connect sketch list item double-click to sketch run
+    connect(ui->sketchesWidget, SIGNAL(sketchDoubleClicked()),
+            this, SLOT(on_sketches_runBtn_clicked()),
+            Qt::QueuedConnection);
+
     // Set up image format icons
     fmt_icons[0] = QIcon(":/icons/fmt_lcd1.png");
     fmt_icons[1] = QIcon(":/icons/fmt_lcd2.png");
@@ -406,4 +411,14 @@ void MainWindow::on_serial_shareMode_toggled(bool checked)
 void MainWindow::on_serial_saveImage_clicked()
 {
     showSaveDialog(ui->serial_saveImage, ui->serialmonitor->getImageEditor());
+}
+
+void MainWindow::on_sketches_runBtn_clicked()
+{
+    if (!ui->sketchesWidget->hasSelectedSketch()) {
+        return;
+    }
+    QString name = ui->sketchesWidget->getSelectedSketch();
+    serial->execute(stk500LaunchSketch(name));
+    setSelectedTab(0);
 }

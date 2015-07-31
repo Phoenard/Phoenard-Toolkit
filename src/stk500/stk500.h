@@ -10,6 +10,7 @@
 #include <QWaitCondition>
 #include "stk500command.h"
 #include "stk500_fat.h"
+#include "stk500settings.h"
 
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
@@ -36,15 +37,18 @@ public:
     /* Commands */
     QString signOn();
     void signOut();
+    bool isSignedOn();
     CardVolume SD_init();
+    PHN_Settings readSettings();
+    void writeSettings(PHN_Settings settings);
     void SD_readBlock(quint32 block, char* dest, int destLen);
-    void SD_writeBlock(quint32 block, char* src, int srcLen, bool isFAT = false);
+    void SD_writeBlock(quint32 block, const char* src, int srcLen, bool isFAT = false);
     void FLASH_readPage(quint32 address, char* dest, int destLen);
-    void FLASH_writePage(quint32 address, char* src, int srcLen);
+    void FLASH_writePage(quint32 address, const char* src, int srcLen);
     void EEPROM_read(quint32 address, char* dest, int destLen);
-    void EEPROM_write(quint32 address, char* src, int srcLen);
+    void EEPROM_write(quint32 address, const char* src, int srcLen);
     void RAM_read(quint16 address, char* dest, int destLen);
-    void RAM_write(quint16 address, char* src, int srcLen);
+    void RAM_write(quint16 address, const char* src, int srcLen);
     quint8 RAM_readByte(quint16 address);
     quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
     quint16 ANALOG_read(quint8 adc);
@@ -60,7 +64,11 @@ private:
     int command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength);
     void loadAddress(quint32 address);
     void readData(STK_CMD data_command, quint32 address, char* dest, int destLen);
-    void writeData(STK_CMD data_command, quint32 address, char* src, int srcLen);
+    void writeData(STK_CMD data_command, quint32 address, const char* src, int srcLen);
+
+    // copy ops are private to prevent copying
+    stk500(const stk500&); // no implementation
+    stk500& operator=(const stk500&); // no implementation
 
     QSerialPort *port;
     QTimer *aliveTimer;
@@ -68,6 +76,7 @@ private:
     uint sequenceNumber;
     quint32 currentAddress;
     stk500_sd *sd_handler;
+    bool signedOn;
 };
 
 // Stores a 512-byte cache for a single block of data
@@ -171,5 +180,7 @@ struct ProtocolException : public std::exception {
     ~ProtocolException() throw () {} // Updated
     const char* what() const throw() { return s.c_str(); }
 };
+
+
 
 #endif // STK500_H

@@ -6,6 +6,7 @@ stk500::stk500(QSerialPort *port)
     this->port = port;
     this->lastCmdTime = 0;
     this->sd_handler = new stk500_sd(this);
+    this->signedOn = false;
 }
 
 void stk500::printData(char* title, char* data, int len) {
@@ -239,7 +240,6 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             /* ============================== */
         }
     }
-
     QString cmdCode = QString("%1").arg((uint) command, 0, 16).toUpper();
     if (cmdCode.length() == 1) {
         cmdCode.insert(0, '0');
@@ -294,7 +294,7 @@ void stk500::readData(STK_CMD data_command, quint32 address, char* dest, int des
     command(data_command, arguments, sizeof(arguments), dest, destLen);
 }
 
-void stk500::writeData(STK_CMD data_command, quint32 address, char* src, int srcLen) {
+void stk500::writeData(STK_CMD data_command, quint32 address, const char* src, int srcLen) {
     /* Load the address (if needed) */
     loadAddress(address);
 
@@ -317,11 +317,17 @@ QString stk500::signOn() {
     if (resp[0] < name_length) {
         name_length = resp[0];
     }
+    signedOn = true;
     return QString::fromLocal8Bit(resp + 1, name_length);
 }
 
 void stk500::signOut() {
     command(LEAVE_PROGMODE_ISP, NULL, 0, NULL, 0);
+    signedOn = false;
+}
+
+bool stk500::isSignedOn() {
+    return signedOn && !isTimeout();
 }
 
 CardVolume stk500::SD_init() {
@@ -340,36 +346,24 @@ CardVolume stk500::SD_init() {
     return volume;
 }
 
+PHN_Settings stk500::readSettings() {
+    PHN_Settings result;
+    EEPROM_read(EEPROM_SETTINGS_ADDR, (char*) &result, EEPROM_SETTINGS_SIZE);
+    return result;
+}
+
+void stk500::writeSettings(PHN_Settings settings) {
+    EEPROM_write(EEPROM_SETTINGS_ADDR, (char*) &settings, EEPROM_SETTINGS_SIZE);
+}
+
 void stk500::SD_readBlock(quint32 block, char* dest, int destLen) {
     readData(READ_SD_ISP, block, dest, destLen);
     currentAddress++;
 }
 
-void stk500::SD_writeBlock(quint32 block, char* src, int srcLen, bool isFAT) {
+void stk500::SD_writeBlock(quint32 block, const char* src, int srcLen, bool isFAT) {
     writeData(isFAT ? PROGRAM_SD_FAT_ISP : PROGRAM_SD_ISP, block, src, srcLen);
     currentAddress++;
-
-return;
-
-    // Check that it was written correctly
-    char buff[512];
-    loadAddress(block);
-    SD_readBlock(block, buff, 512);
-    bool valid = true;
-    for (int i = 0; i < 512; i++) {
-        if (src[i] != buff[i]) {
-            valid = false;
-            break;
-        }
-    }
-    if (valid) {
-        return;
-    }
-
-    stk500::printData("TOW", src, 512);
-    stk500::printData("NEW", buff, 512);
-    qDebug() << "FAILED TO WRITE BLOCK " << block << " FAT " << isFAT;
-
 }
 
 void stk500::FLASH_readPage(quint32 address, char* dest, int destLen) {
@@ -377,7 +371,7 @@ void stk500::FLASH_readPage(quint32 address, char* dest, int destLen) {
     currentAddress += destLen / 2;
 }
 
-void stk500::FLASH_writePage(quint32 address, char* src, int srcLen) {
+void stk500::FLASH_writePage(quint32 address, const char* src, int srcLen) {
     writeData(PROGRAM_FLASH_ISP, address, src, srcLen);
     currentAddress += srcLen / 2;
 }
@@ -387,7 +381,7 @@ void stk500::EEPROM_read(quint32 address, char* dest, int destLen) {
     currentAddress += destLen;
 }
 
-void stk500::EEPROM_write(quint32 address, char* src, int srcLen) {
+void stk500::EEPROM_write(quint32 address, const char* src, int srcLen) {
     writeData(PROGRAM_EEPROM_ISP, address, src, srcLen);
     currentAddress += srcLen;
 }
@@ -397,7 +391,7 @@ void stk500::RAM_read(quint16 address, char* dest, int destLen) {
     currentAddress += destLen;
 }
 
-void stk500::RAM_write(quint16 address, char* src, int srcLen) {
+void stk500::RAM_write(quint16 address, const char* src, int srcLen) {
     writeData(PROGRAM_RAM_ISP, address, src, srcLen);
     currentAddress += srcLen;
 }

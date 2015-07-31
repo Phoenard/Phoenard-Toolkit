@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     dialogs/progressdialog.cpp \
     dialogs/qmultifiledialog.cpp \
     dialogs/formatselectdialog.cpp \
-    dialogs/codeselectdialog.cpp
+    dialogs/codeselectdialog.cpp \
+    stk500/stk500settings.cpp
 
 HEADERS  += mainwindow.h \
     menubutton.h \
@@ -51,7 +52,8 @@ HEADERS  += mainwindow.h \
     dialogs/formatselectdialog.h \
     dialogs/codeselectdialog.h \
     stk500/sketchinfo.h \
-    mainmenutab.h
+    mainmenutab.h \
+    stk500/stk500settings.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \
