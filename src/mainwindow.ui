@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>665</width>
+    <width>685</width>
     <height>432</height>
    </rect>
   </property>
@@ -53,9 +53,6 @@
       </property>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_8">
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="spacing">
@@ -65,7 +62,7 @@
            <number>0</number>
           </property>
           <property name="topMargin">
-           <number>6</number>
+           <number>4</number>
           </property>
           <property name="rightMargin">
            <number>6</number>
@@ -112,6 +109,12 @@
         </item>
         <item>
          <widget class="QLabel" name="port_statusLbl">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>17</height>
+           </size>
+          </property>
           <property name="palette">
            <palette>
             <active>
@@ -151,6 +154,9 @@
           </property>
           <property name="text">
            <string>Absolutely nothing</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
           </property>
          </widget>
         </item>
@@ -251,7 +257,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="page_10">
          <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -343,13 +349,13 @@
              <number>4</number>
             </property>
             <item>
-             <widget class="MenuButton" name="memoriesButton_3">
+             <widget class="MenuButton" name="sketches_runBtn">
               <property name="text">
-               <string>Memories</string>
+               <string>Run</string>
               </property>
               <property name="icon">
                <iconset resource="icons/icons.qrc">
-                <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+                <normaloff>:/icons/run.png</normaloff>:/icons/run.png</iconset>
               </property>
              </widget>
             </item>
@@ -463,7 +469,7 @@
               </property>
               <property name="sizeHint" stdset="0">
                <size>
-                <width>100</width>
+                <width>70</width>
                 <height>20</height>
                </size>
               </property>
@@ -619,6 +625,18 @@
       </widget>
       <widget class="QWidget" name="page">
        <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>5</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
+        <property name="bottomMargin">
+         <number>5</number>
+        </property>
         <item>
          <widget class="SketchListWidget" name="sketchesWidget" native="true"/>
         </item>

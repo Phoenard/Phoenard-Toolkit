@@ -22,5 +22,6 @@
         <file>code.png</file>
         <file>checkbox_checked.png</file>
         <file>checkbox_unchecked.png</file>
+        <file>run.png</file>
     </qresource>
 </RCC>

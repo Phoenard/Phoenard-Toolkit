@@ -28,24 +28,6 @@
    </property>
    <item>
     <widget class="QListWidget" name="list">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>310</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
-      </size>
-     </property>
      <property name="palette">
       <palette>
        <active>
@@ -191,6 +173,11 @@
        </disabled>
       </palette>
      </property>
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
      <property name="iconSize">
       <size>
        <width>64</width>
@@ -206,38 +193,19 @@
      <property name="isWrapping" stdset="0">
       <bool>true</bool>
      </property>
-     <property name="spacing">
-      <number>5</number>
+     <property name="resizeMode">
+      <enum>QListView::Adjust</enum>
      </property>
      <property name="gridSize">
       <size>
-       <width>70</width>
+       <width>74</width>
        <height>90</height>
       </size>
      </property>
      <property name="viewMode">
       <enum>QListView::IconMode</enum>
      </property>
-     <property name="uniformItemSizes">
-      <bool>true</bool>
-     </property>
-     <property name="selectionRectVisible">
-      <bool>false</bool>
-     </property>
     </widget>
-   </item>
-   <item>
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>

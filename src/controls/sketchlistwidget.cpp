@@ -6,6 +6,8 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
     ui(new Ui::SketchListWidget)
 {
     ui->setupUi(this);
+
+    setStyleSheet("QListWidget::item { border: 5px solid black; }");
 }
 
 SketchListWidget::~SketchListWidget()
@@ -17,7 +19,7 @@ void SketchListWidget::refreshSketches() {
     stk500ListSketches task;
     serial->execute(task);
 
-
+    ui->list->clear();
     for (int i = 0; i < task.sketches.length(); i++) {
         SketchInfo &info = task.sketches[i];
 
