@@ -14,8 +14,8 @@ typedef struct {
         memcpy(this->iconData, iconData, sizeof(this->iconData));
 
         /* Define the two colors used to display the icon */
-        QRgb color0= QColor(0, 0, 0).rgb();
-        QRgb color1= QColor(255, 255, 255).rgb();
+        QRgb color0 = QColor(0, 0, 0).rgb();
+        QRgb color1 = QColor(255, 255, 255).rgb();
 
         /* Generate 64x64 Image from 1-bit image data */
         QImage iconImage(64, 64, QImage::Format_ARGB32);
