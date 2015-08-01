@@ -117,7 +117,6 @@ public:
     /* Cache handling */
     char* cacheBlock(quint32 block, bool readBlock, bool markDirty, bool isFat = false);
     void flushCache();
-    void discardCache();
     void wipeBlock(quint32 block, bool isFat = false);
     void wipeCluster(quint32 cluster);
     void read(quint32 block, int blockOffset, char* dest, int length);

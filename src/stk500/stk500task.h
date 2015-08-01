@@ -143,4 +143,12 @@ public:
     QString sketchName;
 };
 
+class stk500LoadIcon : public stk500Task {
+public:
+    stk500LoadIcon(SketchInfo &sketch) : stk500Task("Loading icon"), sketch(sketch) {}
+    virtual void run();
+
+    SketchInfo sketch;
+};
+
 #endif // STK500TASK_H

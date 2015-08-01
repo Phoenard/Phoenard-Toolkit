@@ -1295,6 +1295,8 @@ void stk500ListSketches::run() {
             sketch.name[tmpLen] = entry.name_raw[tmpLen];
         }
         sketch.name[tmpLen] = 0;
+        sketch.hasIcon = false;
+        sketch.iconDirty = true;
 
         /* Locate this entry in the current results, or add if not found */
         int sketchIndex = -1;
@@ -1319,9 +1321,6 @@ void stk500ListSketches::run() {
             } else {
                 sketch.iconBlock = protocol->sd().getClusterBlock(firstCluster);
             }
-
-            // Temporary: load icon too
-            sketch.setIcon(protocol->sd().cacheBlock(sketch.iconBlock, true, false, false));
         }
 
         /* Update entry */
@@ -1340,4 +1339,10 @@ void stk500LaunchSketch::run() {
         protocol->writeSettings(settings);
         protocol->resetDelayed();
     }
+}
+
+void stk500LoadIcon::run() {
+    sketch.setIcon(protocol->sd().cacheBlock(sketch.iconBlock, true, false, false));
+    sketch.iconDirty = false;
+    sketch.hasIcon = true;
 }

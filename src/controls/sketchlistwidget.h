@@ -19,11 +19,13 @@ public:
     void refreshSketches();
     bool hasSelectedSketch();
     QString getSelectedSketch();
+    void startLoadingIcons();
 
 signals:
     void sketchDoubleClicked();
 
 private slots:
+    void serialTaskFinished(stk500Task *task);
     void on_list_itemDoubleClicked(QListWidgetItem *item);
 
 private:

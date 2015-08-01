@@ -18,6 +18,7 @@ public:
     bool isOpen();
     void open(QString & portName);
     void close();
+    void executeAsync(stk500Task &task);
     void execute(stk500Task &task);
     void executeAll(QList<stk500Task*> tasks);
     void cancelTasks();
@@ -32,11 +33,13 @@ protected:
     void notifyStatus(stk500_ProcessThread *sender, QString status);
     void notifyClosed(stk500_ProcessThread *sender);
     void notifySerialOpened(stk500_ProcessThread *sender);
+    void notifyTaskFinished(stk500_ProcessThread *sender, stk500Task *task);
 
 signals:
     void statusChanged(QString status);
     void serialOpened();
     void closed();
+    void taskFinished(stk500Task *task);
 
 protected:
     bool cleanKilledProcesses();
@@ -47,7 +50,6 @@ private:
 
 // Thread that processes stk500 tasks
 class stk500_ProcessThread : public QThread {
-   Q_OBJECT
 
 public:
     stk500_ProcessThread(stk500Serial *owner, QString portName);

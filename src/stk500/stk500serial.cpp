@@ -65,6 +65,31 @@ void stk500Serial::notifySerialOpened(stk500_ProcessThread *) {
     emit serialOpened();
 }
 
+void stk500Serial::notifyTaskFinished(stk500_ProcessThread *, stk500Task *task) {
+    emit taskFinished(task);
+}
+
+void stk500Serial::executeAsync(stk500Task &task) {
+    /* If not open, fail all tasks right away */
+    if (!isOpen()) {
+        task.setError(ProtocolException("Port is not opened"));
+        return;
+    }
+
+    /* Wait while processing */
+    while (process->isProcessing) {
+        //TODO: Make all of this a bit more elegant
+        // Like use a task list instead of this mess
+        QThread::msleep(50);
+    }
+
+    process->sync.lock();
+    process->currentTask = &task;
+    process->sync.unlock();
+    process->wake();
+    process->isProcessing = true;
+}
+
 void stk500Serial::execute(stk500Task &task) {
     QList<stk500Task*> tasks;
     tasks.append(&task);
@@ -276,9 +301,8 @@ void stk500_ProcessThread::run() {
         port.setPortName(portName);
         port.setReadBufferSize(4096);
         port.setSettingsRestoredOnClose(false);
-        port.open(QIODevice::ReadWrite);
-        port.clearError();
         port.setBaudRate(115200);
+        port.open(QIODevice::ReadWrite);
 
         /* Run process loop while not being closed */
         bool needSignOn = true;
@@ -286,6 +310,7 @@ void stk500_ProcessThread::run() {
         qint64 start_time;
         long currSerialBaud = 0;
         char serialBuffer[1024];
+        bool wasIdling = true;
         while (!this->closeRequested) {
             if (this->isBaudChanged) {
                 this->isBaudChanged = false;
@@ -376,9 +401,27 @@ void stk500_ProcessThread::run() {
                 /* Sign on with the bootloader */
                 if (needSignOn) {
                     needSignOn = false;
+                    wasIdling = true;
                     updateStatus("[STK500] Signing on");
                     if (trySignOn(&protocol)) {
                         qDebug() << "[STK500] Protocol: " << protocolName;
+
+                        /* Speed test: execute command timed */
+                        /*
+                        try {
+                            char d[512];
+                            while (true) {
+                                // Time: 67 ms
+                                qint64 timestart = QDateTime::currentMSecsSinceEpoch();
+                                protocol.RAM_read(0, d, sizeof(d));
+                                qint64 spent = QDateTime::currentMSecsSinceEpoch() - timestart;
+                                qDebug() << "Time: " << spent;
+                                msleep(200);
+                            }
+                        } catch (ProtocolException &ex) {
+                            qDebug() << ex.what();
+                        }
+                        */
 
                         /* EEPROM Settings reading test */
                         /*
@@ -435,9 +478,12 @@ void stk500_ProcessThread::run() {
                         if (!protocol.isSignedOn()) {
                             throw ProtocolException("Could not communicate with device");
                         }
+
                         // Before processing, force the Micro-SD to re-read information
-                        protocol.sd().reset();
-                        protocol.sd().discardCache();
+                        // Only needed if we were idling before (and user may have switched card)
+                        if (wasIdling) {
+                            protocol.sd().reset();
+                        }
 
                         // Process the task after setting the protocol
                         task->setProtocol(&protocol);
@@ -455,9 +501,13 @@ void stk500_ProcessThread::run() {
                         }
                     }
 
+                    // Notify we finished (or failed, or cancelled...)
+                    owner->notifyTaskFinished(this, task);
+
                     // Clear the currently executed task
                     currentTask = NULL;
                     isProcessing = false;
+                    wasIdling = false;
 
                 } else if (protocol.idleTime() >= STK500_CMD_MIN_INTERVAL) {
                     /* No task and protocol inactive - ping while waiting for tasks to be sent our way */
@@ -466,6 +516,7 @@ void stk500_ProcessThread::run() {
                     // Still alive?
                     if (protocol.isSignedOn()) {
                         updateStatus("[STK500] Idle");
+                        wasIdling = true;
 
                         if (!trySignOn(&protocol)) {
                             updateStatus("[STK500] Session lost");

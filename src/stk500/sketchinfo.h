@@ -2,12 +2,15 @@
 #define SKETCHINFO_H
 
 #include <QIcon>
+#include <QMetaType>
 
-typedef struct {
+typedef struct SketchInfo {
     char name[9];
     quint32 iconBlock;
     char iconData[512];
     QIcon icon;
+    bool hasIcon;
+    bool iconDirty;
 
     void setIcon(const char* iconData) {
         /* Copy raw icon data */
@@ -44,5 +47,7 @@ typedef struct {
         this->icon = QIcon(QPixmap::fromImage(iconImage));
     }
 } SketchInfo;
+
+Q_DECLARE_METATYPE(SketchInfo)
 
 #endif // SKETCHINFO_H

@@ -112,7 +112,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
     while (!processed) {
 
         /* Read in received response data */
-        incomingRead = port->read((char*) incomingData, sizeof(incomingData));
+        incomingRead = port->read(incomingData, sizeof(incomingData));
         if (incomingRead == -1) {
             errorInfo = port->errorString();
             break;
@@ -130,7 +130,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             break;
         }
 
-        /* If nothing read, wait shortly and try again */
+        /* If nothing read, process I/O to read in new data */
         if (!incomingRead) {
             port->waitForReadyRead(50);
             continue;
@@ -442,18 +442,22 @@ quint16 stk500::ANALOG_read(quint8 adc) {
 
 stk500_sd::stk500_sd(stk500 *handler) {
     _handler = handler;
-    discardCache();
     reset();
 }
 
 void stk500_sd::reset() {
     _volume.isInitialized = 0;
+    for (int i = 0; i < SD_CACHE_CNT; i++) {
+        _cache[i].reset();
+    }
 }
 
 void stk500_sd::init(bool forceInit) {
-    if (forceInit) _volume.isInitialized = 0;
-    if (_handler->isTimeout()) _volume.isInitialized = 0;
-    if (_volume.isInitialized == 1) return;
+    /* Various conditions to check whether we are initialized already */
+    if (!forceInit && (_volume.isInitialized == 1) && !_handler->isTimeout()) return;
+
+    /* Reset the cache and volume state before initializing */
+    reset();
 
     /* Initialize the SD card on the device */
     _volume = _handler->SD_init();
@@ -547,12 +551,6 @@ void stk500_sd::flushCache() {
         if (_cache[i].needsWriting) {
             writeOutCache(&_cache[i]);
         }
-    }
-}
-
-void stk500_sd::discardCache() {
-    for (int i = 0; i < SD_CACHE_CNT; i++) {
-        _cache[i].reset();
     }
 }
 
