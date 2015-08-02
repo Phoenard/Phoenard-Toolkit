@@ -23,6 +23,7 @@ void SketchListWidget::refreshSketches() {
 
     // Default icon to use
     QIcon defaultIcon(":/icons/sketchdefault.png");
+    QIcon loadIcon(":/icons/sketchloading.png");
 
     // Synchronize the items in the list widget with the sketches
     for (int i = 0; i < task.sketches.length(); i++) {
@@ -64,7 +65,7 @@ void SketchListWidget::refreshSketches() {
         } else {
             // Schedule for loading
             sketch.iconDirty = true;
-            itemFound->setIcon(defaultIcon); //TODO: Loading icon?
+            itemFound->setIcon(loadIcon);
         }
 
         // Store sketch information in item

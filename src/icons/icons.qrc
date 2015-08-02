@@ -24,5 +24,6 @@
         <file>checkbox_unchecked.png</file>
         <file>run.png</file>
         <file>sketchdefault.png</file>
+        <file>sketchloading.png</file>
     </qresource>
 </RCC>
