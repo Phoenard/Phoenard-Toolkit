@@ -526,8 +526,10 @@ char* stk500_sd::cacheBlock(quint32 block, bool readBlock, bool markDirty, bool 
             init();
             _handler->SD_readBlock(selected->block, selected->buffer, 512);
         } catch (ProtocolException&) {
+            BlockCache cache_old = *selected;
             _handler->reset();
             init();
+            *selected = cache_old;
             _handler->SD_readBlock(selected->block, selected->buffer, 512);
         }
     }
@@ -539,8 +541,10 @@ void stk500_sd::writeOutCache(BlockCache *cache) {
          init();
         _handler->SD_writeBlock(cache->block, cache->buffer, 512, cache->isFAT);
     } catch (ProtocolException&) {
+        BlockCache cache_old = *cache;
         _handler->reset();
          init();
+         *cache = cache_old;
         _handler->SD_writeBlock(cache->block, cache->buffer, 512, cache->isFAT);
     }
     cache->reset();

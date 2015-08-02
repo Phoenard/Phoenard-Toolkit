@@ -145,7 +145,8 @@ int MainWindow::selectedTab() {
 }
 
 void MainWindow::setSelectedTab(int index, bool forceUpdate) {
-    bool doEvents = forceUpdate || (index != selectedTab());
+    int prevIndex = selectedTab();
+    bool doEvents = forceUpdate || (index != prevIndex);
     ui->optionTabs->setCurrentIndex(index);
     ui->mainTabs->setCurrentIndex(index);
     MenuButton *selectedBtn = NULL;
@@ -153,12 +154,23 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
         selectedBtn = allButtons[index];
     }
 
+    /* Handle events fired when a tab is closed */
+    if (prevIndex != index) {
+        /* Close serial when closing serial tab */
+        if (prevIndex == 0) {
+            serial->closeSerial();
+        }
+
+        /* Stop loading icons when closing sketches tab */
+        if (prevIndex == 1) {
+            ui->sketchesWidget->stopLoadingIcons();
+        }
+    }
+
     if (doEvents) {
         /* First tab uses serial mode, all others rely on stk500 */
         if (index == 0) {
             ui->serialmonitor->openSerial();
-        } else {
-            serial->closeSerial();
         }
 
         /* Load sketches when opening sketches tab */
@@ -418,6 +430,7 @@ void MainWindow::on_sketches_runBtn_clicked()
     if (!ui->sketchesWidget->hasSelectedSketch()) {
         return;
     }
+    ui->sketchesWidget->stopLoadingIcons();
     QString name = ui->sketchesWidget->getSelectedSketch();
     serial->execute(stk500LaunchSketch(name));
     setSelectedTab(0);

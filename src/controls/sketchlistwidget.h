@@ -20,6 +20,7 @@ public:
     bool hasSelectedSketch();
     QString getSelectedSketch();
     void startLoadingIcons();
+    void stopLoadingIcons();
 
 signals:
     void sketchDoubleClicked();
@@ -30,6 +31,7 @@ private slots:
 
 private:
     Ui::SketchListWidget *ui;
+    stk500LoadIcon *lastTask;
 };
 
 #endif // SKETCHLISTWIDGET_H

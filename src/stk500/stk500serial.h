@@ -3,6 +3,7 @@
 
 #include "stk500.h"
 #include "stk500task.h"
+#include <QQueue>
 
 class stk500_ProcessThread;
 
@@ -18,9 +19,8 @@ public:
     bool isOpen();
     void open(QString & portName);
     void close();
-    void executeAsync(stk500Task &task);
-    void execute(stk500Task &task);
-    void executeAll(QList<stk500Task*> tasks);
+    void execute(stk500Task &task, bool asynchronous = false);
+    void executeAll(QList<stk500Task*> tasks, bool asynchronous = false);
     void cancelTasks();
     void openSerial(int baudrate);
     void closeSerial();
@@ -55,6 +55,7 @@ public:
     stk500_ProcessThread(stk500Serial *owner, QString portName);
     void cancelTasks();
     void wake();
+    stk500Task *currentTask();
 
 protected:
     virtual void run();
@@ -65,7 +66,8 @@ public:
     stk500Serial *owner;
     QMutex sync;
     QWaitCondition cond;
-    stk500Task *currentTask;
+    QQueue<stk500Task*> tasks;
+    QMutex tasksLock;
     QMutex readBuffLock;
     QMutex writeBuffLock;
     QByteArray readBuff;

@@ -10,18 +10,20 @@ class stk500Task
 {
 public:
     stk500Task(QString title = "") : _hasError(false), _isCancelled(false), _progress(-1.0),
-        _status(title + "..."), _title(title), _cancelSuppress(false) {}
+        _status(title + "..."), _title(title), _cancelSuppress(false), _isFinished(false) {}
 
     virtual void run() = 0;
     void setProtocol(stk500 *protocol) { this->protocol = protocol; }
     const bool hasError() { return _hasError; }
     const bool isCancelled() { return (_isCancelled && !_cancelSuppress); }
+    const bool isFinished() { return _isFinished; }
     void suppressCancel(bool suppress) { _cancelSuppress = suppress; }
     const bool isCancelSuppressed() { return _cancelSuppress; }
     const ProtocolException getError() { return _exception; }
     const char* getErrorMessage() { return _exception.what(); }
     void setError(ProtocolException exception);
     void cancel() { _isCancelled = true; }
+    void finish() { _isFinished = true; }
     void setProgress(double progress) { _progress = progress; }
     const double progress() { return _progress; }
     void setStatus(QString status);
@@ -48,6 +50,7 @@ private:
     ProtocolException _exception;
     bool _hasError;
     bool _isCancelled;
+    bool _isFinished;
     bool _cancelSuppress;
     double _progress;
     QString _title;

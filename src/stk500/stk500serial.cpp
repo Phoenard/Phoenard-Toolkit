@@ -69,34 +69,13 @@ void stk500Serial::notifyTaskFinished(stk500_ProcessThread *, stk500Task *task) 
     emit taskFinished(task);
 }
 
-void stk500Serial::executeAsync(stk500Task &task) {
-    /* If not open, fail all tasks right away */
-    if (!isOpen()) {
-        task.setError(ProtocolException("Port is not opened"));
-        return;
-    }
-
-    /* Wait while processing */
-    while (process->isProcessing) {
-        //TODO: Make all of this a bit more elegant
-        // Like use a task list instead of this mess
-        QThread::msleep(50);
-    }
-
-    process->sync.lock();
-    process->currentTask = &task;
-    process->sync.unlock();
-    process->wake();
-    process->isProcessing = true;
-}
-
-void stk500Serial::execute(stk500Task &task) {
+void stk500Serial::execute(stk500Task &task, bool asynchronous) {
     QList<stk500Task*> tasks;
     tasks.append(&task);
-    executeAll(tasks);
+    executeAll(tasks, asynchronous);
 }
 
-void stk500Serial::executeAll(QList<stk500Task*> tasks) {
+void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
     /* No tasks - don't do anything */
     if (tasks.isEmpty()) return;
 
@@ -108,36 +87,41 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks) {
         return;
     }
 
+    /* Enqueue the other tasks */
+    process->tasksLock.lock();
+    for (int i = 0; i < tasks.length(); i++) {
+        process->tasks.enqueue(tasks[i]);
+    }
+    int totalTaskCount = process->tasks.length();
+    process->isProcessing = true;
+    process->tasksLock.unlock();
+    process->wake();
+
+    /* If specified, wait until processing completes */
+    if (asynchronous) {
+        return;
+    }
+
     ProgressDialog *dialog = NULL;
     qint64 currentTime;
     qint64 startTime = QDateTime::currentMSecsSinceEpoch();
     bool isWaitCursor = true;
-    int totalTaskCount = tasks.count();
-    int processedCount = 0;
     qint64 waitTimeout = 1200;
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
-    while (!tasks.isEmpty()) {
-        // Obtain next task, check if it's not cancelled
-        stk500Task *task = tasks.takeFirst();
-        if (task->isCancelled() || task->hasError()) {
-            continue;
-        }
-
-        // Put into the process thread for processing
-        process->sync.lock();
-        process->currentTask = task;
-        process->sync.unlock();
-        process->wake();
-        process->isProcessing = true;
+    while (process->isProcessing) {
+        // Obtain next task
+        stk500Task *task = process->currentTask();
+        int processedCount = totalTaskCount - process->tasks.count();
+        if (task == NULL) break;
 
         if (dialog != NULL) {
             dialog->setWindowTitle(task->title());
         }
 
-        // Wait until it's done processing
-        while (process->isProcessing) {
+        // Wait until the task is finished processing
+        while (!task->isFinished()) {
             currentTime = QDateTime::currentMSecsSinceEpoch();
             if ((currentTime - startTime) < waitTimeout) {
                 /* Allows for active UI updates, but is slightly dangerous */
@@ -180,15 +164,17 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks) {
         }
 
         // If task has an error, stop other tasks too (errors are dangerous)
-        if (task->hasError()) {
-            for (stk500Task *task : tasks) {
-                task->setError(ProtocolException("Cancelled due to previous error"));
+        bool taskHasError = false;
+        for (stk500Task* currentTask : tasks) {
+            if (currentTask->hasError()) {
+                taskHasError = true;
+            } else if (taskHasError) {
+                currentTask->setError(ProtocolException("Cancelled because of previous error"));
             }
         }
         if (task->hasError()) {
             task->showError();
         }
-        processedCount++;
     }
     if (isWaitCursor) {
         QApplication::restoreOverrideCursor();
@@ -275,7 +261,6 @@ stk500_ProcessThread::stk500_ProcessThread(stk500Serial *owner, QString portName
     this->isProcessing = false;
     this->isBaudChanged = false;
     this->serialBaud = 0;
-    this->currentTask = NULL;
     this->portName = portName;
     this->status = "";
 }
@@ -391,7 +376,7 @@ void stk500_ProcessThread::run() {
                 }
             } else {
                 /* Command mode: process bootloader I/O */
-                stk500Task *task = this->currentTask;
+                stk500Task *task = currentTask();
 
                 /* If not signed on and a task is to be handled, sign on first */
                 if (task != NULL && !protocol.isSignedOn()) {
@@ -487,7 +472,10 @@ void stk500_ProcessThread::run() {
 
                         // Process the task after setting the protocol
                         task->setProtocol(&protocol);
-                        task->run();
+                        if (!task->isCancelled()) {
+                            task->setProtocol(&protocol);
+                            task->run();
+                        }
 
                         // Flush the data on the Micro-SD now all is well
                         protocol.sd().flushCache();
@@ -501,12 +489,20 @@ void stk500_ProcessThread::run() {
                         }
                     }
 
+                    // Clear the currently executed task
+                    this->tasksLock.lock();
+                    if (!this->tasks.empty() && (this->tasks.head() == task)) {
+                        this->tasks.dequeue();
+                    }
+                    if (this->tasks.empty()) {
+                        isProcessing = false;
+                    }
+                    this->tasksLock.unlock();
+
                     // Notify we finished (or failed, or cancelled...)
+                    task->finish();
                     owner->notifyTaskFinished(this, task);
 
-                    // Clear the currently executed task
-                    currentTask = NULL;
-                    isProcessing = false;
                     wasIdling = false;
 
                 } else if (protocol.idleTime() >= STK500_CMD_MIN_INTERVAL) {
@@ -572,13 +568,21 @@ void stk500_ProcessThread::updateStatus(QString status) {
 }
 
 void stk500_ProcessThread::cancelTasks() {
-    stk500Task *curr = currentTask;
-    if (curr != NULL) {
-        curr->cancel();
+    tasksLock.lock();
+    for (int i = 0; i < tasks.length(); i++) {
+        tasks[i]->cancel();
     }
-    wake();
+    tasks.clear();
+    tasksLock.unlock();
 }
 
 void stk500_ProcessThread::wake() {
     cond.wakeAll();
+}
+
+stk500Task *stk500_ProcessThread::currentTask() {
+    tasksLock.lock();
+    stk500Task *task = tasks.empty() ? NULL : tasks.head();
+    tasksLock.unlock();
+    return task;
 }

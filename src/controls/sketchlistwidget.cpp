@@ -7,8 +7,9 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
     ui(new Ui::SketchListWidget)
 {
     ui->setupUi(this);
-
     setStyleSheet("QListWidget::item { border: 5px solid black; }");
+
+    stopLoadingIcons();
 }
 
 SketchListWidget::~SketchListWidget()
@@ -85,6 +86,10 @@ void SketchListWidget::refreshSketches() {
     startLoadingIcons();
 }
 
+void SketchListWidget::stopLoadingIcons() {
+    lastTask = NULL;
+}
+
 void SketchListWidget::startLoadingIcons() {
     // Find the first icon that requires loading
     SketchInfo sketch;
@@ -106,18 +111,19 @@ void SketchListWidget::startLoadingIcons() {
         }
     }
     if (foundSketch) {
-        serial->executeAsync(*new stk500LoadIcon(sketch));
+        lastTask = new stk500LoadIcon(sketch);
+        serial->execute(*lastTask, true);
+    } else {
+        stopLoadingIcons();
     }
 }
 
 void SketchListWidget::serialTaskFinished(stk500Task *task) {
-    if (typeid(*task) != typeid(stk500LoadIcon)) {
-         return;
-    }
+    // Filter out the requested task
+    if (lastTask != task) return;
 
     // Find the item belonging to this task
-    stk500LoadIcon *loadTask = (stk500LoadIcon*) task;
-    SketchInfo &sketch = loadTask->sketch;
+    SketchInfo &sketch = lastTask->sketch;
     QString sketchName = QString(sketch.name);
     for (int i = 0; i < ui->list->count(); i++) {
         QListWidgetItem *item = ui->list->item(i);
@@ -131,8 +137,9 @@ void SketchListWidget::serialTaskFinished(stk500Task *task) {
     }
 
     // Memory management: need to delete this when done
-    delete loadTask;
+    delete lastTask;
 
+    // If not aborted, continue with the next task
     startLoadingIcons();
 }
 
