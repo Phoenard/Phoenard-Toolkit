@@ -26,6 +26,7 @@ void SketchListWidget::refreshSketches() {
     QIcon loadIcon(":/icons/sketchloading.png");
 
     // Synchronize the items in the list widget with the sketches
+    QListWidgetItem *selected = NULL;
     for (int i = 0; i < task.sketches.length(); i++) {
         SketchInfo sketch = task.sketches[i];
         QString sketchName = QString(sketch.name);
@@ -68,6 +69,11 @@ void SketchListWidget::refreshSketches() {
             itemFound->setIcon(loadIcon);
         }
 
+        // Check if current sketch
+        if (sketchName == task.currentSketch) {
+            selected = itemFound;
+        }
+
         // Store sketch information in item
         QVariant var;
         var.setValue(sketch);
@@ -77,6 +83,11 @@ void SketchListWidget::refreshSketches() {
     // Remove any items past the count limit
     while (ui->list->count() > task.sketches.length()) {
         ui->list->removeItemWidget(ui->list->item(ui->list->count() - 1));
+    }
+
+    // Select the selected item
+    if (selected != NULL) {
+        selected->setSelected(true);
     }
 
     // Connect the signal fired when a task is finished

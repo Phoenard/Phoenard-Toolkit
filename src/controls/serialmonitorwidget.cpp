@@ -113,16 +113,15 @@ void serialmonitorwidget::clearOutputText() {
 /* Read Serial output and display it in the text area */
 void serialmonitorwidget::readSerialOutput()
 {
-    char buff[1025];
-    int len = serial->read(buff, 1024);
+    char buff[1024];
+    int len = serial->read(buff, sizeof(buff));
     if (len) {
         if (this->screenEnabled) {
             for (int i = 0; i < len; i++) {
                 receiveScreen(buff[i]);
             }
         } else {
-            buff[len] = 0;
-            QString myString(buff);
+            QString myString = QString::fromLatin1(buff, len);
             myString = myString.remove('\r');
 
             if (ui->autoScrollCheck->isChecked()) {

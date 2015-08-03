@@ -214,7 +214,8 @@ Pixel Cube::pixel(int x, int y) {
 }
 
 void Cube::setPixel(int x, int y, QColor color) {
-    Pixel color_pixel = {color.rgb()};
+    Pixel color_pixel;
+    color_pixel.rgb = color.rgb();
     if (trueColor) {
         // True color: simply set the pixel
         pixels[x][y] = color_pixel;

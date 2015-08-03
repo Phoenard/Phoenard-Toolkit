@@ -2,7 +2,7 @@
 
 static QString getShortName(const char* rawname) {
     int len = 8;
-    while ((len > 8) && (rawname[len-1] == ' ')) {
+    while ((len > 0) && (rawname[len-1] == ' ')) {
         len--;
     }
     return QString::fromLatin1(rawname, len);
