@@ -2,6 +2,7 @@
 #define IMAGEEDITOR_H
 
 #include <QWidget>
+#include <QMouseEvent>
 #include "quantize.h"
 
 enum ImageFormat { LCD1, LCD2, LCD4, LCD8, LCD16, BMP8, BMP24, INVALID };
@@ -37,8 +38,21 @@ public:
     const int getColorCount() { return quant.colors; }
     void setColor(int index, QColor color);
     void setPixel(int x, int y, QColor color);
+    QColor pixel(int x, int y);
     void fill(QColor color);
     void paintEvent(QPaintEvent *e);
+    QPixmap &previewImage() { return preview; }
+
+protected:
+    void onMouseChanged(QMouseEvent* event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+
+signals:
+    void mouseChanged(int x, int y, Qt::MouseButtons buttons);
+    void imageChanged();
+
 private:
     QImage sourceImage;
     bool sourceImageValid;
@@ -49,11 +63,7 @@ private:
     Quantize::Cube quant;
     QPixmap preview;
     QRect drawnImageBounds;
-
-signals:
-
-public slots:
-
+    QPoint lastMousePos;
 };
 
 typedef struct Imageheader_LCD {

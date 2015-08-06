@@ -13,6 +13,18 @@ MenuButton::MenuButton(QWidget *parent) :
     this->setMinimumSize(48, 50);
     _isTab = false;
     _isHover = false;
+
+    // Default color palette
+    QPalette pal = this->palette();
+
+    pal.setColor(QPalette::Inactive, QPalette::Button, QColor::fromRgb(255, 128, 128));
+    pal.setColor(QPalette::Active, QPalette::Button, QColor::fromRgb(0, 150, 255));
+    pal.setColor(QPalette::Active, QPalette::Highlight, QColor::fromRgb(128, 128, 128));
+    pal.setColor(QPalette::Inactive, QPalette::Highlight, QColor::fromRgb(255, 255, 0));
+    pal.setColor(QPalette::Disabled, QPalette::Highlight, QColor::fromRgb(255, 255, 255));
+
+    //pal.setColor(QPalette::Highlight, )
+    this->setPalette(pal);
 }
 
 void MenuButton::setIsTab(bool isTab) {
@@ -78,30 +90,25 @@ void MenuButton::paintEvent(QPaintEvent *) {
         painter.fillPath(buttonShape, color);
     } else if (_isTab && isChecked()) {
         // Selected tab flat button
-        QColor color = QColor::fromRgb(255, 255, 255);
+        QColor color = palette().color(QPalette::Base);
         painter.fillPath(buttonShape, color);
     } else {
-        QColor topColor;
-
         // Button state for top color: DOWN, HOVER and NORMAL
+        QColor topColor;
         if (isDown()) {
-            topColor = QColor::fromRgb(128, 128, 128);
+            topColor = palette().color(QPalette::Active, QPalette::Highlight);
         } else if (_isHover) {
-            if (isChecked()) {
-                topColor = QColor::fromRgb(128, 255, 255);
-            } else {
-                topColor = QColor::fromRgb(255, 255, 0);
-            }
+            topColor = palette().color(QPalette::Inactive, QPalette::Highlight);
         } else {
-            topColor = QColor::fromRgb(255, 255, 255);
+            topColor = palette().color(QPalette::Disabled, QPalette::Highlight);
         }
 
         // Checked state for bottom color: CHECKED and UNCHECKED
         QColor bottomColor;
         if (isChecked()) {
-            bottomColor = QColor::fromRgb(0, 150, 255);
+            bottomColor = palette().color(QPalette::Active, QPalette::Button);
         } else {
-            bottomColor = QColor::fromRgb(255, 128, 128);
+            bottomColor = palette().color(QPalette::Inactive, QPalette::Button);
         }
 
         // Reversed gradient when pressed down

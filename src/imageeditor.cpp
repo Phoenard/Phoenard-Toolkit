@@ -77,6 +77,7 @@ bool isLCDColor(ImageFormat format) {
 
 ImageEditor::ImageEditor(QWidget *parent) :
     QWidget(parent) {
+    this->setMouseTracking(true);
 }
 
 void ImageEditor::loadImage(QString filePath) {
@@ -304,6 +305,10 @@ void ImageEditor::setPixel(int x, int y, QColor color) {
     this->update();
 }
 
+QColor ImageEditor::pixel(int x, int y) {
+    return QColor(this->quant.pixel(x, y).rgb);
+}
+
 void ImageEditor::fill(QColor color) {
     for (int x = 0; x < quant.width; x++) {
         for (int y = 0; y < quant.height; y++) {
@@ -434,6 +439,33 @@ void ImageEditor::saveImageTo(QString destFilePath) {
     }
 }
 
+void ImageEditor::onMouseChanged(QMouseEvent* event) {
+    QPoint pos = event->pos();
+    if (!drawnImageBounds.contains(pos)) {
+        lastMousePos = QPoint(-1, -1);
+        return;
+    }
+    int x = (preview.width() * (pos.x() - drawnImageBounds.x())) / drawnImageBounds.width();
+    int y = (preview.height() * (pos.y() - drawnImageBounds.y())) / drawnImageBounds.height();
+    if ((event->button() == Qt::NoButton) && (x == lastMousePos.x()) && (y == lastMousePos.y())) {
+        return;
+    }
+    lastMousePos = QPoint(x, y);
+    emit mouseChanged(x, y, event->buttons());
+}
+
+void ImageEditor::mouseMoveEvent(QMouseEvent *event) {
+    onMouseChanged(event);
+}
+
+void ImageEditor::mousePressEvent(QMouseEvent *event) {
+    onMouseChanged(event);
+}
+
+void ImageEditor::mouseReleaseEvent(QMouseEvent *event) {
+    onMouseChanged(event);
+}
+
 void ImageEditor::paintEvent(QPaintEvent *) {
     QPainter painter(this);
     if (!sourceImageValid) return;
@@ -451,5 +483,7 @@ void ImageEditor::paintEvent(QPaintEvent *) {
 
     // Draw the actual image
     drawnImageBounds = dest;
-    painter.drawPixmap(dest, QPixmap::fromImage(quant.output));
+    preview = QPixmap::fromImage(quant.output);
+    painter.drawPixmap(dest, preview);
+    emit imageChanged();
 }

@@ -18,6 +18,10 @@ public:
     void loadIcon(const char* iconData);
     void saveIcon(char* iconData);
 
+private slots:
+    void on_image_mouseChanged(int x, int y, Qt::MouseButtons buttons);
+    void on_image_imageChanged();
+
 private:
     Ui::IconEditDialog *ui;
 };
