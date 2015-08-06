@@ -360,6 +360,17 @@
              </widget>
             </item>
             <item>
+             <widget class="MenuButton" name="sketches_iconBtn">
+              <property name="text">
+               <string>Icon</string>
+              </property>
+              <property name="icon">
+               <iconset resource="icons/icons.qrc">
+                <normaloff>:/icons/icon_edit.png</normaloff>:/icons/icon_edit.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_4">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>

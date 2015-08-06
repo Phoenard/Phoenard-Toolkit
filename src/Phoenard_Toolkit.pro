@@ -31,6 +31,7 @@ SOURCES += main.cpp\
     dialogs/qmultifiledialog.cpp \
     dialogs/formatselectdialog.cpp \
     dialogs/codeselectdialog.cpp \
+    dialogs/iconeditdialog.cpp \
     stk500/stk500settings.cpp
 
 HEADERS  += mainwindow.h \
@@ -51,6 +52,7 @@ HEADERS  += mainwindow.h \
     dialogs/qmultifiledialog.h \
     dialogs/formatselectdialog.h \
     dialogs/codeselectdialog.h \
+    dialogs/iconeditdialog.h \
     stk500/sketchinfo.h \
     mainmenutab.h \
     stk500/stk500settings.h
@@ -59,6 +61,7 @@ FORMS    += mainwindow.ui \
     progressdialog.ui \
     dialogs/formatselectdialog.ui \
     dialogs/codeselectdialog.ui \
+    dialogs/iconeditdialog.ui \
     controls/serialmonitorwidget.ui \
     controls/sketchlistwidget.ui
 

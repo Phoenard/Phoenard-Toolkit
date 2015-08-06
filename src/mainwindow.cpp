@@ -13,6 +13,7 @@
 #include <QScrollBar>
 #include "dialogs/formatselectdialog.h"
 #include "dialogs/codeselectdialog.h"
+#include "dialogs/iconeditdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -76,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < allButtons_len; i++) {
         allButtons[i]->setIsTab(true);
     }
-    setSelectedTab(0, true);
+    setSelectedTab(1, true);
 
     this->openSerial();
 
@@ -431,7 +432,20 @@ void MainWindow::on_sketches_runBtn_clicked()
         return;
     }
     ui->sketchesWidget->stopLoadingIcons();
-    QString name = ui->sketchesWidget->getSelectedSketch();
+    QString name = ui->sketchesWidget->getSelectedName();
     serial->execute(stk500LaunchSketch(name));
     setSelectedTab(0);
+}
+
+void MainWindow::on_sketches_iconBtn_clicked()
+{
+    if (!ui->sketchesWidget->hasSelectedSketch()) {
+        return;
+    }
+    SketchInfo info = ui->sketchesWidget->getSelectedSketch();
+    IconEditDialog dialog(this);
+    dialog.setModal(true);
+    dialog.setWindowTitle(QString("Editing icon of ") + QString(info.name));
+    dialog.loadIcon(info.iconData);
+    dialog.exec();
 }

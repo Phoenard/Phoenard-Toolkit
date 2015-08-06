@@ -9,6 +9,9 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
     ui->setupUi(this);
     setStyleSheet("QListWidget::item { border: 5px solid black; }");
 
+    loadIcon = QIcon(":/icons/sketchloading.png");
+    defaultIcon = QIcon(":/icons/sketchdefault.png");
+
     stopLoadingIcons();
 }
 
@@ -20,10 +23,6 @@ SketchListWidget::~SketchListWidget()
 void SketchListWidget::refreshSketches() {
     stk500ListSketches task;
     serial->execute(task);
-
-    // Default icon to use
-    QIcon defaultIcon(":/icons/sketchdefault.png");
-    QIcon loadIcon(":/icons/sketchloading.png");
 
     // Synchronize the items in the list widget with the sketches
     QListWidgetItem *selected = NULL;
@@ -156,13 +155,33 @@ void SketchListWidget::serialTaskFinished(stk500Task *task) {
 }
 
 bool SketchListWidget::hasSelectedSketch() {
-    return getSelectedSketch() != "";
+    return getSelectedName() != "";
 }
 
-QString SketchListWidget::getSelectedSketch() {
+QString SketchListWidget::getSelectedName() {
     QList<QListWidgetItem*> items = ui->list->selectedItems();
     if (items.isEmpty()) return "";
     return items[0]->text();
+}
+
+SketchInfo SketchListWidget::getSelectedSketch() {
+    SketchInfo info;
+    QList<QListWidgetItem*> items = ui->list->selectedItems();
+    if (!items.isEmpty()) {
+        info = qvariant_cast<SketchInfo>(items[0]->data(Qt::UserRole));
+
+        // If icon not yet loaded, load it now.
+        if (info.iconDirty) {
+            stk500LoadIcon task(info);
+            serial->execute(task);
+            info = task.sketch;
+            QVariant var;
+            var.setValue(info);
+            items[0]->setData(Qt::UserRole, var);
+            items[0]->setIcon(info.hasIcon ? info.icon : defaultIcon);
+        }
+    }
+    return info;
 }
 
 void SketchListWidget::on_list_itemDoubleClicked(QListWidgetItem*) {

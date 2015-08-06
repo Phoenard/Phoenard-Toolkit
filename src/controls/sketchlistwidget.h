@@ -18,7 +18,8 @@ public:
     ~SketchListWidget();
     void refreshSketches();
     bool hasSelectedSketch();
-    QString getSelectedSketch();
+    QString getSelectedName();
+    SketchInfo getSelectedSketch();
     void startLoadingIcons();
     void stopLoadingIcons();
 
@@ -32,6 +33,8 @@ private slots:
 private:
     Ui::SketchListWidget *ui;
     stk500LoadIcon *lastTask;
+    QIcon loadIcon;
+    QIcon defaultIcon;
 };
 
 #endif // SKETCHLISTWIDGET_H
