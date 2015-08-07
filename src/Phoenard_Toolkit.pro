@@ -16,14 +16,14 @@ win32:RC_ICONS += App_Icon.ico
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    menubutton.cpp \
     stk500/stk500.cpp \
     stk500/stk500task.cpp \
     stk500/stk500serial.cpp \
     stk500/longfilenamegen.cpp \
-    imageeditor.cpp \
-    quantize.cpp \
+    imaging/quantize.cpp \
     colorselect.cpp \
+    controls/menubutton.cpp \
+    controls/imageviewer.cpp \
     controls/sdbrowserwidget.cpp \
     controls/serialmonitorwidget.cpp \
     controls/sketchlistwidget.cpp \
@@ -32,19 +32,21 @@ SOURCES += main.cpp\
     dialogs/formatselectdialog.cpp \
     dialogs/codeselectdialog.cpp \
     dialogs/iconeditdialog.cpp \
-    stk500/stk500settings.cpp
+    stk500/stk500settings.cpp \
+    imaging/phnimage.cpp \
+    imaging/imageformat.cpp
 
 HEADERS  += mainwindow.h \
-    menubutton.h \
     stk500/stk500.h \
     stk500/stk500_fat.h \
     stk500/stk500task.h \
     stk500/stk500serial.h \
     stk500/longfilenamegen.h \
     stk500/stk500command.h \
-    imageeditor.h \
-    quantize.h \
+    imaging/quantize.h \
     colorselect.h \
+    controls/menubutton.h \
+    controls/imageviewer.h \
     controls/sdbrowserwidget.h \
     controls/serialmonitorwidget.h \
     controls/sketchlistwidget.h \
@@ -55,7 +57,9 @@ HEADERS  += mainwindow.h \
     dialogs/iconeditdialog.h \
     stk500/sketchinfo.h \
     mainmenutab.h \
-    stk500/stk500settings.h
+    stk500/stk500settings.h \
+    imaging/phnimage.h \
+    imaging/imageformat.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \

@@ -2,7 +2,7 @@
 #define FORMATSELECTDIALOG_H
 
 #include <QDialog>
-#include "../imageeditor.h"
+#include "../controls/imageviewer.h"
 
 namespace Ui {
 class FormatSelectDialog;
@@ -15,7 +15,7 @@ class FormatSelectDialog : public QDialog
 public:
     explicit FormatSelectDialog(QWidget *parent = 0);
     ~FormatSelectDialog();
-    void setData(ImageEditor *editor, QByteArray &data);
+    void setData(ImageViewer *editor, QByteArray &data);
 
 private slots:
     void on_fmtBox_activated(int index);
@@ -25,7 +25,7 @@ private slots:
 private:
     Ui::FormatSelectDialog *ui;
     QByteArray *data;
-    ImageEditor *editor;
+    ImageViewer *editor;
     QList<QSize> resolutions[6];
 };
 

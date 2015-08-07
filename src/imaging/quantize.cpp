@@ -18,15 +18,6 @@ int calc_distance(Pixel &color1, Pixel &color2) {
             SQUARES[color2.color.b - color1.color.b + MAX_RGB]);
 }
 
-void strip_color565(Pixel &color) {
-    // Retain last 5 bits of red
-    color.color.r &= 0xF8;
-    // Retain last 6 bits of green
-    color.color.g &= 0xFC;
-    // Retain last 5 bits of blue
-    color.color.b &= 0xF8;
-}
-
 /*
  * =====================================================================
  * ================== CUBE CLASS IMPLEMENTATION ========================
@@ -63,13 +54,16 @@ void Cube::erase() {
         delete root;
         root = 0;
     }
+    colors = 0;
+    max_colors = 0;
+    width = 0;
+    height = 0;
 }
 
-void Cube::load(QImage &image, int max_colors, bool convertColor565) {
-    // Load pixels and set up for colormap data
-    loadPixels(image, max_colors, convertColor565);
+void Cube::reduce(int max_colors) {
     this->trueColor = false;
-    int x, y;
+    this->colors = 0;
+    this->max_colors = max_colors;
 
     // Prior to doing things, pre-calculate a colormap
     // This checks if quantification is needed at all
@@ -79,9 +73,10 @@ void Cube::load(QImage &image, int max_colors, bool convertColor565) {
     if (max_colors <= 256) {
         int colors_tmp = 0;
         Pixel *colormap_tmp = new Pixel[max_colors];
-        int i;
-        for (x = 0; x < width; x++) {
-            for (y = 0; y < height; y++) {
+        int x, y, i;
+        bool working = true;
+        for (x = 0; x < width && working; x++) {
+            for (y = 0; y < height && working; y++) {
                 // Attempt to find the index
                 for (i = 0; i < colors_tmp; i++) {
                     if (colormap_tmp[i].value == pixels[x][y].value) {
@@ -92,13 +87,14 @@ void Cube::load(QImage &image, int max_colors, bool convertColor565) {
                 if (i == colors_tmp) {
                     colors_tmp++;
                     if (colors_tmp > max_colors) {
-                        goto end_colorfind;
+                        // Out of range; done.
+                        working = false;
+                        break;
                     }
                     colormap_tmp[i].value = pixels[x][y].value;
                 }
             }
         }
-end_colorfind:
         if (colors_tmp > max_colors) {
             delete[] colormap_tmp;
         } else {
@@ -141,36 +137,21 @@ end_colorfind:
         root = new Node(this);
 
         // Perform the quantization process here
-        classification();
-        reduction();
+        // Repeat and adjust depth until nonzero colors are found
+        while (depth > 0) {
+            classification();
+            reduction();
+            if (colors) {
+                break;
+            } else {
+                depth--;
+            }
+        }
         assignment();
     }
-
-    // Apply to the output image
-    output = QImage(width, height, QImage::Format_ARGB32);
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++) {
-            Pixel p = colormap[pixels[x][y].value];
-            output.setPixel(x, y, p.value);
-        }
-    }
 }
 
-void Cube::loadTrue(QImage &image, bool convertColor565) {
-    loadPixels(image, convertColor565 ? 0x10000 : 0x1000000, convertColor565);
-    this->colors = this->max_colors;
-
-    // Apply to the output image
-    output = QImage(width, height, QImage::Format_ARGB32);
-    int x, y;
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++) {
-            output.setPixel(x, y, pixels[x][y].value);
-        }
-    }
-}
-
-void Cube::loadPixels(QImage &image, int max_colors, bool convertColor565) {
+void Cube::loadImage(QImage &image) {
     // Erase any previous data - if it exists
     erase();
 
@@ -181,10 +162,9 @@ void Cube::loadPixels(QImage &image, int max_colors, bool convertColor565) {
     for (int i = 0; i < width; i++) {
         this->pixels[i] = new Pixel[height];
     }
-    this->max_colors = max_colors;
+    this->colors = this->max_colors = 0x1000000;
     this->colormap = 0;
     this->nodes = 0;
-    this->colors = 0;
     this->trueColor = true;
 
     // Fill pixel data
@@ -194,60 +174,31 @@ void Cube::loadPixels(QImage &image, int max_colors, bool convertColor565) {
             this->pixels[x][y].rgb = image.pixel(x, y);
         }
     }
-
-    // Strip 565 color if conversion is needed
-    if (convertColor565) {
-        for (x = 0; x < width; x++) {
-            for (y = 0; y < height; y++) {
-                strip_color565(this->pixels[x][y]);
-            }
-        }
-    }
 }
 
-Pixel Cube::pixel(int x, int y) {
-    if (trueColor) {
-        return pixels[x][y];
-    } else {
-        return colormap[pixels[x][y].value];
-    }
-}
-
-void Cube::setPixel(int x, int y, QColor color) {
-    Pixel color_pixel;
-    color_pixel.rgb = color.rgb();
-    if (trueColor) {
-        // True color: simply set the pixel
-        pixels[x][y] = color_pixel;
-
-    } else {
-        // Color mapped
-        // Find out what index is closest to the color
-        // If equal, we are done entirely
-        int minDist = INT_MAX;
-        uint mapIdx = 0;
-        for (int i = 0; i < this->colors; i++) {
-            int dist = calc_distance(this->colormap[i], color_pixel);
-            if (dist < minDist) {
-                minDist = dist;
-                mapIdx = i;
-                if (dist == 0) break;
-            }
+uint Cube::findColor(Pixel color) {
+    // Color mapped
+    // Find out what index is closest to the color
+    // If equal, we are done entirely
+    int minDist = INT_MAX;
+    uint mapIdx = 0;
+    for (int i = 0; i < this->colors; i++) {
+        int dist = calc_distance(this->colormap[i], color);
+        if (dist < minDist) {
+            minDist = dist;
+            mapIdx = i;
+            if (dist == 0) break;
         }
-        // Store color index and change color to the mapped value
-        pixels[x][y].value = mapIdx;
-        color_pixel = this->colormap[mapIdx];
     }
-
-    // Update the output preview buffer image
-    this->output.setPixel(x, y, color_pixel.rgb);
+    // Done!
+    return mapIdx;
 }
 
 void Cube::classification() {
     // convert to indexed color
     for (int x = width; --x >= 0; ) {
         for (int y = height; --y >= 0; ) {
-            Pixel pixel = pixels[x][y];
+            Pixel &pixel = pixels[x][y];
             unsigned char red   = pixel.color.r;
             unsigned char green = pixel.color.g;
             unsigned char blue  = pixel.color.b;

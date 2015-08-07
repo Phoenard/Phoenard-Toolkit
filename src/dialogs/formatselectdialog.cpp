@@ -19,16 +19,17 @@ FormatSelectDialog::~FormatSelectDialog()
     delete ui;
 }
 
-void FormatSelectDialog::setData(ImageEditor *editor, QByteArray &data) {
+void FormatSelectDialog::setData(ImageViewer *editor, QByteArray &data) {
     this->data = &data;
     this->editor = editor;
     int size = data.size();
 
     // Attempt to load for the first mode
-    editor->loadImage(data);
-    ImageFormat format = editor->imageFormat();
+    PHNImage &image = editor->image();
+    image.loadData(data);
+    ImageFormat format = image.imageFormat();
     QSize imageSize;
-    if (editor->imageValid()) imageSize = editor->imageSize();
+    if (image.imageValid()) imageSize = image.imageSize();
 
     // Add single option for detected format
     ui->fmtBox->addItem(getFormatName(format));
@@ -82,7 +83,7 @@ void FormatSelectDialog::on_fmtBox_activated(int index)
 {
     ui->resBox->clear();
     if (index == 0) {
-        editor->loadImage(*data);
+        editor->image().loadData(*data);
     } else if (index == -1) {
         return;
     }
@@ -104,5 +105,5 @@ void FormatSelectDialog::on_resBox_currentIndexChanged(int index)
     }
 
     QSize res = resolutions[fmtIndex].at(index);
-    editor->loadImageRaw(res.width(),res.height(), bitModes[fmtIndex], *data);
+    editor->image().loadData(res.width(),res.height(), bitModes[fmtIndex], *data);
 }

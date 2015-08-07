@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QDebug>
-#include "../imageeditor.h"
+#include "imageviewer.h"
 #include "../mainmenutab.h"
 
 namespace Ui {
@@ -33,7 +33,7 @@ public:
     ~serialmonitorwidget();
     void openSerial();
     void setScreenShare(bool enabled);
-    ImageEditor* getImageEditor();
+    ImageViewer* getImageEditor();
     virtual void setSerial(stk500Serial *serial);
 
 private:

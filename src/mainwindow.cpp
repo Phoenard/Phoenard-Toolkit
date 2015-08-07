@@ -269,19 +269,21 @@ void MainWindow::on_sd_newButton_clicked()
 }
 
 void MainWindow::img_updateFormat() {
-    ImageFormat format = ui->img_editor->outputImageFormat();
+    PHNImage &image = ui->img_editor->image();
+    ImageFormat format = image.outputImageFormat();
     ui->img_formatButton->setIcon(fmt_icons[(int) format]);
     ui->img_colorSelect->setColorMode(format);
 
-    if (!ui->img_editor->outputImageTrueColor()) {
-        for (int i = 0; i < ui->img_editor->getColorCount(); i++) {
-            ui->img_colorSelect->setColor(i, ui->img_editor->getColor(i));
+    if (!image.isFullColor()) {
+        for (int i = 0; i < image.getColorCount(); i++) {
+            ui->img_colorSelect->setColor(i, image.getColor(i));
         }
     }
 }
 
 void MainWindow::on_img_formatButton_clicked()
 {
+    PHNImage &image = ui->img_editor->image();
     QMenu myMenu;
     QAction *actions[7];
     for (int i = 0; i < 7; i++) {
@@ -289,7 +291,7 @@ void MainWindow::on_img_formatButton_clicked()
     }
     QString useHeaderTitle = "Use image header";
     QAction *useHeaderItem;
-    if (ui->img_editor->hasHeader()) {
+    if (image.hasHeader()) {
         QIcon useHeaderIcon(":/icons/checkbox_checked.png");
         useHeaderItem = myMenu.addAction(useHeaderIcon, useHeaderTitle);
     } else {
@@ -299,11 +301,11 @@ void MainWindow::on_img_formatButton_clicked()
 
     QAction *clicked = showMenu(ui->img_formatButton, myMenu);
     if (clicked == useHeaderItem) {
-        ui->img_editor->setHeader(!ui->img_editor->hasHeader());
+        image.setHeader(!image.hasHeader());
     } else {
         for (int i = 0; i < 7; i++) {
             if (actions[i] == clicked) {
-                ui->img_editor->setFormat((ImageFormat) i);
+                image.setFormat((ImageFormat) i);
             }
         }
         img_updateFormat();
@@ -312,8 +314,9 @@ void MainWindow::on_img_formatButton_clicked()
 
 void MainWindow::img_load(QString fileName, ImageFormat format)
 {
-    ui->img_editor->loadImage(fileName);
-    ui->img_editor->setFormat(format);
+    PHNImage &image = ui->img_editor->image();
+    image.loadFile(fileName);
+    image.setFormat(format);
     img_updateFormat();
 }
 
@@ -374,7 +377,7 @@ void MainWindow::on_img_loadButton_clicked()
     img_updateFormat();
 }
 
-void MainWindow::showSaveDialog(QWidget *at, ImageEditor *editorDialog) {
+void MainWindow::showSaveDialog(QWidget *at, ImageViewer *editorDialog) {
     QIcon icon_file(":/icons/newfile.png");
     QIcon icon_sd(":/icons/microsd.png");
     QIcon icon_code(":/icons/code.png");
@@ -393,12 +396,12 @@ void MainWindow::showSaveDialog(QWidget *at, ImageEditor *editorDialog) {
             return;
         }
         QString filePath = dialog.selectedFiles().at(0);
-        editorDialog->saveImageTo(filePath);
+        editorDialog->image().saveImageTo(filePath);
     } else if (result == sdOpt) {
         //TODO: Show dialog for browsing on the micro-SD
         return;
     } else if (result == codeOpt) {
-        QByteArray data = editorDialog->saveImage();
+        QByteArray data = editorDialog->image().saveImage();
 
         /* Allow the user to copy code  */
         CodeSelectDialog dialog(this);

@@ -4,8 +4,8 @@
 #include <QMainWindow>
 #include <QTreeWidgetItem>
 #include "controls/sdbrowserwidget.h"
-#include "menubutton.h"
-#include "imageeditor.h"
+#include "controls/menubutton.h"
+#include "controls/imageviewer.h"
 #include <QListView>
 #include <QPushButton>
 #include <QFileDialog>
@@ -27,7 +27,7 @@ public:
     int selectedTab();
     void img_updateFormat();
     void img_load(QString fileName, ImageFormat format);
-    void showSaveDialog(QWidget *at, ImageEditor *editorDialog);
+    void showSaveDialog(QWidget *at, ImageViewer *editorDialog);
 
 private slots:
     /* Custom slots */

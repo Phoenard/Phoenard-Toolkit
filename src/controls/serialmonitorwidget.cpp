@@ -21,8 +21,10 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     for (int i = 0; i < (2*240*320); i++) {
         tmp.append((char) 0);
     }
-    this->ui->outputImage->loadImageRaw(320, 240, 16, tmp, colors);
-    this->ui->outputImage->setFormat(BMP24);
+
+    PHNImage &image = ui->outputImage->image();
+    image.loadData(320, 240, 16, tmp, colors);
+    image.setFormat(BMP24);
 }
 
 serialmonitorwidget::~serialmonitorwidget()
@@ -141,7 +143,7 @@ void serialmonitorwidget::readSerialOutput()
     }
 }
 
-ImageEditor* serialmonitorwidget::getImageEditor() {
+ImageViewer* serialmonitorwidget::getImageEditor() {
     return ui->outputImage;
 }
 
@@ -210,7 +212,7 @@ void serialmonitorwidget::receiveScreen(quint8 byte)
             this->screen.view_hb = 319;
             this->screen.view_va = 0;
             this->screen.view_vb = 239;
-            this->ui->outputImage->fill(Qt::black);
+            this->ui->outputImage->image().fill(Qt::black);
         } else if (byte == 0xFF) {
             this->screen.cmd_len = 2;
         } else if (byte == 0xFE) {
@@ -225,7 +227,7 @@ void serialmonitorwidget::receiveScreen(quint8 byte)
 void serialmonitorwidget::receivePixel(quint16 color)
 {
     // Write pixel to the screen image
-    this->ui->outputImage->setPixel(screen.cur_x, screen.cur_y, color565_to_rgb(color));
+    this->ui->outputImage->image().setPixel(screen.cur_x, screen.cur_y, color565_to_rgb(color));
 
     // Next pixel - use entrymode and view port
     switch (screen.entrymode) {

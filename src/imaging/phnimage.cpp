@@ -1,9 +1,4 @@
-#include "imageeditor.h"
-#include <QFile>
-#include <QPainter>
-#include <QDebug>
-#include <QTime>
-#include <QtEndian>
+#include "phnimage.h"
 
 QColor color565_to_rgb(quint16 color565) {
     QColor rval;
@@ -14,93 +9,55 @@ QColor color565_to_rgb(quint16 color565) {
     return rval;
 }
 
-quint16 rgb_to_color565(QColor &color) {
+quint16 rgb_to_color565(Quantize::Pixel &color) {
     quint16 rval;
-    rval = color.red() >> 3;
+    rval = color.color.r >> 3;
     rval <<= 6;
-    rval |= color.green() >> 2;
+    rval |= color.color.g >> 2;
     rval <<= 5;
-    rval |= color.blue() >> 3;
+    rval |= color.color.b >> 3;
     return rval;
 }
 
-QString getFormatName(ImageFormat format) {
-    switch (format) {
-    case BMP8: return "Bitmap (8bit, 256 colors)";
-    case BMP24: return "Bitmap (24bit, true color)";
-    case LCD1: return "LCD (1bit, 2 colors)";
-    case LCD2: return "LCD (2bit, 4 colors)";
-    case LCD4: return "LCD (4bit, 16 colors)";
-    case LCD8: return "LCD (8bit, 256 colors)";
-    case LCD16: return "LCD (16bit, true color)";
-    default: return "Unknown format";
-    }
+static void strip_color565(Quantize::Pixel &color) {
+    // Retain last 5 bits of red
+    color.color.r &= 0xF8;
+    // Retain last 6 bits of green
+    color.color.g &= 0xFC;
+    // Retain last 5 bits of blue
+    color.color.b &= 0xF8;
 }
 
-int getFormatColors(ImageFormat format) {
-    switch (format) {
-    case BMP24:
-        return 0x1000000;
-    case BMP8:
-        return 0x100;
-    case LCD1:
-        return 0x2;
-    case LCD2:
-        return 0x4;
-    case LCD4:
-        return 0x10;
-    case LCD8:
-        return 0x100;
-    case LCD16:
-        return 0x10000;
-    default:
-        return 0x1000000;
-    }
+PHNImage::PHNImage()
+{
+    this->sourceImageValid = false;
 }
 
-bool isTrueColor(ImageFormat format) {
-    return (format == BMP24) || (format == LCD16);
+void PHNImage::onChanged() {
+    emit changed();
 }
 
-bool isLCDColor(ImageFormat format) {
-    switch (format) {
-    case LCD1:
-    case LCD2:
-    case LCD4:
-    case LCD8:
-    case LCD16:
-        return true;
-    default:
-        return false;
-    }
-}
-
-ImageEditor::ImageEditor(QWidget *parent) :
-    QWidget(parent) {
-    this->setMouseTracking(true);
-}
-
-void ImageEditor::loadImage(QString filePath) {
+void PHNImage::loadFile(QString filePath) {
     QFile sourceFile(filePath);
     sourceFile.open(QIODevice::ReadOnly);
     if (sourceFile.isOpen()) {
         QByteArray data = sourceFile.readAll();
         sourceFile.close();
-        loadImage(data);
+        loadData(data);
     } else {
         qDebug() << "IMAGE LOAD FAIL";
     }
 }
 
-void ImageEditor::loadImage(QByteArray &data) {
+void PHNImage::loadData(QByteArray &data) {
     // By default, loading fails
     sourceImageValid = false;
     sourceImageFormat = INVALID;
-    destImageColors = 0;
     destImageHeader = true;
 
     // Fails instantly if the length is below header size
     if (data.size() < 10) {
+        quant.erase();
         return;
     }
 
@@ -144,7 +101,8 @@ void ImageEditor::loadImage(QByteArray &data) {
             stream.readRawData(pixeldata.data(), datasize);
 
             // Read the remaining pixel data into a byte array for further loading
-            loadImageRaw(header.width, header.height, header.bpp, pixeldata, pixelmap);
+            loadData(header.width, header.height, header.bpp, pixeldata, pixelmap);
+            destImageHeader = true;
         }
     }
 
@@ -164,7 +122,7 @@ void ImageEditor::loadImage(QByteArray &data) {
     }
 }
 
-void ImageEditor::loadImageRaw(int width, int height, int bpp, QByteArray &data) {
+void PHNImage::loadData(int width, int height, int bpp, QByteArray &data) {
     QList<QColor> defaultColors;
     if (bpp <= 8) {
         int colorCount = 1 << bpp;
@@ -173,13 +131,12 @@ void ImageEditor::loadImageRaw(int width, int height, int bpp, QByteArray &data)
             defaultColors.append(QColor::fromRgbF(f, f, f));
         }
     }
-    loadImageRaw(width, height, bpp, data, defaultColors);
+    loadData(width, height, bpp, data, defaultColors);
 }
 
-void ImageEditor::loadImageRaw(int width, int height, int bpp, QByteArray &data, QList<QColor> &pixelmap) {
+void PHNImage::loadData(int width, int height, int bpp, QByteArray &data, QList<QColor> &pixelmap) {
     sourceImage = QImage(width, height, QImage::Format_ARGB32);
     sourceImageValid = true;
-    destImageColors = 0;
     destImageHeader = false;
     switch (bpp) {
     case 1:
@@ -210,8 +167,27 @@ void ImageEditor::loadImageRaw(int width, int height, int bpp, QByteArray &data,
                 dataIndex += 2;
             }
         }
+
+        // Update the preview image information
+        setFormat(sourceImageFormat);
     } else {
         // Load as 1/2/4/8-bit raw colormapped image
+        // To preserve the colormap, make sure to load manually
+        quant.erase();
+        quant.trueColor = false;
+        quant.width = width;
+        quant.height = height;
+        quant.max_colors = 1 << bpp;
+        quant.colors = pixelmap.length();
+        quant.colormap = new Quantize::Pixel[quant.colors];
+        for (int i = 0; i < quant.colors; i++) {
+            quant.colormap[i].rgb = pixelmap[i].rgb();
+        }
+        quant.pixels = new Quantize::Pixel*[quant.width];
+        for (int i = 0; i < quant.width; i++) {
+            quant.pixels[i] = new Quantize::Pixel[quant.height];
+        }
+
         int tmpbuff = 0;
         int tmpbuff_len = 0;
         int pixelmask = (1 << bpp) - 1;
@@ -223,29 +199,32 @@ void ImageEditor::loadImageRaw(int width, int height, int bpp, QByteArray &data,
                     tmpbuff = (data.at(dataIndex++) & 0xFF);
                     tmpbuff_len = 8;
                 }
-                sourceImage.setPixel(x, y, pixelmap.at(tmpbuff & pixelmask).rgb());
+                uint index = tmpbuff & pixelmask;
+                quant.pixels[x][y].value = index;
+                sourceImage.setPixel(x, y, quant.colormap[index].rgb);
                 tmpbuff >>= bpp;
                 tmpbuff_len -= bpp;
             }
         }
-    }
 
-    // Update the preview image information
-    setFormat(sourceImageFormat);
+        destImageFormat = sourceImageFormat;
+        _pixmap = QPixmap::fromImage(sourceImage);
+        onChanged();
+    }
 }
 
-void ImageEditor::setFormat(ImageFormat format, int colorCount) {
+void PHNImage::setFormat(ImageFormat format, int colorCount) {
     if (!sourceImageValid) {
-        destImageFormat = LCD1;
-        update();
+        destImageFormat = INVALID;
+        quant.erase();
+        onChanged();
         return;
     }
     destImageFormat = format;
-    int maxColors = getFormatColors(destImageFormat);
     if (colorCount == -1) {
-        colorCount = maxColors;
+        colorCount = getFormatColors(destImageFormat);
     }
-    if (destImageColors == colorCount) {
+    if (quant.colors == colorCount) {
         return;
     }
 
@@ -253,23 +232,19 @@ void ImageEditor::setFormat(ImageFormat format, int colorCount) {
     QTime myTimer;
     myTimer.start();
 
-    // If 16-bit LCD color is used, convert the color data first
-    bool convert565 = isLCDColor(destImageFormat) && !isLCDColor(sourceImageFormat);
+    // Load the image data into the quantizer
+    quant.loadImage(sourceImage);
 
-    // If converting to a true color format, do not perform quantization
-    // Only perform it if the amount was clamped
-    if (isTrueColor(destImageFormat) && colorCount >= maxColors) {
-        // Store as true color
-        quant.loadTrue(sourceImage, convert565);
-    } else {
-        // Perform the quantization as needed
-        quant.load(sourceImage, colorCount, convert565);
-    }
-    destImageColors = quant.colors;
+    // Preset color count
+    bool strip565 = isLCDFormat(destImageFormat) && !isLCDFormat(sourceImageFormat);
+    quant.max_colors = quant.colors = strip565 ? 0x10000 : 0x1000000;
 
-    // For colormapped images, we need to sort the color indices
-    if (!isTrueColor(destImageFormat)) {
-        if (isTrueColor(sourceImageFormat)) {
+    // Reduce the amount of colors into a colormap if needed
+    if (!isFullColorFormat(destImageFormat)) {
+        quant.reduce(colorCount);
+
+        // For colormapped images, we need to sort the color indices
+        if (isFullColorFormat(sourceImageFormat)) {
             // For source images of true color, this is done from dark to light colors
             quant.sortColors();
         } else {
@@ -278,47 +253,112 @@ void ImageEditor::setFormat(ImageFormat format, int colorCount) {
         }
     }
 
+    // Strip non-565 colors if needed
+    if (strip565) {
+        if (quant.trueColor) {
+            int x, y;
+            for (x = 0; x < quant.width; x++) {
+                for (y = 0; y < quant.height; y++) {
+                    strip_color565(quant.pixels[x][y]);
+                }
+            }
+        } else {
+            for (int i = 0; i < quant.colors; i++) {
+                strip_color565(quant.colormap[i]);
+            }
+        }
+    }
+
+    // Turn the quantized result into a pixmap for display purposes
+    QImage quantImage(quant.width, quant.height, QImage::Format_ARGB32);
+    if (quant.trueColor) {
+        // True color mode - set pixels
+        int x, y;
+        for (x = 0; x < quant.width; x++) {
+            for (y = 0; y < quant.height; y++) {
+                quantImage.setPixel(x, y, quant.pixels[x][y].rgb);
+            }
+        }
+    } else {
+        // Colormap mode - set using colormap
+        int x, y;
+        uint pixIndex;
+        for (x = 0; x < quant.width; x++) {
+            for (y = 0; y < quant.height; y++) {
+                pixIndex = quant.pixels[x][y].value;
+                quantImage.setPixel(x, y, quant.colormap[pixIndex].rgb);
+            }
+        }
+    }
+    _pixmap = QPixmap::fromImage(quantImage);
+
     qDebug() << "Quantization to" << colorCount << "colors"
              << "; format =" << getFormatName(destImageFormat)
              << "; time =" << myTimer.elapsed() << "ms"
              << "; result color count =" << quant.colors;
 
-    preview = QPixmap::fromImage(quant.output);
-
-    update();
+    this->onChanged();
 }
 
-int ImageEditor::imageFormatColors() {
-    return destImageColors;
-}
-
-QColor ImageEditor::getColor(int index) {
+QColor PHNImage::getColor(int index) {
     return QColor(this->quant.colormap[index].value);
 }
 
-void ImageEditor::setColor(int index, QColor color) {
+void PHNImage::setColor(int index, QColor color) {
     this->quant.colormap[index].value = (uint) color.rgb();
 }
 
-void ImageEditor::setPixel(int x, int y, QColor color) {
-    this->quant.setPixel(x, y, color);
-    this->update();
+void PHNImage::setPixel(int x, int y, QColor color) {
+    // First figure out the color to actually use
+    // For colormapped images, this can only be a valid entry
+    // For LCD16, we need to trim the color to 16-bit
+    // For TrueColor we can use any color (24-bit)
+    if (!this->quant.trueColor) {
+        // Colormap: find index and apply
+        Quantize::Pixel p;
+        p.rgb = color.rgb();
+        uint index = this->quant.findColor(p);
+        this->quant.pixels[x][y].value = index;
+        color.setRgb(this->quant.colormap[index].rgb);
+
+    } else if (this->destImageFormat == LCD16) {
+        // True color 16-bit: Trim to 565 format
+        Quantize::Pixel pixel;
+        pixel.rgb = color.rgb();
+        strip_color565(pixel);
+        color.setRgb(pixel.rgb);
+        this->quant.pixels[x][y] = pixel;
+
+    } else {
+        // True color 24-bit: directly apply color
+        this->quant.pixels[x][y].rgb = color.rgb();
+    }
+
+    // Update the pixmap with this pixel
+    QPainter painter(&_pixmap);
+    painter.setPen(color);
+    painter.drawPoint(x, y);
+
+    this->onChanged();
 }
 
-QColor ImageEditor::pixel(int x, int y) {
-    return QColor(this->quant.pixel(x, y).rgb);
+QColor PHNImage::pixel(int x, int y) {
+    Quantize::Pixel &p = quant.pixels[x][y];
+    if (!quant.trueColor) {
+        p = quant.colormap[p.value];
+    }
+    return QColor(p.rgb);
 }
 
-void ImageEditor::fill(QColor color) {
+void PHNImage::fill(QColor color) {
     for (int x = 0; x < quant.width; x++) {
         for (int y = 0; y < quant.height; y++) {
-            this->quant.setPixel(x, y, color);
+            setPixel(x, y, color);
         }
     }
-    this->update();
 }
 
-QByteArray ImageEditor::saveImage() {
+QByteArray PHNImage::saveImage() {
     QByteArray dataArray;
     QDataStream out(&dataArray, QIODevice::WriteOnly);
     int x, y;
@@ -328,7 +368,7 @@ QByteArray ImageEditor::saveImage() {
         QImage img_24bit(quant.width, quant.height, QImage::Format_ARGB32);
         for (x = 0; x < quant.width; x++) {
             for (y = 0; y < quant.height; y++) {
-                img_24bit.setPixel(x, y, quant.pixel(x, y).value);
+                img_24bit.setPixel(x, y, quant.pixels[x][y].rgb);
             }
         }
         img_24bit.save(out.device(), "BMP");
@@ -343,7 +383,8 @@ QByteArray ImageEditor::saveImage() {
         }
         for (x = 0; x < quant.width; x++) {
             for (y = 0; y < quant.height; y++) {
-                img_8bit.setPixel(x, y, quant.pixels[x][y].value);
+                Quantize::Pixel &p = quant.colormap[quant.pixels[x][y].value];
+                img_8bit.setPixel(x, y, p.rgb);
             }
         }
         img_8bit.save(out.device(), "BMP");
@@ -371,7 +412,7 @@ QByteArray ImageEditor::saveImage() {
             // Write out the pixel data
             for (y = 0; y < lcd_header.height; y++) {
                 for (x = 0; x < lcd_header.width; x++) {
-                    color = rgb_to_color565(QColor(quant.pixel(x, y).value));
+                    color = rgb_to_color565(quant.pixels[x][y]);
                     out.writeRawData((char*) &color, sizeof(color));
                 }
             }
@@ -397,7 +438,7 @@ QByteArray ImageEditor::saveImage() {
 
                 // Write out pixelmap
                 for (int i = 0; i < quant.colors; i++) {
-                    color = rgb_to_color565(QColor(quant.colormap[i].value));
+                    color = rgb_to_color565(quant.colormap[i]);
                     out.writeRawData((char*) &color, sizeof(color));
                 }
             }
@@ -427,7 +468,7 @@ QByteArray ImageEditor::saveImage() {
     return dataArray;
 }
 
-void ImageEditor::saveImageTo(QString destFilePath) {
+void PHNImage::saveImageTo(QString destFilePath) {
     QByteArray data = saveImage();
     QFile file(destFilePath);
     if (file.open(QIODevice::WriteOnly)) {
@@ -437,53 +478,4 @@ void ImageEditor::saveImageTo(QString destFilePath) {
     } else {
         qDebug() << "FAILED TO SAVE FILE";
     }
-}
-
-void ImageEditor::onMouseChanged(QMouseEvent* event) {
-    QPoint pos = event->pos();
-    if (!drawnImageBounds.contains(pos)) {
-        lastMousePos = QPoint(-1, -1);
-        return;
-    }
-    int x = (preview.width() * (pos.x() - drawnImageBounds.x())) / drawnImageBounds.width();
-    int y = (preview.height() * (pos.y() - drawnImageBounds.y())) / drawnImageBounds.height();
-    if ((event->button() == Qt::NoButton) && (x == lastMousePos.x()) && (y == lastMousePos.y())) {
-        return;
-    }
-    lastMousePos = QPoint(x, y);
-    emit mouseChanged(x, y, event->buttons());
-}
-
-void ImageEditor::mouseMoveEvent(QMouseEvent *event) {
-    onMouseChanged(event);
-}
-
-void ImageEditor::mousePressEvent(QMouseEvent *event) {
-    onMouseChanged(event);
-}
-
-void ImageEditor::mouseReleaseEvent(QMouseEvent *event) {
-    onMouseChanged(event);
-}
-
-void ImageEditor::paintEvent(QPaintEvent *) {
-    QPainter painter(this);
-    if (!sourceImageValid) return;
-
-    QRect dest(0, 0, preview.width(), preview.height());
-
-    // Show a scaled version of the image
-    float scale_w = (float) width() / (float) dest.width();
-    float scale_h = (float) height() / (float) dest.height();
-    float scale = (scale_w > scale_h) ? scale_h : scale_w;
-    dest.setWidth(dest.width() * scale);
-    dest.setHeight(dest.height() * scale);
-    dest.moveLeft((width() - dest.width()) / 2);
-    dest.moveTop((height() - dest.height()) / 2);
-
-    // Draw the actual image
-    drawnImageBounds = dest;
-    preview = QPixmap::fromImage(quant.output);
-    painter.drawPixmap(dest, preview);
-    emit imageChanged();
 }

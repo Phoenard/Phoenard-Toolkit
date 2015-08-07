@@ -82,7 +82,7 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
-    <widget class="ImageEditor" name="image" native="true">
+    <widget class="ImageViewer" name="image" native="true">
      <property name="autoFillBackground">
       <bool>false</bool>
      </property>
@@ -196,15 +196,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ImageEditor</class>
+   <class>ImageViewer</class>
    <extends>QWidget</extends>
-   <header>../imageeditor.h</header>
+   <header>../controls/imageviewer.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>MenuButton</class>
    <extends>QToolButton</extends>
-   <header>../menubutton.h</header>
+   <header>../controls/menubutton.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -245,6 +245,7 @@
 
 #include <QImage>
 #include <QColor>
+#include <QDebug>
 
 namespace Quantize {
 
@@ -280,7 +281,7 @@ typedef struct Search {
 } Search;
 
 /**
- * Figure out the distance between this node and som color.
+ * Figure out the euclidian distance between two pixel colors
  */
 int calc_distance(Pixel &color1, Pixel &color2);
 
@@ -311,9 +312,6 @@ public:
     int width;
     int height;
 
-    // Stores a Qt version of the quantized image
-    QImage output;
-
     /*
      * Initializer specifying the pixel ARGB data and max colors to quantize to
      */
@@ -325,14 +323,19 @@ public:
     ~Cube();
 
     /*
-     * Performs quantization using the image, the result stored in this instance
+     * Erases all contents from previous quantization
      */
-    void load(QImage &image, int max_colors, bool convertColor565 = false);
+    void erase();
 
     /*
-     * Stores an image in true color without using quantization
+     * Loads image data without applying to the output image
      */
-    void loadTrue(QImage &image, bool convertColor565 = false);
+    void loadImage(QImage &image);
+
+    /*
+     * Performs quantization on the currently loaded data
+     */
+    void reduce(int max_colors);
 
     /*
      * Procedure Classification begins by initializing a color
@@ -413,23 +416,9 @@ public:
     void sortColors();
 
     /*
-     * Obtains the value of a single pixel
+     * Finds the index in the colormap for the color closest
      */
-    Pixel pixel(int x, int y);
-    /*
-     * Sets the value of a single pixel (true color only)
-     */
-    void setPixel(int x, int y, QColor color);
-
-private:
-    /*
-     * Erases all contents from previous quantization
-     */
-    void erase();
-    /*
-     * Loads image data without applying to the output image
-     */
-    void loadPixels(QImage &image, int max_colors, bool convertColor565);
+    uint findColor(Pixel color);
 };
 
 /**

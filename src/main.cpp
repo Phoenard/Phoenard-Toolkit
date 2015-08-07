@@ -33,16 +33,16 @@ int main(int argc, char *argv[])
     if (parser.isSet(imageConvertOption)) {
         QString source = args.at(0);
         QString dest = args.at(1);
-        ImageEditor editor;
+        PHNImage image;
 
         //TODO: Handle raw input formats here
-        editor.loadImage(source);
+        image.loadFile(source);
 
         //TODO: Handle other output image formats here
         if (parser.isSet(skiFormat)) {
-            editor.setFormat(LCD1);
-            editor.setHeader(false);
-            editor.saveImageTo(dest);
+            image.setFormat(LCD1);
+            image.setHeader(false);
+            image.saveImageTo(dest);
         }
         exit(0);
     }

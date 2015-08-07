@@ -63,7 +63,7 @@
     </widget>
    </item>
    <item>
-    <widget class="ImageEditor" name="outputImage" native="true">
+    <widget class="ImageViewer" name="outputImage" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -203,9 +203,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ImageEditor</class>
+   <class>ImageViewer</class>
    <extends>QWidget</extends>
-   <header>../imageeditor.h</header>
+   <header>imageviewer.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -716,7 +716,7 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
-           <widget class="ImageEditor" name="img_editor" native="true"/>
+           <widget class="ImageViewer" name="img_editor" native="true"/>
           </item>
           <item>
            <widget class="ColorSelect" name="img_colorSelect" native="true">
@@ -765,12 +765,12 @@
   <customwidget>
    <class>MenuButton</class>
    <extends>QToolButton</extends>
-   <header>menubutton.h</header>
+   <header>controls/menubutton.h</header>
   </customwidget>
   <customwidget>
-   <class>ImageEditor</class>
+   <class>ImageViewer</class>
    <extends>QWidget</extends>
-   <header>imageeditor.h</header>
+   <header>controls/imageviewer.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

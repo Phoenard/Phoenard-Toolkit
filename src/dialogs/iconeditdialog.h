@@ -2,7 +2,7 @@
 #define ICONEDITDIALOG_H
 
 #include <QDialog>
-#include "../imageeditor.h"
+#include "../controls/imageviewer.h"
 
 namespace Ui {
 class IconEditDialog;
@@ -15,6 +15,7 @@ class IconEditDialog : public QDialog
 public:
     explicit IconEditDialog(QWidget *parent = 0);
     ~IconEditDialog();
+    PHNImage &image();
     void loadIcon(const char* iconData);
     void saveIcon(char* iconData);
 

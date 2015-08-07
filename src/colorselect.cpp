@@ -21,7 +21,7 @@ ColorSelect::ColorSelect(QWidget *parent) :
 }
 
 void ColorSelect::setColorMode(ImageFormat format) {
-    setColorMode(isTrueColor(format), getFormatColors(format));
+    setColorMode(isFullColorFormat(format), getFormatColors(format));
 }
 
 void ColorSelect::setColorMode(bool trueColor, int colorCount) {
