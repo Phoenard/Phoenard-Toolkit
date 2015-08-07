@@ -54,6 +54,7 @@ void PHNImage::loadData(QByteArray &data) {
     sourceImageValid = false;
     sourceImageFormat = INVALID;
     destImageHeader = true;
+    quant.erase();
 
     // Fails instantly if the length is below header size
     if (data.size() < 10) {
@@ -138,6 +139,7 @@ void PHNImage::loadData(int width, int height, int bpp, QByteArray &data, QList<
     sourceImage = QImage(width, height, QImage::Format_ARGB32);
     sourceImageValid = true;
     destImageHeader = false;
+    quant.erase();
     switch (bpp) {
     case 1:
         sourceImageFormat = LCD1;

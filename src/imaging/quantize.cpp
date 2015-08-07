@@ -136,6 +136,11 @@ void Cube::reduce(int max_colors) {
         // Define the root node of the octree
         root = new Node(this);
 
+        // No idea why this additional classification is required
+        // But it makes the performance a whole lot better
+        // This algorithm is weird.
+        classification();
+
         // Perform the quantization process here
         // Repeat and adjust depth until nonzero colors are found
         while (depth > 0) {
@@ -278,10 +283,19 @@ void Cube::assignment() {
 }
 
 int compareColors(const void * r_a, const void * r_b) {
-    Pixel_RGB &a = ((Pixel*) r_a)->color;
-    Pixel_RGB &b = ((Pixel*) r_b)->color;
-    int d = (int) (a.r + a.g + a.b) - (int) (b.r + b.g + b.b);
-    return (d > 0) ? 1 : ((d < 0) ? -1 : 0);
+    QColor ca(((Pixel*) r_a)->rgb);
+    QColor cb(((Pixel*) r_b)->rgb);
+    int hue_diff = ca.hue() - cb.hue();
+    if (hue_diff >= 128) hue_diff -= 256;
+    if (hue_diff <= -128) hue_diff += 256;
+    if ((hue_diff > 10) || (hue_diff < -10)) {
+        Pixel_RGB &a = ((Pixel*) r_a)->color;
+        Pixel_RGB &b = ((Pixel*) r_b)->color;
+        int d = (int) (a.r + a.g + a.b) - (int) (b.r + b.g + b.b);
+        return (d > 0) ? 1 : ((d < 0) ? -1 : 0);
+    } else {
+        return (hue_diff > 0) ? 1 : -1;
+    }
 }
 
 void Cube::sortColors() {
