@@ -39,6 +39,9 @@ void IconEditDialog::on_image_mouseChanged(int x, int y, Qt::MouseButtons button
     if (buttons & Qt::RightButton) {
         image().setPixel(x, y, QColor(Qt::white));
     }
+    QPainterPath sel;
+    sel.addRect(x, y, 1, 1);
+    ui->image->setSelection(sel);
 }
 
 void IconEditDialog::on_image_imageChanged() {

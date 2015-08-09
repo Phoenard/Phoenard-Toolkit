@@ -83,6 +83,9 @@
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
     <widget class="ImageViewer" name="image" native="true">
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="autoFillBackground">
       <bool>false</bool>
      </property>

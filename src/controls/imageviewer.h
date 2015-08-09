@@ -12,6 +12,8 @@ public:
     explicit ImageViewer(QWidget *parent = 0);
     void paintEvent(QPaintEvent *e);
     PHNImage &image() { return _image; }
+    void setSelection(QPainterPath path);
+    QPainterPath &selection() { return selectionPath; }
 
 protected:
     void onMouseChanged(QMouseEvent* event);
@@ -19,17 +21,24 @@ protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
 
+private:
+    void updatePath(QPainterPath path);
+
 signals:
     void mouseChanged(int x, int y, Qt::MouseButtons buttons);
     void imageChanged();
 
 private slots:
     void on_image_changed();
+    void on_selection_update();
 
 private:
     PHNImage _image;
     QRect drawnImageBounds;
+    qreal drawnImageScale;
     QPoint lastMousePos;
+    QPainterPath selectionPath;
+    int dashOffset;
 };
 
 #endif // IMAGEVIEWER_H
