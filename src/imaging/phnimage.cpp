@@ -28,6 +28,62 @@ static void strip_color565(Quantize::Pixel &color) {
     color.color.b &= 0xF8;
 }
 
+QList<QPoint> getLinePoints(QPoint p0, QPoint p1) {
+    QList<QPoint> points;
+    int x0 = p0.x(), y0 = p0.y();
+    int x1 = p1.x(), y1 = p1.y();
+
+    if ((x0 == x1) || (y0 == y1)) {
+        // CALC  QPoint(27,3)  TO  QPoint(27,5)
+        // Handle straight lines using simple signum logic
+        int mx, my;
+        do {
+            points.append(QPoint(x0, y0));
+            mx = (x1 > x0) - (x1 < x0);
+            my = (y1 > y0) - (y1 < y0);
+            x0 += mx; y0 += my;
+        } while ((mx != 0) || (my != 0));
+
+    } else {
+        // Handle other lines using the Bresenham's algorithm
+        // Taken from the Phoenard Arduino library
+        int dx = (x1 - x0), dy = (y1 - y0);
+        int adx = abs(dx), ady = abs(dy);
+        bool steep = ady > adx;
+        if (steep) {
+          std::swap(x0, y0);
+          std::swap(x1, y1);
+          std::swap(adx, ady);
+        }
+        if (x0 > x1) {
+          std::swap(x0, x1);
+          std::swap(y0, y1);
+        }
+
+        int err = adx;
+        int ystep = (y0 < y1) ? 1 : -1;
+
+        adx += adx;
+        ady += ady;
+        for (; x0<=x1; x0++) {
+            points.append(steep ? QPoint(y0, x0) : QPoint(x0, y0));
+            err -= ady;
+            if (err < 0) {
+                y0 += ystep;
+                err += adx;
+            }
+        }
+
+        // Reverse the points in the list if required
+        if (points[0] != p0) {
+            for(int k = 0; k < (points.size()/2); k++) {
+                points.swap(k, points.size()-(1+k));
+            }
+        }
+    }
+    return points;
+}
+
 PHNImage::PHNImage()
 {
     this->sourceImageValid = false;

@@ -25,7 +25,7 @@ private:
     void updatePath(QPainterPath path);
 
 signals:
-    void mouseChanged(int x, int y, Qt::MouseButtons buttons);
+    void mouseChanged(QPoint position, Qt::MouseButtons buttons);
     void imageChanged();
 
 private slots:

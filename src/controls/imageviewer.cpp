@@ -19,6 +19,7 @@ ImageViewer::ImageViewer(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(on_selection_update()));
     timer->start(200);
     dashOffset = 0;
+    lastMousePos = QPoint(-1, -1);
 }
 
 void ImageViewer::setSelection(QPainterPath path) {
@@ -59,8 +60,22 @@ void ImageViewer::onMouseChanged(QMouseEvent* event) {
     if ((event->button() == Qt::NoButton) && (x == lastMousePos.x()) && (y == lastMousePos.y())) {
         return;
     }
-    lastMousePos = QPoint(x, y);
-    emit mouseChanged(x, y, event->buttons());
+
+    // Obtain all points in between old and new positions
+    // If no previous point was known, only take new point
+    QPoint newPos(x, y);
+    QList<QPoint> points;
+    if ((lastMousePos.x() == -1) && (lastMousePos.y() == -1)) {
+        points.append(newPos);
+    } else {
+        points = getLinePoints(lastMousePos, newPos);
+    }
+    lastMousePos = newPos;
+
+    // Go by all points and fire the event
+    for (QPoint point : points) {
+        emit mouseChanged(point, event->buttons());
+    }
 }
 
 void ImageViewer::on_image_changed() {

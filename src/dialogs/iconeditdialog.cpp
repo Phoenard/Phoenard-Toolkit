@@ -32,15 +32,15 @@ void IconEditDialog::saveIcon(char* iconData) {
     memcpy(iconData, data.data(), 512);
 }
 
-void IconEditDialog::on_image_mouseChanged(int x, int y, Qt::MouseButtons buttons) {
+void IconEditDialog::on_image_mouseChanged(QPoint point, Qt::MouseButtons buttons) {
     if (buttons & Qt::LeftButton) {
-        image().setPixel(x, y, QColor(Qt::black));
+        image().setPixel(point.x(), point.y(), QColor(Qt::black));
     }
     if (buttons & Qt::RightButton) {
-        image().setPixel(x, y, QColor(Qt::white));
+        image().setPixel(point.x(), point.y(), QColor(Qt::white));
     }
     QPainterPath sel;
-    sel.addRect(x, y, 1, 1);
+    sel.addRect(point.x(), point.y(), 1, 1);
     ui->image->setSelection(sel);
 }
 
