@@ -32,6 +32,30 @@ void IconEditDialog::saveIcon(char* iconData) {
     memcpy(iconData, data.data(), 512);
 }
 
+void IconEditDialog::setWindowTitle(const QString &title) {
+    this->title = title;
+    QDialog::setWindowTitle(title);
+}
+
+void IconEditDialog::closeEvent(QCloseEvent *event) {
+    if (image().isEdited()) {
+        // Ask the user if we really want to save this
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Save icon", "The icon was changed. Do you want to save?",
+                                        QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel);
+
+        if (reply == QMessageBox::Cancel) {
+            event->ignore();
+        } else if (reply == QMessageBox::Yes) {
+            this->accept();
+        } else {
+            this->reject();
+        }
+    } else {
+        this->reject();
+    }
+}
+
 void IconEditDialog::on_image_mouseChanged(QPoint point, Qt::MouseButtons buttons) {
     if (buttons & Qt::LeftButton) {
         image().setPixel(point.x(), point.y(), QColor(Qt::black));
@@ -46,4 +70,17 @@ void IconEditDialog::on_image_mouseChanged(QPoint point, Qt::MouseButtons button
 
 void IconEditDialog::on_image_imageChanged() {
     ui->preview->setPixmap(image().pixmap());
+    if (image().isEdited()) {
+        QDialog::setWindowTitle(this->title + "*");
+    }
+}
+
+void IconEditDialog::on_cancelBtn_clicked()
+{
+    this->reject();
+}
+
+void IconEditDialog::on_acceptBtn_clicked()
+{
+    this->accept();
 }

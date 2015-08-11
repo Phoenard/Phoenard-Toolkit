@@ -8,6 +8,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QDir>
 #include "stk500command.h"
 #include "stk500_fat.h"
 #include "stk500settings.h"
@@ -53,6 +54,7 @@ public:
     quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
     quint16 ANALOG_read(quint8 adc);
 
+    static QString getTempFile(QString filePath);
     static QString getFileName(QString filePath);
     static QString getFileExt(QString filePath);
     static QString getSizeText(quint32 size);
@@ -65,6 +67,9 @@ private:
     void loadAddress(quint32 address);
     void readData(STK_CMD data_command, quint32 address, char* dest, int destLen);
     void writeData(STK_CMD data_command, quint32 address, const char* src, int srcLen);
+
+    /* Folder in %temp% where we store temporary cached files */
+    static QString phnTempFolder;
 
     // copy ops are private to prevent copying
     stk500(const stk500&); // no implementation

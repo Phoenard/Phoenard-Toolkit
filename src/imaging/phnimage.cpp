@@ -101,6 +101,7 @@ QPoint getPointWithin(QPoint point, QRect rectangle) {
 PHNImage::PHNImage()
 {
     this->sourceImageValid = false;
+    this->edited = false;
 }
 
 void PHNImage::onChanged() {
@@ -281,6 +282,7 @@ void PHNImage::loadData(int width, int height, int bpp, QByteArray &data, QList<
 
         destImageFormat = sourceImageFormat;
         _pixmap = QPixmap::fromImage(sourceImage);
+        edited = false;
         onChanged();
     }
 }
@@ -363,6 +365,7 @@ void PHNImage::setFormat(ImageFormat format, int colorCount) {
         }
     }
     _pixmap = QPixmap::fromImage(quantImage);
+    edited = false;
 
     qDebug() << "Quantization to" << colorCount << "colors"
              << "; format =" << getFormatName(destImageFormat)
@@ -410,6 +413,9 @@ void PHNImage::setPixel(int x, int y, QColor color) {
     QPainter painter(&_pixmap);
     painter.setPen(color);
     painter.drawPoint(x, y);
+
+    // Notify that we edited
+    edited = true;
 
     this->onChanged();
 }

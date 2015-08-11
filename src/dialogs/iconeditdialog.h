@@ -2,6 +2,7 @@
 #define ICONEDITDIALOG_H
 
 #include <QDialog>
+#include <QMessageBox>
 #include "../controls/imageviewer.h"
 
 namespace Ui {
@@ -18,13 +19,22 @@ public:
     PHNImage &image();
     void loadIcon(const char* iconData);
     void saveIcon(char* iconData);
+    void setWindowTitle(const QString &title);
+
+protected:
+    virtual void closeEvent(QCloseEvent *event);
 
 private slots:
     void on_image_mouseChanged(QPoint point, Qt::MouseButtons buttons);
     void on_image_imageChanged();
 
+    void on_cancelBtn_clicked();
+
+    void on_acceptBtn_clicked();
+
 private:
     Ui::IconEditDialog *ui;
+    QString title;
 };
 
 #endif // ICONEDITDIALOG_H

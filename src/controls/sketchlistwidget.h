@@ -20,6 +20,7 @@ public:
     bool hasSelectedSketch();
     QString getSelectedName();
     SketchInfo getSelectedSketch();
+    void setSelectedSketch(const SketchInfo &info);
     void startLoadingIcons();
     void stopLoadingIcons();
 

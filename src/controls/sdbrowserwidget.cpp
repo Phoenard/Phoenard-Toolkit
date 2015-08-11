@@ -30,20 +30,8 @@ void SDBrowserWidget::on_itemDoubleClicked(QTreeWidgetItem *item, int column) {
     if (!itemIsFolder(item) && column >= 0) {
         QString sourcePath = getPath(item);
         if (!sourcePath.isEmpty()) {
-            // Generate a random file name to write to
-            QString rndFormat = QDir::tempPath() + "/phntk_sd%.tmp/" + stk500::getFileName(sourcePath);
-            QString destPath;
-            do {
-                QString randomHex;
-                for (int i = 0; i < 4; i++) {
-                    randomHex.insert(0, QString("%1").arg(qrand(), 0, 16));
-                    while (randomHex.length() & 0x3) {
-                        randomHex.insert(0, '0');
-                    }
-                }
-                destPath = rndFormat;
-                destPath.replace("%", randomHex);
-            } while (QDir(destPath).exists());
+            // Generate the temporary file to write to
+            QString destPath = stk500::getTempFile(sourcePath);
 
             // Read the file
             stk500SaveFiles saveTask(sourcePath, destPath);

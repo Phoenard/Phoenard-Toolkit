@@ -450,5 +450,30 @@ void MainWindow::on_sketches_iconBtn_clicked()
     dialog.setModal(true);
     dialog.setWindowTitle(QString("Editing icon of ") + QString(info.name));
     dialog.loadIcon(info.iconData);
-    dialog.exec();
+    if (dialog.exec() == QDialog::Accepted) {
+        QString fileName = QString(info.name) + ".SKI";
+        QString tmpFile = stk500::getTempFile(fileName);
+
+        // Save the icon
+        dialog.saveIcon(info.iconData);
+        info.setIcon(info.iconData);
+
+        // Write the new icon data to a temporary file
+        QFile file(tmpFile);
+        file.open(QIODevice::WriteOnly);
+        file.write(info.iconData, sizeof(info.iconData));
+        file.close();
+
+        // Save this file to SD
+        stk500ImportFiles task(tmpFile, fileName);
+        serial->execute(task);
+
+        // Update icon in sketch list if successful
+        if (!task.hasError() && !task.isCancelled()) {
+            ui->sketchesWidget->setSelectedSketch(info);
+        }
+
+        // Delete the temporary file again
+        file.remove();
+    }
 }

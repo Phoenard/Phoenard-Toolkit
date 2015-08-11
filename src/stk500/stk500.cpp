@@ -819,6 +819,22 @@ QString stk500::getTimeText(qint64 timeMillis) {
     return rval;
 }
 
+QString stk500::phnTempFolder = "";
+
+QString stk500::getTempFile(QString filePath) {
+    // Generate the temporary folder if needed
+    if (phnTempFolder.isEmpty()) {
+        phnTempFolder = QDir::tempPath() + "/phntk_cache.tmp";
+
+        // Make the directory
+        QDir dir = QDir::root();
+        dir.mkpath(phnTempFolder);
+    }
+
+    // Get the path
+    return phnTempFolder + "/" + getFileName(filePath);
+}
+
 QString stk500::getFileName(QString filePath) {
     QString fileName = filePath;
     int endIdx;

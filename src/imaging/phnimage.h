@@ -42,6 +42,7 @@ public:
     void setFormat(ImageFormat format, int colorCount = -1);
     void setHeader(bool header) { this->destImageHeader = header; }
     bool hasHeader() { return this->destImageHeader; }
+    bool isEdited() { return this->edited; }
     QColor getColor(int index);
     const int getColorCount() { return quant.colors; }
     void setColor(int index, QColor color);
@@ -63,6 +64,7 @@ private:
     Quantize::Cube quant;
     ImageFormat destImageFormat;
     bool destImageHeader;
+    bool edited;
 };
 
 typedef struct Imageheader_LCD {

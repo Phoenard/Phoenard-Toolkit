@@ -184,6 +184,16 @@ SketchInfo SketchListWidget::getSelectedSketch() {
     return info;
 }
 
+void SketchListWidget::setSelectedSketch(const SketchInfo &info) {
+    QList<QListWidgetItem*> items = ui->list->selectedItems();
+    if (!items.isEmpty()) {
+        QVariant var;
+        var.setValue(info);
+        items[0]->setData(Qt::UserRole, var);
+        items[0]->setIcon(info.icon);
+    }
+}
+
 void SketchListWidget::on_list_itemDoubleClicked(QListWidgetItem*) {
     emit sketchDoubleClicked();
 }
