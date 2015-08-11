@@ -15,6 +15,8 @@ quint16 rgb_to_color565(Quantize::Pixel &color);
 
 QList<QPoint> getLinePoints(QPoint p0, QPoint p1);
 
+QPoint getPointWithin(QPoint point, QRect rectangle);
+
 class PHNImage : public QObject
 {
     Q_OBJECT

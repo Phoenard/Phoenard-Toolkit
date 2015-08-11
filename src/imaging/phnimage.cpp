@@ -84,6 +84,20 @@ QList<QPoint> getLinePoints(QPoint p0, QPoint p1) {
     return points;
 }
 
+QPoint getPointWithin(QPoint point, QRect rectangle) {
+    if (rectangle.contains(point)) {
+        return point;
+    }
+    int x = point.x(), y = point.y();
+    int xa = rectangle.x(), ya = rectangle.y();
+    int xb = rectangle.right(), yb = rectangle.bottom();
+    if (x < xa) x = xa;
+    if (y < ya) y = ya;
+    if (x > xb) x = xb;
+    if (y > yb) y = yb;
+    return QPoint(x, y);
+}
+
 PHNImage::PHNImage()
 {
     this->sourceImageValid = false;

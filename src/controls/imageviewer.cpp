@@ -52,29 +52,26 @@ void ImageViewer::on_selection_update() {
 
 void ImageViewer::onMouseChanged(QMouseEvent* event) {
     QPoint pos = event->pos();
-    if (!drawnImageBounds.contains(pos)) {
-        lastMousePos = QPoint(-1, -1);
-        return;
-    }
-    int x = (_image.width() * (pos.x() - drawnImageBounds.x())) / drawnImageBounds.width();
-    int y = (_image.height() * (pos.y() - drawnImageBounds.y())) / drawnImageBounds.height();
+    int x = (pos.x() - drawnImageBounds.x()) / this->drawnImageScale;
+    int y = (pos.y() - drawnImageBounds.y()) / this->drawnImageScale;
     bool isMouseChange = (event->button() != Qt::NoButton);
     bool shiftPressed = event->modifiers().testFlag(Qt::ShiftModifier);
     QPoint newPos(x, y);
 
-    // If pressing down for the first time, store press point
-    if (shiftPressed && isMouseChange) {
-        this->pressStartPos = newPos;
-    }
-
     // While holding SHIFT, use a block alignment algorithm
     if (shiftPressed && (event->buttons() != Qt::NoButton)) {
+        if (this->pressStartPos == QPoint(-1, -1)) {
+            this->pressStartPos = newPos;
+        }
+
         QPoint diff = newPos - pressStartPos;
         if (abs(diff.x()) < abs(diff.y())) {
             newPos.setX(pressStartPos.x());
         } else {
             newPos.setY(pressStartPos.y());
         }
+    } else {
+        this->pressStartPos = QPoint(-1, -1);
     }
 
     // Ignore when no movement or events happened
@@ -82,24 +79,34 @@ void ImageViewer::onMouseChanged(QMouseEvent* event) {
         return;
     }
 
-    // Obtain all points in between old and new positions
-    // If no previous point was known, only take new point
-    QList<QPoint> points;
-    if ((lastMousePos.x() == -1) && (lastMousePos.y() == -1)) {
-        points.append(newPos);
-    } else {
-        points = getLinePoints(lastMousePos, newPos);
+    // Update position and allow boundary pixels to be registered
+    // When mouse moves out of bounds, the coordinate is clipped
+    // While moving outside the area, nothing happens
+    QPoint p0 = lastMousePos;
+    QPoint p1 = newPos;
+    lastMousePos = newPos;
+
+    QRect bounds(0, 0, _image.width(), _image.height());
+    bool hasP0 = bounds.contains(p0);
+    bool hasP1 = bounds.contains(p1);
+    if (!hasP0) p0 = getPointWithin(p0, bounds);
+    if (!hasP1) p1 = getPointWithin(p1, bounds);
+
+    if (hasP0 || hasP1) {
+        // Obtain all points in between old and new positions
+        // If no previous point was known, only take new point
+        QList<QPoint> points;
+        points = getLinePoints(p0, p1);
 
         // Remove the first point (event fired before)
         if (lastMousePos != newPos) {
-            points.removeAt(0);
+          points.removeAt(0);
         }
-    }
-    lastMousePos = newPos;
 
-    // Go by all points and fire the event
-    for (QPoint point : points) {
-        emit mouseChanged(point, event->buttons());
+        // Go by all points and fire the event
+        for (QPoint point : points) {
+            emit mouseChanged(point, event->buttons());
+        }
     }
 }
 
