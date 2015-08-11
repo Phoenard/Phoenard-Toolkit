@@ -37,6 +37,7 @@ private:
     QRect drawnImageBounds;
     qreal drawnImageScale;
     QPoint lastMousePos;
+    QPoint pressStartPos;
     QPainterPath selectionPath;
     int dashOffset;
 };

@@ -20,6 +20,7 @@ ImageViewer::ImageViewer(QWidget *parent) :
     timer->start(200);
     dashOffset = 0;
     lastMousePos = QPoint(-1, -1);
+    pressStartPos = QPoint(-1, -1);
 }
 
 void ImageViewer::setSelection(QPainterPath path) {
@@ -57,18 +58,42 @@ void ImageViewer::onMouseChanged(QMouseEvent* event) {
     }
     int x = (_image.width() * (pos.x() - drawnImageBounds.x())) / drawnImageBounds.width();
     int y = (_image.height() * (pos.y() - drawnImageBounds.y())) / drawnImageBounds.height();
-    if ((event->button() == Qt::NoButton) && (x == lastMousePos.x()) && (y == lastMousePos.y())) {
+    bool isMouseChange = (event->button() != Qt::NoButton);
+    bool shiftPressed = event->modifiers().testFlag(Qt::ShiftModifier);
+    QPoint newPos(x, y);
+
+    // If pressing down for the first time, store press point
+    if (shiftPressed && isMouseChange) {
+        this->pressStartPos = newPos;
+    }
+
+    // While holding SHIFT, use a block alignment algorithm
+    if (shiftPressed && (event->buttons() != Qt::NoButton)) {
+        QPoint diff = newPos - pressStartPos;
+        if (abs(diff.x()) < abs(diff.y())) {
+            newPos.setX(pressStartPos.x());
+        } else {
+            newPos.setY(pressStartPos.y());
+        }
+    }
+
+    // Ignore when no movement or events happened
+    if (!isMouseChange && (newPos == lastMousePos)) {
         return;
     }
 
     // Obtain all points in between old and new positions
     // If no previous point was known, only take new point
-    QPoint newPos(x, y);
     QList<QPoint> points;
     if ((lastMousePos.x() == -1) && (lastMousePos.y() == -1)) {
         points.append(newPos);
     } else {
         points = getLinePoints(lastMousePos, newPos);
+
+        // Remove the first point (event fired before)
+        if (lastMousePos != newPos) {
+            points.removeAt(0);
+        }
     }
     lastMousePos = newPos;
 
