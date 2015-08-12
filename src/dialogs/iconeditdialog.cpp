@@ -119,6 +119,12 @@ void IconEditDialog::on_importBtn_clicked()
     // Load the data
     PHNImage &image = this->image();
     image.loadData(data);
+    if (image.isNull()) {
+        while (data.length() < 512) {
+            data.append((char) 0x00);
+        }
+        image.loadData(64, 64, 1, data);
+    }
     image.resize(64, 64);
     image.setFormat(LCD1);
     image.setColors(QList<QColor>() << QColor(Qt::black) << QColor(Qt::white));
