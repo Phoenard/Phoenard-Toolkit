@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QMessageBox>
+#include <QFileDialog>
 #include "../controls/imageviewer.h"
 
 namespace Ui {
@@ -23,6 +24,8 @@ public:
 
 protected:
     virtual void closeEvent(QCloseEvent *event);
+    virtual void showEvent(QShowEvent *event);
+    void updateTitle();
 
 private slots:
     void on_image_mouseChanged(QPoint point, Qt::MouseButtons buttons);
@@ -31,6 +34,8 @@ private slots:
     void on_cancelBtn_clicked();
 
     void on_acceptBtn_clicked();
+
+    void on_importBtn_clicked();
 
 private:
     Ui::IconEditDialog *ui;

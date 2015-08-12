@@ -40,9 +40,12 @@ public:
     const QSize imageSize() { return sourceImage.size(); }
     const bool isFullColor() { return quant.trueColor; }
     void setFormat(ImageFormat format, int colorCount = -1);
+    void resize(int newWidth, int newHeight);
+    void setColors(QList<QColor> &colors);
     void setHeader(bool header) { this->destImageHeader = header; }
     bool hasHeader() { return this->destImageHeader; }
-    bool isEdited() { return this->edited; }
+    bool isModified() { return this->modified; }
+    void resetModified() { this->modified = false; }
     QColor getColor(int index);
     const int getColorCount() { return quant.colors; }
     void setColor(int index, QColor color);
@@ -64,7 +67,7 @@ private:
     Quantize::Cube quant;
     ImageFormat destImageFormat;
     bool destImageHeader;
-    bool edited;
+    bool modified;
 };
 
 typedef struct Imageheader_LCD {

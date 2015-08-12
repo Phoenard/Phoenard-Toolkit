@@ -101,10 +101,11 @@ QPoint getPointWithin(QPoint point, QRect rectangle) {
 PHNImage::PHNImage()
 {
     this->sourceImageValid = false;
-    this->edited = false;
+    this->modified = false;
 }
 
 void PHNImage::onChanged() {
+    modified = true;
     emit changed();
 }
 
@@ -282,7 +283,6 @@ void PHNImage::loadData(int width, int height, int bpp, QByteArray &data, QList<
 
         destImageFormat = sourceImageFormat;
         _pixmap = QPixmap::fromImage(sourceImage);
-        edited = false;
         onChanged();
     }
 }
@@ -344,28 +344,7 @@ void PHNImage::setFormat(ImageFormat format, int colorCount) {
     }
 
     // Turn the quantized result into a pixmap for display purposes
-    QImage quantImage(quant.width, quant.height, QImage::Format_ARGB32);
-    if (quant.trueColor) {
-        // True color mode - set pixels
-        int x, y;
-        for (x = 0; x < quant.width; x++) {
-            for (y = 0; y < quant.height; y++) {
-                quantImage.setPixel(x, y, quant.pixels[x][y].rgb);
-            }
-        }
-    } else {
-        // Colormap mode - set using colormap
-        int x, y;
-        uint pixIndex;
-        for (x = 0; x < quant.width; x++) {
-            for (y = 0; y < quant.height; y++) {
-                pixIndex = quant.pixels[x][y].value;
-                quantImage.setPixel(x, y, quant.colormap[pixIndex].rgb);
-            }
-        }
-    }
-    _pixmap = QPixmap::fromImage(quantImage);
-    edited = false;
+    _pixmap = QPixmap::fromImage(quant.toImage());
 
     qDebug() << "Quantization to" << colorCount << "colors"
              << "; format =" << getFormatName(destImageFormat)
@@ -373,6 +352,52 @@ void PHNImage::setFormat(ImageFormat format, int colorCount) {
              << "; result color count =" << quant.colors;
 
     this->onChanged();
+}
+
+void PHNImage::resize(int newWidth, int newHeight) {
+    if (this->isNull()) return;
+    if ((quant.width == newWidth) && (quant.height == newHeight)) return;
+
+    // Resize the source image to the new dimensions
+    sourceImage = sourceImage.scaled(newWidth, newHeight);
+
+    // Force an update by setting the format
+    quant.erase();
+    setFormat(destImageFormat);
+}
+
+void PHNImage::setColors(QList<QColor> &colors) {
+    if (this->isNull()) return;
+
+    // Reduce to a certain amount of colors if needed
+    if (quant.trueColor || (quant.colors > colors.length())) {
+        quant.loadImage(sourceImage);
+        quant.reduce(colors.length());
+    }
+
+    // Resize the colormap if needed
+    quant.setColormapSize(colors.length());
+
+    // Figure out what colors to bind to which colormap channel
+    // This is done by comparing the colors and matching best fit
+    for (int index = 0; index < colors.length(); index++) {
+        Quantize::Pixel p;
+        p.rgb = colors[index].rgb();
+
+        // Find the best fit color in the colormap
+        // Start at the index last set (index of the current color)
+        uint foundIndex = quant.findColor(p, index);
+
+        // Swap indices to put this found index at the current index
+        quant.swapColors(index, foundIndex);
+
+        // Apply to colormap
+        quant.colormap[index] = p;
+    }
+
+    // All done; update pixmap for display
+    _pixmap = QPixmap::fromImage(quant.toImage());
+    onChanged();
 }
 
 QColor PHNImage::getColor(int index) {
@@ -413,9 +438,6 @@ void PHNImage::setPixel(int x, int y, QColor color) {
     QPainter painter(&_pixmap);
     painter.setPen(color);
     painter.drawPoint(x, y);
-
-    // Notify that we edited
-    edited = true;
 
     this->onChanged();
 }

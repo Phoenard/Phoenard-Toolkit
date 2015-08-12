@@ -61,6 +61,7 @@ void Cube::erase() {
 }
 
 void Cube::reduce(int max_colors) {
+    setTrueColor(true);
     this->trueColor = false;
     this->colors = 0;
     this->max_colors = max_colors;
@@ -143,17 +144,111 @@ void Cube::reduce(int max_colors) {
 
         // Perform the quantization process here
         // Repeat and adjust depth until nonzero colors are found
-        while (depth > 0) {
-            classification();
-            reduction();
-            if (colors) {
-                break;
-            } else {
-                depth--;
+        // Ignore if the INT_MAX constant is used: no reduction is performed then
+        if (max_colors != INT_MAX) {
+            while (depth > 0) {
+                classification();
+                reduction();
+                if (colors) {
+                    break;
+                } else {
+                    depth--;
+                }
             }
         }
         assignment();
     }
+}
+
+void Cube::setTrueColor(bool trueColor) {
+    // If nothing can be done, stop.
+    if ((this->trueColor == trueColor) || !pixels) return;
+
+    if (trueColor) {
+        // Protection for unexpected missing colormap
+        if (!colormap) return;
+
+        // Convert color map indices to the color values
+        int x, y;
+        for (x = 0; x < width; x++) {
+            for (y = 0; y < height; y++) {
+                Pixel &p = pixels[x][y];
+                p = colormap[p.value];
+            }
+        }
+
+        // Delete the colormap and done
+        delete[] this->colormap;
+        this->colormap = 0;
+        this->trueColor = trueColor;
+    } else {
+        // Use flexible reduction algorithm
+        reduce(INT_MAX);
+    }
+}
+
+void Cube::setColormapSize(int colorCount) {
+    if (colorCount == colors) return;
+
+    Pixel* newColormap = new Pixel[colorCount];
+    int i = 0;
+    if (this->colormap) {
+        for (; (i < colors) && (i < colorCount); i++) {
+            newColormap[i] = this->colormap[i];
+        }
+        delete[] this->colormap;
+    }
+    for (; i < colorCount; i++) {
+        newColormap[i].value = 0;
+    }
+    this->colormap = newColormap;
+    this->colors = colorCount;
+}
+
+void Cube::swapColors(uint indexA, uint indexB) {
+    // Some safety checks
+    if (trueColor || (indexA == indexB)) return;
+    if ((indexA >= colors) || (indexB >= colors)) return;
+
+    // Swap the entries in the colormap
+    std::swap(colormap[indexA], colormap[indexB]);
+
+    // Swap all individual pixel index values
+    int x, y;
+    for (x = 0; x < width; x++) {
+        for (y = 0; y < height; y++) {
+            Pixel &p = pixels[x][y];
+            if (p.value == indexA) {
+                p.value = indexB;
+            } else if (p.value == indexB) {
+                p.value = indexA;
+            }
+        }
+    }
+}
+
+QImage Cube::toImage() {
+    QImage quantImage(width, height, QImage::Format_ARGB32);
+    if (trueColor) {
+        // True color mode - set pixels
+        int x, y;
+        for (x = 0; x < width; x++) {
+            for (y = 0; y < height; y++) {
+                quantImage.setPixel(x, y, pixels[x][y].rgb);
+            }
+        }
+    } else {
+        // Colormap mode - set using colormap
+        int x, y;
+        uint pixIndex;
+        for (x = 0; x < width; x++) {
+            for (y = 0; y < height; y++) {
+                pixIndex = pixels[x][y].value;
+                quantImage.setPixel(x, y, colormap[pixIndex].rgb);
+            }
+        }
+    }
+    return quantImage;
 }
 
 void Cube::loadImage(QImage &image) {
@@ -181,13 +276,13 @@ void Cube::loadImage(QImage &image) {
     }
 }
 
-uint Cube::findColor(Pixel color) {
+uint Cube::findColor(Pixel color, uint startIndex) {
     // Color mapped
     // Find out what index is closest to the color
     // If equal, we are done entirely
     int minDist = INT_MAX;
     uint mapIdx = 0;
-    for (int i = 0; i < this->colors; i++) {
+    for (uint i = startIndex; i < this->colors; i++) {
         int dist = calc_distance(this->colormap[i], color);
         if (dist < minDist) {
             minDist = dist;

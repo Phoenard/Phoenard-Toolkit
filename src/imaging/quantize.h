@@ -338,6 +338,27 @@ public:
     void reduce(int max_colors);
 
     /*
+     * Sets whether to represent the data in True Color format
+     * or to use a colormap instead.
+     */
+    void setTrueColor(bool trueColor);
+
+    /*
+     * Initializes or resizes the colormap to a given size
+     */
+    void setColormapSize(int colorCount);
+
+    /*
+     * Swaps the place of two colors in the colormap
+     */
+    void swapColors(uint indexA, uint indexB);
+
+    /*
+     * Converts the contents stored into a usable QImage
+     */
+    QImage toImage();
+
+    /*
      * Procedure Classification begins by initializing a color
      * description tree of sufficient depth to represent each
      * possible input color in a leaf. However, it is impractical
@@ -418,7 +439,7 @@ public:
     /*
      * Finds the index in the colormap for the color closest
      */
-    uint findColor(Pixel color);
+    uint findColor(Pixel color, uint startIndex = 0);
 };
 
 /**
