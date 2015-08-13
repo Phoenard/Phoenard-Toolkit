@@ -783,6 +783,9 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
         throw ProtocolException("Failed to create file");
     }
 
+    /* Store the found or created file entry */
+    destEntry = protocol->sd().readDirectory(filePtr);
+
     /* Proceed to read in the source file */
 
     // Open the source file for reading, if needed that is
@@ -792,7 +795,7 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
     }
 
     // Set up the dest file entry information
-    DirectoryEntry fileEntry = protocol->sd().readDirectory(filePtr);
+    DirectoryEntry fileEntry = destEntry;
     if (sourceFile.isOpen()) {
         fileEntry.fileSize = sourceFile.size();
     } else {
@@ -976,6 +979,9 @@ void stk500ImportFiles::importFolder(DirectoryEntryPtr dirStartPtr, QString sour
         throw ProtocolException("Failed to create folder");
     }
 
+    /* Store the found or created entry */
+    destEntry = protocol->sd().readDirectory(folderPtr);
+
     /* Check if the source folder exists at all */
     if (sourceFilePath.isEmpty()) {
         return;
@@ -989,7 +995,7 @@ void stk500ImportFiles::importFolder(DirectoryEntryPtr dirStartPtr, QString sour
     }
 
     /* Read the directory first cluster */
-    DirectoryEntry folderEntry = protocol->sd().readDirectory(folderPtr);
+    DirectoryEntry folderEntry = destEntry;
     DirectoryEntryPtr folderStartPtr = protocol->sd().getDirPtrFromCluster(folderEntry.firstCluster());
 
     /* Start processing all the files/folders inside */
@@ -1291,25 +1297,27 @@ void stk500ListSketches::run() {
         /* Generate a temporary entry for comparison and adding */
         SketchInfo sketch;
         int tmpLen = 0;
+        QString sketchName;
         for (; tmpLen < 8 && (entry.name_raw[tmpLen] != ' '); tmpLen++) {
-            sketch.name[tmpLen] = entry.name_raw[tmpLen];
+            sketchName.append(entry.name_raw[tmpLen]);
         }
-        sketch.name[tmpLen] = 0;
+        sketch.name = sketchName;
         sketch.hasIcon = false;
         sketch.iconDirty = true;
+        sketch.iconBlock = 0;
 
         /* Locate this entry in the current results, or add if not found */
         int sketchIndex = -1;
         for (int i = 0; i < sketches.length(); i++) {
             SketchInfo &other = sketches[i];
-            if (!strcmp(sketch.name, other.name)) {
+            if (sketch.name == other.name) {
                 sketchIndex = i;
                 sketch = other;
                 break;
             }
         }
         if (sketchIndex == -1) {
-            sketchIndex = sketches.length();
+            sketchIndex = sketch.index = sketches.length();
             sketches.append(sketch);
         }
 

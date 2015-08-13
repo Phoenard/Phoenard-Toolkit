@@ -28,7 +28,7 @@ public:
     int height() { return this->quant.height; }
     bool isNull() { return !this->sourceImageValid; }
 
-    void loadFile(QString filePath);
+    void loadFile(const QString &filePath);
     void loadData(QByteArray &data);
     void loadData(int width, int height, int bpp, QByteArray &data);
     void loadData(int width, int height, int bpp, QByteArray &data, QList<QColor> &pixelmap);

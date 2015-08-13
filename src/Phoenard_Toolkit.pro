@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     dialogs/iconeditdialog.cpp \
     stk500/stk500settings.cpp \
     imaging/phnimage.cpp \
-    imaging/imageformat.cpp
+    imaging/imageformat.cpp \
+    dialogs/asknamedialog.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -59,7 +60,8 @@ HEADERS  += mainwindow.h \
     mainmenutab.h \
     stk500/stk500settings.h \
     imaging/phnimage.h \
-    imaging/imageformat.h
+    imaging/imageformat.h \
+    dialogs/asknamedialog.h
 
 FORMS    += mainwindow.ui \
     progressdialog.ui \
@@ -67,7 +69,8 @@ FORMS    += mainwindow.ui \
     dialogs/codeselectdialog.ui \
     dialogs/iconeditdialog.ui \
     controls/serialmonitorwidget.ui \
-    controls/sketchlistwidget.ui
+    controls/sketchlistwidget.ui \
+    dialogs/asknamedialog.ui
 
 OTHER_FILES +=
 

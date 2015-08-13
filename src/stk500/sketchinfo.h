@@ -5,12 +5,13 @@
 #include <QMetaType>
 
 typedef struct SketchInfo {
-    char name[9];
+    QString name;
     quint32 iconBlock;
     char iconData[512];
     QIcon icon;
     bool hasIcon;
     bool iconDirty;
+    int index;
 
     void setIcon(const char* iconData) {
         /* Copy raw icon data */

@@ -47,7 +47,7 @@ void MenuButton::leaveEvent(QEvent *event)
 }
 
 void MenuButton::paintEvent(QPaintEvent *) {
-    const int edge_round_size = 14;
+    const int edge_round_size = 10;
     const int edge_w = (2 * edge_round_size);
     int shape_height = height();
     if (!_isTab) {

@@ -14,6 +14,7 @@
 #include "dialogs/formatselectdialog.h"
 #include "dialogs/codeselectdialog.h"
 #include "dialogs/iconeditdialog.h"
+#include "dialogs/asknamedialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -458,10 +459,10 @@ void MainWindow::on_sketches_iconBtn_clicked()
     SketchInfo info = ui->sketchesWidget->getSelectedSketch();
     IconEditDialog dialog(this);
     dialog.setModal(true);
-    dialog.setWindowTitle(QString("Editing icon of ") + QString(info.name));
+    dialog.setWindowTitle(QString("Editing icon of ") + info.name);
     dialog.loadIcon(info.iconData);
     if (dialog.exec() == QDialog::Accepted) {
-        QString fileName = QString(info.name) + ".SKI";
+        QString fileName = info.name + ".SKI";
         QString tmpFile = stk500::getTempFile(fileName);
 
         // Save the icon
@@ -486,4 +487,60 @@ void MainWindow::on_sketches_iconBtn_clicked()
         // Delete the temporary file again
         file.remove();
     }
+}
+
+void MainWindow::on_sketches_addnewBtn_clicked()
+{
+    // First ask the user to enter the new sketch name
+    AskNameDialog dialog(this);
+    dialog.setWindowTitle("Add new sketch");
+    dialog.setHelpTitle("Please enter the name for your new sketch");
+    dialog.setMaxLength(8);
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    // Convert the name to a short name
+    QString name = dialog.name().toUpper();
+    if (name.length() > 8) {
+        name = name.remove(8);
+    }
+
+    // Check if this name is not already taken; fail in that case
+    QList<QString> names = ui->sketchesWidget->getSketchNames();
+    if (names.contains(name)) {
+        QMessageBox::critical(this, "Failed to add", "A sketch with this name already exists");
+        return;
+    }
+
+    // Generate the default icon data
+    PHNImage iconImage;
+    iconImage.loadFile(":/icons/sketchdefault.png");
+    iconImage.setFormat(LCD1);
+    iconImage.setHeader(false);
+    QByteArray iconData = iconImage.saveImage();
+
+    // Write the icon data to a temporary .SKI file
+    QString tmpSkiFileName = stk500::getTempFile(name + ".SKI");
+    QFile tmpSkiFile(tmpSkiFileName);
+    if (!tmpSkiFile.open(QIODevice::WriteOnly)) {
+        tmpSkiFileName = "";
+    } else {
+        tmpSkiFile.write(iconData);
+        tmpSkiFile.close();
+    }
+
+    // Generate the tasks to create the HEX and SKI files, and run them
+    stk500ImportFiles taskHex("", name + ".HEX");
+    stk500ImportFiles taskSki(tmpSkiFileName, name + ".SKI");
+    serial->executeAll(QList<stk500Task*>() << &taskHex << &taskSki);
+    if (!taskHex.isSuccessful() || !taskSki.isSuccessful()) return;
+
+    // Generate a new sketch item in sketch list
+    SketchInfo newSketch;
+    newSketch.name = name;
+    newSketch.iconBlock = 0;
+    newSketch.iconDirty = false;
+    newSketch.hasIcon = true;
+    newSketch.index = -1;
+    newSketch.setIcon(iconData.data());
+    ui->sketchesWidget->updateSketch(newSketch);
 }

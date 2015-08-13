@@ -17,6 +17,7 @@ public:
     const bool hasError() { return _hasError; }
     const bool isCancelled() { return (_isCancelled && !_cancelSuppress); }
     const bool isFinished() { return _isFinished; }
+    const bool isSuccessful() { return !isCancelled() && !hasError(); }
     void suppressCancel(bool suppress) { _cancelSuppress = suppress; }
     const bool isCancelSuppressed() { return _cancelSuppress; }
     const ProtocolException getError() { return _exception; }
@@ -41,7 +42,6 @@ public:
     QList<DirectoryInfo> sd_list(DirectoryEntryPtr startPtr);
     void sd_allocEntries(DirectoryEntryPtr startPos, int oldLength, int newLength);
     bool sd_remove(QString fileName, bool fileIsDir);
-    DirectoryEntryPtr sd_findOrCreate(DirectoryWalker walker, QString fileName);
     DirectoryEntryPtr sd_rename(DirectoryWalker walker, QString oldName, QString newName);
 protected:
     stk500 *protocol;
@@ -87,6 +87,7 @@ public:
 
     QString sourceFile;
     QString destFile;
+    DirectoryEntry destEntry;
 };
 
 /*

@@ -26,5 +26,7 @@
         <file>sketchdefault.png</file>
         <file>sketchloading.png</file>
         <file>icon_edit.png</file>
+        <file>newsketch.png</file>
+        <file>rename.png</file>
     </qresource>
 </RCC>

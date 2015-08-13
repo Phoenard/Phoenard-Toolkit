@@ -131,6 +131,5 @@ void IconEditDialog::on_resetBtn_clicked()
     PHNImage &image = this->image();
     image.loadFile(":/icons/sketchdefault.png");
     image.setFormat(LCD1);
-    image.setColors(QList<QColor>() << QColor(Qt::black) << QColor(Qt::white));
     image.setHeader(false);
 }

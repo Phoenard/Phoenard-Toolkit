@@ -384,12 +384,12 @@ int compareColors(const void * r_a, const void * r_b) {
     if (hue_diff >= 128) hue_diff -= 256;
     if (hue_diff <= -128) hue_diff += 256;
     if ((hue_diff > 10) || (hue_diff < -10)) {
+        return (hue_diff > 0) ? 1 : -1;
+    } else {
         Pixel_RGB &a = ((Pixel*) r_a)->color;
         Pixel_RGB &b = ((Pixel*) r_b)->color;
         int d = (int) (a.r + a.g + a.b) - (int) (b.r + b.g + b.b);
         return (d > 0) ? 1 : ((d < 0) ? -1 : 0);
-    } else {
-        return (hue_diff > 0) ? 1 : -1;
     }
 }
 

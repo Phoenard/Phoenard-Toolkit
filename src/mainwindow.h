@@ -75,6 +75,8 @@ private slots:
 
     void on_sketches_iconBtn_clicked();
 
+    void on_sketches_addnewBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;

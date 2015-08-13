@@ -371,6 +371,39 @@
              </widget>
             </item>
             <item>
+             <widget class="MenuButton" name="sketches_addnewBtn">
+              <property name="text">
+               <string>New</string>
+              </property>
+              <property name="icon">
+               <iconset resource="icons/icons.qrc">
+                <normaloff>:/icons/newsketch.png</normaloff>:/icons/newsketch.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="MenuButton" name="sketches_renameBtn">
+              <property name="text">
+               <string>Rename</string>
+              </property>
+              <property name="icon">
+               <iconset resource="icons/icons.qrc">
+                <normaloff>:/icons/rename.png</normaloff>:/icons/rename.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="MenuButton" name="sketches_deleteBtn">
+              <property name="text">
+               <string>Delete</string>
+              </property>
+              <property name="icon">
+               <iconset resource="icons/icons.qrc">
+                <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_4">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -758,9 +791,10 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>SDBrowserWidget</class>
-   <extends>QTreeWidget</extends>
-   <header>controls/sdbrowserwidget.h</header>
+   <class>ImageViewer</class>
+   <extends>QWidget</extends>
+   <header>controls/imageviewer.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>MenuButton</class>
@@ -768,10 +802,9 @@
    <header>controls/menubutton.h</header>
   </customwidget>
   <customwidget>
-   <class>ImageViewer</class>
-   <extends>QWidget</extends>
-   <header>controls/imageviewer.h</header>
-   <container>1</container>
+   <class>SDBrowserWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>controls/sdbrowserwidget.h</header>
   </customwidget>
   <customwidget>
    <class>ColorSelect</class>

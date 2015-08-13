@@ -1,5 +1,6 @@
 #include "sketchlistwidget.h"
 #include "ui_sketchlistwidget.h"
+#include "../imaging/phnimage.h"
 #include <QDebug>
 
 SketchListWidget::SketchListWidget(QWidget *parent) :
@@ -11,6 +12,12 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
 
     loadIcon = QIcon(":/icons/sketchloading.png");
     defaultIcon = QIcon(":/icons/sketchdefault.png");
+
+    PHNImage defaultImg;
+    defaultImg.loadFile(":/icons/sketchdefault.png");
+    defaultImg.setFormat(LCD1);
+    defaultImg.setHeader(false);
+    defaultIconData = defaultImg.saveImage();
 
     stopLoadingIcons();
 }
@@ -28,7 +35,7 @@ void SketchListWidget::refreshSketches() {
     QListWidgetItem *selected = NULL;
     for (int i = 0; i < task.sketches.length(); i++) {
         SketchInfo sketch = task.sketches[i];
-        QString sketchName = QString(sketch.name);
+        QString sketchName = sketch.name;
 
         // First attempt to find the sketch icon in the list
         QListWidgetItem *itemFound = NULL;
@@ -61,7 +68,8 @@ void SketchListWidget::refreshSketches() {
             // No icon available; use default
             sketch.hasIcon = true;
             sketch.iconDirty = false;
-            itemFound->setIcon(defaultIcon);
+            sketch.setIcon(defaultIconData.data());
+            itemFound->setIcon(sketch.icon);
         } else {
             // Schedule for loading
             sketch.iconDirty = true;
@@ -81,7 +89,7 @@ void SketchListWidget::refreshSketches() {
 
     // Remove any items past the count limit
     while (ui->list->count() > task.sketches.length()) {
-        ui->list->removeItemWidget(ui->list->item(ui->list->count() - 1));
+        delete ui->list->item(ui->list->count() - 1);
     }
 
     // Select the selected item
@@ -135,7 +143,7 @@ void SketchListWidget::serialTaskFinished(stk500Task *task) {
 
     // Find the item belonging to this task
     SketchInfo &sketch = lastTask->sketch;
-    QString sketchName = QString(sketch.name);
+    QString sketchName = sketch.name;
     for (int i = 0; i < ui->list->count(); i++) {
         QListWidgetItem *item = ui->list->item(i);
         if (item->text() == sketchName) {
@@ -152,6 +160,34 @@ void SketchListWidget::serialTaskFinished(stk500Task *task) {
 
     // If not aborted, continue with the next task
     startLoadingIcons();
+}
+
+QList<QString> SketchListWidget::getSketchNames() {
+    QList<QString> names;
+    for (int i = 0; i < ui->list->count(); i++) {
+        names.append(ui->list->item(i)->text());
+    }
+    return names;
+}
+
+void SketchListWidget::updateSketch(SketchInfo info) {
+    qDebug() << "UPDATE!";
+    QListWidgetItem* item;
+    if ((info.index < 0) || (info.index >= ui->list->count())) {
+        // Add the item
+        info.index = ui->list->count();
+        item = new QListWidgetItem(info.name);
+        ui->list->addItem(item);
+        qDebug() << "ADDED.";
+    } else {
+        // Update existing item
+        item = ui->list->item(info.index);
+    }
+    QVariant var;
+    var.setValue(info);
+    item->setData(Qt::UserRole, var);
+    item->setText(info.name);
+    item->setIcon(info.icon);
 }
 
 bool SketchListWidget::hasSelectedSketch() {

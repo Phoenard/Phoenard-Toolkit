@@ -109,7 +109,7 @@ void PHNImage::onChanged() {
     emit changed();
 }
 
-void PHNImage::loadFile(QString filePath) {
+void PHNImage::loadFile(const QString &filePath) {
     QFile sourceFile(filePath);
     sourceFile.open(QIODevice::ReadOnly);
     if (sourceFile.isOpen()) {
