@@ -54,9 +54,10 @@ public:
     quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
     quint16 ANALOG_read(quint8 adc);
 
-    static QString getTempFile(QString filePath);
-    static QString getFileName(QString filePath);
-    static QString getFileExt(QString filePath);
+    static QString trimFileExt(const QString &filePath);
+    static QString getTempFile(const QString &filePath);
+    static QString getFileName(const QString &filePath);
+    static QString getFileExt(const QString &filePath);
     static QString getSizeText(quint32 size);
     static QString getTimeText(qint64 timeMillis);
     static void printData(char* title, char* data, int len);

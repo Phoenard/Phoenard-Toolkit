@@ -13,12 +13,6 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
     loadIcon = QIcon(":/icons/sketchloading.png");
     defaultIcon = QIcon(":/icons/sketchdefault.png");
 
-    PHNImage defaultImg;
-    defaultImg.loadFile(":/icons/sketchdefault.png");
-    defaultImg.setFormat(LCD1);
-    defaultImg.setHeader(false);
-    defaultIconData = defaultImg.saveImage();
-
     stopLoadingIcons();
 }
 
@@ -42,8 +36,12 @@ void SketchListWidget::refreshSketches() {
         for (int j = i; j < ui->list->count(); j++) {
             QListWidgetItem *item = ui->list->item(j);
             if (item->text() == sketchName) {
+                SketchInfo existing = qvariant_cast<SketchInfo>(item->data(Qt::UserRole));
                 itemFound = item;
-                sketch = qvariant_cast<SketchInfo>(item->data(Qt::UserRole));
+                memcpy(sketch.iconData, existing.iconData, sizeof(sketch.iconData));
+                sketch.icon = existing.icon;
+                sketch.hasIcon = existing.hasIcon;
+                sketch.iconDirty = existing.iconDirty;
                 break;
             }
         }
@@ -68,7 +66,7 @@ void SketchListWidget::refreshSketches() {
             // No icon available; use default
             sketch.hasIcon = true;
             sketch.iconDirty = false;
-            sketch.setIcon(defaultIconData.data());
+            sketch.setIcon(SKETCH_DEFAULT_ICON);
             itemFound->setIcon(sketch.icon);
         } else {
             // Schedule for loading
@@ -168,6 +166,12 @@ QList<QString> SketchListWidget::getSketchNames() {
         names.append(ui->list->item(i)->text());
     }
     return names;
+}
+
+void SketchListWidget::deleteSketch(const SketchInfo &sketch) {
+    if ((sketch.index >= 0) && (sketch.index < ui->list->count())) {
+        delete ui->list->item(sketch.index);
+    }
 }
 
 void SketchListWidget::updateSketch(SketchInfo info) {

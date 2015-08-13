@@ -821,7 +821,7 @@ QString stk500::getTimeText(qint64 timeMillis) {
 
 QString stk500::phnTempFolder = "";
 
-QString stk500::getTempFile(QString filePath) {
+QString stk500::getTempFile(const QString &filePath) {
     // Generate the temporary folder if needed
     if (phnTempFolder.isEmpty()) {
         phnTempFolder = QDir::tempPath() + "/phntk_cache.tmp";
@@ -835,7 +835,7 @@ QString stk500::getTempFile(QString filePath) {
     return phnTempFolder + "/" + getFileName(filePath);
 }
 
-QString stk500::getFileName(QString filePath) {
+QString stk500::getFileName(const QString &filePath) {
     QString fileName = filePath;
     int endIdx;
     if (fileName.endsWith('/')) {
@@ -849,7 +849,11 @@ QString stk500::getFileName(QString filePath) {
     return fileName;
 }
 
-QString stk500::getFileExt(QString filePath) {
+QString stk500::trimFileExt(const QString &filePath) {
+    return filePath.left(filePath.length() - getFileExt(filePath).length() - 1);
+}
+
+QString stk500::getFileExt(const QString &filePath) {
     /* Find last dot in path */
     int dotIdx = filePath.lastIndexOf('.');
     if (dotIdx == -1) return "";
@@ -859,7 +863,7 @@ QString stk500::getFileExt(QString filePath) {
     if (filePath.indexOf('\\', dotIdx) != -1) return "";
 
     /* Valid extension */
-    return filePath.remove(0, dotIdx+1);
+    return filePath.right(filePath.length() - dotIdx - 1);
 }
 
 QString stk500::getSizeText(quint32 size) {

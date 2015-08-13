@@ -4,6 +4,9 @@
 #include <QIcon>
 #include <QMetaType>
 
+/// Default sketch icon data
+extern const char SKETCH_DEFAULT_ICON[512];
+
 typedef struct SketchInfo {
     QString name;
     quint32 iconBlock;

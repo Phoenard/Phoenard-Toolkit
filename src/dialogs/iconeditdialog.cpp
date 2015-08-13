@@ -1,5 +1,6 @@
 #include "iconeditdialog.h"
 #include "ui_iconeditdialog.h"
+#include "../stk500/sketchinfo.h"
 #include <QDebug>
 
 IconEditDialog::IconEditDialog(QWidget *parent) :
@@ -134,8 +135,8 @@ void IconEditDialog::on_importBtn_clicked()
 void IconEditDialog::on_resetBtn_clicked()
 {
     // Load the default icon image
+    QByteArray iconData(SKETCH_DEFAULT_ICON, sizeof(SKETCH_DEFAULT_ICON));
     PHNImage &image = this->image();
-    image.loadFile(":/icons/sketchdefault.png");
-    image.setFormat(LCD1);
+    image.loadData(64, 64, 1, iconData);
     image.setHeader(false);
 }

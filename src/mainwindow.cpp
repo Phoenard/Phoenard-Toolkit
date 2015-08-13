@@ -511,20 +511,13 @@ void MainWindow::on_sketches_addnewBtn_clicked()
         return;
     }
 
-    // Generate the default icon data
-    PHNImage iconImage;
-    iconImage.loadFile(":/icons/sketchdefault.png");
-    iconImage.setFormat(LCD1);
-    iconImage.setHeader(false);
-    QByteArray iconData = iconImage.saveImage();
-
     // Write the icon data to a temporary .SKI file
     QString tmpSkiFileName = stk500::getTempFile(name + ".SKI");
     QFile tmpSkiFile(tmpSkiFileName);
     if (!tmpSkiFile.open(QIODevice::WriteOnly)) {
         tmpSkiFileName = "";
     } else {
-        tmpSkiFile.write(iconData);
+        tmpSkiFile.write(SKETCH_DEFAULT_ICON, sizeof(SKETCH_DEFAULT_ICON));
         tmpSkiFile.close();
     }
 
@@ -536,11 +529,32 @@ void MainWindow::on_sketches_addnewBtn_clicked()
 
     // Generate a new sketch item in sketch list
     SketchInfo newSketch;
-    newSketch.name = name;
+    newSketch.name = stk500::trimFileExt(taskHex.destEntry.name());
     newSketch.iconBlock = 0;
     newSketch.iconDirty = false;
     newSketch.hasIcon = true;
     newSketch.index = -1;
-    newSketch.setIcon(iconData.data());
+    newSketch.setIcon(SKETCH_DEFAULT_ICON);
     ui->sketchesWidget->updateSketch(newSketch);
+}
+
+void MainWindow::on_sketches_deleteBtn_clicked()
+{
+    if (!ui->sketchesWidget->hasSelectedSketch()) {
+        return;
+    }
+    SketchInfo sketch = ui->sketchesWidget->getSelectedSketch();
+    QString name = sketch.name;
+
+    // Ask to confirm deletion
+    int result = QMessageBox::warning(this, "Deleting " + name,
+                                      "Are you sure you want to permanently delete this sketch?",
+                                      QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+
+    if (result != QMessageBox::Yes) return;
+
+    // Delete the files from the Micro-SD and remove the sketch from the list
+    stk500Delete task("", QStringList() << (name + ".SKI") << (name + ".HEX"));
+    serial->execute(task);
+    ui->sketchesWidget->deleteSketch(sketch);
 }

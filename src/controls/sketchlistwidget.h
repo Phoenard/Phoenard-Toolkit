@@ -25,6 +25,7 @@ public:
     void stopLoadingIcons();
     QList<QString> getSketchNames();
     void updateSketch(SketchInfo info);
+    void deleteSketch(const SketchInfo &sketch);
 
 signals:
     void sketchDoubleClicked();
@@ -38,7 +39,6 @@ private:
     stk500LoadIcon *lastTask;
     QIcon loadIcon;
     QIcon defaultIcon;
-    QByteArray defaultIconData;
 };
 
 #endif // SKETCHLISTWIDGET_H

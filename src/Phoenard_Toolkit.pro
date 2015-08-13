@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     stk500/stk500settings.cpp \
     imaging/phnimage.cpp \
     imaging/imageformat.cpp \
-    dialogs/asknamedialog.cpp
+    dialogs/asknamedialog.cpp \
+    stk500/sketchinfo.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
