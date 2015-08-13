@@ -37,6 +37,8 @@ private slots:
 
     void on_importBtn_clicked();
 
+    void on_resetBtn_clicked();
+
 private:
     Ui::IconEditDialog *ui;
     QString title;
