@@ -184,6 +184,11 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
             ui->microSDWidget->refreshFiles();
             on_microSDWidget_itemSelectionChanged();
         }
+
+        /* Refresh image format when opening Images tab */
+        if (index == 4) {
+            img_updateFormat();
+        }
     }
 
     for (int i = 0; i < allButtons_len; i++) {
@@ -270,13 +275,18 @@ void MainWindow::on_sd_newButton_clicked()
 
 void MainWindow::img_updateFormat() {
     PHNImage &image = ui->img_editor->image();
-    ImageFormat format = image.outputImageFormat();
-    ui->img_formatButton->setIcon(fmt_icons[(int) format]);
-    ui->img_colorSelect->setColorMode(format);
+    bool hasImage = !image.isNull();
+    ui->img_formatButton->setEnabled(hasImage);
+    ui->img_saveButton->setEnabled(hasImage);
+    if (hasImage) {
+        ImageFormat format = image.outputImageFormat();
+        ui->img_formatButton->setIcon(fmt_icons[(int) format]);
+        ui->img_colorSelect->setColorMode(format);
 
-    if (!image.isFullColor()) {
-        for (int i = 0; i < image.getColorCount(); i++) {
-            ui->img_colorSelect->setColor(i, image.getColor(i));
+        if (!image.isFullColor()) {
+            for (int i = 0; i < image.getColorCount(); i++) {
+                ui->img_colorSelect->setColor(i, image.getColor(i));
+            }
         }
     }
 }
