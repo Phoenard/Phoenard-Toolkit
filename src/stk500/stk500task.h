@@ -42,7 +42,6 @@ public:
     QList<DirectoryInfo> sd_list(DirectoryEntryPtr startPtr);
     void sd_allocEntries(DirectoryEntryPtr startPos, int oldLength, int newLength);
     bool sd_remove(QString fileName, bool fileIsDir);
-    DirectoryEntryPtr sd_rename(DirectoryWalker walker, QString oldName, QString newName);
 protected:
     stk500 *protocol;
 

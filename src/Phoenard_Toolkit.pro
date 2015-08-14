@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     imaging/imageformat.cpp \
     dialogs/asknamedialog.cpp \
     stk500/sketchinfo.cpp \
-    imaging/phniconprovider.cpp
+    imaging/phniconprovider.cpp \
+    stk500/stk500sd.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -64,7 +65,8 @@ HEADERS  += mainwindow.h \
     imaging/phnimage.h \
     imaging/imageformat.h \
     dialogs/asknamedialog.h \
-    imaging/phniconprovider.h
+    imaging/phniconprovider.h \
+    stk500/stk500sd.h
 
 FORMS    += mainwindow.ui \
     dialogs/progressdialog.ui \

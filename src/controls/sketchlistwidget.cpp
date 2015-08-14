@@ -11,7 +11,6 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
     setStyleSheet("QListWidget::item { border: 5px solid black; }");
 
     loadIcon = QIcon(":/icons/sketchloading.png");
-    defaultIcon = QIcon(":/icons/sketchdefault.png");
 
     stopLoadingIcons();
 }

@@ -41,7 +41,6 @@ private:
     Ui::SketchListWidget *ui;
     stk500LoadIcon *lastTask;
     QIcon loadIcon;
-    QIcon defaultIcon;
 };
 
 #endif // SKETCHLISTWIDGET_H
