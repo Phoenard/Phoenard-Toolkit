@@ -257,7 +257,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="page_10">
          <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -286,23 +286,6 @@
               </property>
               <property name="checkable">
                <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="MenuButton" name="serial_saveImage">
-              <property name="text">
-               <string>Screen</string>
-              </property>
-              <property name="icon">
-               <iconset resource="icons/icons.qrc">
-                <normaloff>:/icons/saveto.png</normaloff>:/icons/saveto.png</iconset>
-              </property>
-              <property name="checkable">
-               <bool>false</bool>
               </property>
               <property name="checked">
                <bool>false</bool>

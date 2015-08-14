@@ -1,6 +1,9 @@
 #include "serialmonitorwidget.h"
 #include "ui_serialmonitorwidget.h"
 #include <QScrollBar>
+#include <QMenu>
+#include <QAction>
+#include <QClipboard>
 
 serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     QWidget(parent),
@@ -15,7 +18,12 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     this->screen.cmd_len = 0;
     this->screenEnabled = false;
     ui->outputImage->setVisible(false);
-    ui->outputImage->image().create(320, 240);
+    resetScreen();
+
+    // Attach right-click menu to the output image viewer
+    ui->outputImage->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->outputImage, SIGNAL(customContextMenuRequested(const QPoint&)),
+        this, SLOT(showImageContextMenu(const QPoint&)));
 }
 
 serialmonitorwidget::~serialmonitorwidget()
@@ -55,6 +63,23 @@ void serialmonitorwidget::openSerial()
             baudSel.chop(baud_pfix.length());
         }
         serial->openSerial(baudSel.toInt());
+    }
+}
+
+void serialmonitorwidget::showImageContextMenu(const QPoint& pos) {
+    // Map the point to a point on the screen
+    QPoint globalPos = ui->outputImage->mapToGlobal(pos);
+
+    // Show a right-click menu with options for the image
+    QMenu menu;
+    QAction* copyClip = menu.addAction("Copy to clipboard");
+    QAction* selected = menu.exec(globalPos);
+
+    // Execute selected actions
+    if (selected == copyClip) {
+        QClipboard *clipboard = QApplication::clipboard();
+        QPixmap pixmap = ui->outputImage->image().pixmap();
+        clipboard->setPixmap(pixmap);
     }
 }
 
@@ -101,6 +126,7 @@ void serialmonitorwidget::on_sendButton_clicked()
 /* Clear output text - when serial opens */
 void serialmonitorwidget::clearOutputText() {
     ui->outputText->clear();
+    resetScreen();
 }
 
 /* Read Serial output and display it in the text area */
@@ -134,8 +160,9 @@ void serialmonitorwidget::readSerialOutput()
     }
 }
 
-ImageViewer* serialmonitorwidget::getImageEditor() {
-    return ui->outputImage;
+/* Resets the screen to all black */
+void serialmonitorwidget::resetScreen() {
+    ui->outputImage->image().create(320, 240);
 }
 
 /* Receives a single byte as part of the screen serial protocol */
@@ -203,7 +230,7 @@ void serialmonitorwidget::receiveScreen(quint8 byte)
             this->screen.view_hb = 319;
             this->screen.view_va = 0;
             this->screen.view_vb = 239;
-            this->ui->outputImage->image().fill(Qt::black);
+            this->resetScreen();
         } else if (byte == 0xFF) {
             this->screen.cmd_len = 2;
         } else if (byte == 0xFE) {

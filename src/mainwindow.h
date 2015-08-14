@@ -69,8 +69,6 @@ private slots:
 
     void on_serial_shareMode_toggled(bool checked);
 
-    void on_serial_saveImage_clicked();
-
     void on_sketches_runBtn_clicked();
 
     void on_sketches_iconBtn_clicked();

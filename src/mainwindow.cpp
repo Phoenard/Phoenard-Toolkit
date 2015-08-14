@@ -435,11 +435,6 @@ void MainWindow::on_serial_shareMode_toggled(bool checked)
     ui->serialmonitor->setScreenShare(checked);
 }
 
-void MainWindow::on_serial_saveImage_clicked()
-{
-    showSaveDialog(ui->serial_saveImage, ui->serialmonitor->getImageEditor());
-}
-
 void MainWindow::on_sketches_runBtn_clicked()
 {
     if (!ui->sketchesWidget->hasSelectedSketch()) {

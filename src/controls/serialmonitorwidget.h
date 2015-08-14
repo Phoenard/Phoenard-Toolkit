@@ -33,10 +33,10 @@ public:
     ~serialmonitorwidget();
     void openSerial();
     void setScreenShare(bool enabled);
-    ImageViewer* getImageEditor();
     virtual void setSerial(stk500Serial *serial);
 
 private:
+    void resetScreen();
     void receiveScreen(quint8 byte);
     void receivePixel(quint16 color);
     bool moveCursor_x(qint8 dx);
@@ -45,6 +45,7 @@ private:
 private slots:
     void readSerialOutput();
     void clearOutputText();
+    void showImageContextMenu(const QPoint& pos);
 
     void on_runSketchCheck_toggled(bool checked);
 
