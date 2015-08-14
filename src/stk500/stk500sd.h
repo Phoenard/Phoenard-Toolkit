@@ -26,12 +26,6 @@ typedef struct BlockCache {
 // Extension for dealing with Micro-SD access through STK500 protocol
 class stk500sd
 {
-private:
-    stk500 *_handler;
-    CardVolume _volume;
-    BlockCache _cache[SD_CACHE_CNT];
-
-    void writeOutCache(BlockCache *cache);
 public:
     stk500sd(stk500 *handler);
     void init(bool forceInit = false);
@@ -63,17 +57,17 @@ public:
     /* File API functions */
     DirectoryEntryPtr getRootPtr();
     DirectoryEntryPtr getDirPtrFromCluster(quint32 cluster);
+
+private:
+    void writeOutCache(BlockCache *cache);
+
+    stk500 *_handler;
+    CardVolume _volume;
+    BlockCache _cache[SD_CACHE_CNT];
 };
 
 // Stores all information needed to access a file or directory
 class DirectoryInfo {
-private:
-    DirectoryEntryPtr _firstPtr;
-    DirectoryEntryPtr _entryPtr;
-    DirectoryEntry _entry;
-    QString _fileName_long;
-    int _entryCnt;
-
 public:
     DirectoryInfo(DirectoryEntryPtr entryPtr, DirectoryEntryPtr firstPtr, int entryCnt, DirectoryEntry entry, QString longFileName)
         : _entryPtr(entryPtr),_entry(entry), _fileName_long(longFileName), _firstPtr(firstPtr), _entryCnt(entryCnt) {}
@@ -92,6 +86,13 @@ public:
     const int entryCount() { return _entryCnt; }
     QString fileSizeText();
     QString fileSizeTextLong();
+
+private:
+    DirectoryEntryPtr _firstPtr;
+    DirectoryEntryPtr _entryPtr;
+    DirectoryEntry _entry;
+    QString _fileName_long;
+    int _entryCnt;
 };
 
 #endif // STK500SD_H

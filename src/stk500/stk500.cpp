@@ -538,7 +538,3 @@ QString stk500::getSizeText(quint32 size) {
     rval.append(unit);
     return rval;
 }
-
-QString DirectoryInfo::fileSizeText() {
-    return stk500::getSizeText(fileSize());
-}

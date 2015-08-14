@@ -328,8 +328,6 @@ void stk500sd::wipeClusterChain(quint32 startCluster) {
     }
 }
 
-/* =========================== Directory walker API =========================== */
-
 DirectoryEntryPtr stk500sd::getRootPtr() {
     quint32 block;
     if (volume().isfat16) {
@@ -346,4 +344,8 @@ DirectoryEntryPtr stk500sd::getDirPtrFromCluster(quint32 cluster) {
     } else {
         return getRootPtr();
     }
+}
+
+QString DirectoryInfo::fileSizeText() {
+    return stk500::getSizeText(fileSize());
 }
