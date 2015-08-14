@@ -21,7 +21,7 @@ SOURCES += main.cpp\
     stk500/stk500serial.cpp \
     stk500/longfilenamegen.cpp \
     imaging/quantize.cpp \
-    colorselect.cpp \
+    controls/colorselect.cpp \
     controls/menubutton.cpp \
     controls/imageviewer.cpp \
     controls/sdbrowserwidget.cpp \
@@ -46,7 +46,8 @@ HEADERS  += mainwindow.h \
     stk500/longfilenamegen.h \
     stk500/stk500command.h \
     imaging/quantize.h \
-    colorselect.h \
+    controls/colorselect.h \
+    controls/mainmenutab.h \
     controls/menubutton.h \
     controls/imageviewer.h \
     controls/sdbrowserwidget.h \
@@ -58,14 +59,13 @@ HEADERS  += mainwindow.h \
     dialogs/codeselectdialog.h \
     dialogs/iconeditdialog.h \
     stk500/sketchinfo.h \
-    mainmenutab.h \
     stk500/stk500settings.h \
     imaging/phnimage.h \
     imaging/imageformat.h \
     dialogs/asknamedialog.h
 
 FORMS    += mainwindow.ui \
-    progressdialog.ui \
+    dialogs/progressdialog.ui \
     dialogs/formatselectdialog.ui \
     dialogs/codeselectdialog.ui \
     dialogs/iconeditdialog.ui \

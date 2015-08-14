@@ -1,7 +1,7 @@
 #ifndef MAINMENUTAB_H
 #define MAINMENUTAB_H
 
-#include "stk500/stk500serial.h"
+#include "../stk500/stk500serial.h"
 
 class MainMenuTab
 {

@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QDebug>
 #include "imageviewer.h"
-#include "../mainmenutab.h"
+#include "mainmenutab.h"
 
 namespace Ui {
 class serialmonitorwidget;

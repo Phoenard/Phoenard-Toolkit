@@ -809,7 +809,7 @@
   <customwidget>
    <class>ColorSelect</class>
    <extends>QWidget</extends>
-   <header>colorselect.h</header>
+   <header>controls/colorselect.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QListWidget>
-#include "controls/imageviewer.h"
+#include "imageviewer.h"
 
 class ColorSelect : public QWidget
 {
