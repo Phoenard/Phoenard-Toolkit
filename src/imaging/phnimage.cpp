@@ -421,6 +421,12 @@ void PHNImage::setColor(int index, QColor color) {
 }
 
 void PHNImage::setPixel(int x, int y, QColor color) {
+    // No image? Don't do anything at all.
+    if (isNull()) return;
+
+    // Bounds checking to prevent bad crashes
+    if ((x < 0) || (y < 0) || (x >= quant.width) || (y >= quant.height)) return;
+
     // First figure out the color to actually use
     // For colormapped images, this can only be a valid entry
     // For LCD16, we need to trim the color to 16-bit
