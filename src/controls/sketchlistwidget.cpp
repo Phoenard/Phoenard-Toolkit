@@ -21,6 +21,18 @@ SketchListWidget::~SketchListWidget()
     delete ui;
 }
 
+void SketchListWidget::setItemSketch(QListWidgetItem *item, const SketchInfo &sketch) {
+    QVariant var;
+    var.setValue(sketch);
+    item->setData(Qt::UserRole, var);
+    item->setText(sketch.name);
+    item->setIcon(sketch.hasIcon ? sketch.icon : this->loadIcon);
+}
+
+SketchInfo SketchListWidget::getItemSketch(const QListWidgetItem *item) {
+    return qvariant_cast<SketchInfo>(item->data(Qt::UserRole));
+}
+
 void SketchListWidget::refreshSketches() {
     stk500ListSketches task;
     serial->execute(task);
@@ -36,7 +48,7 @@ void SketchListWidget::refreshSketches() {
         for (int j = i; j < ui->list->count(); j++) {
             QListWidgetItem *item = ui->list->item(j);
             if (item->text() == sketchName) {
-                SketchInfo existing = qvariant_cast<SketchInfo>(item->data(Qt::UserRole));
+                SketchInfo existing = getItemSketch(item);
                 itemFound = item;
                 memcpy(sketch.iconData, existing.iconData, sizeof(sketch.iconData));
                 sketch.icon = existing.icon;
@@ -58,20 +70,14 @@ void SketchListWidget::refreshSketches() {
         }
 
         // Reset the item icon loading state
-        if (sketch.hasIcon) {
-            // Use previous icon but reload it
-            sketch.iconDirty = true;
-            itemFound->setIcon(sketch.icon);
-        } else if (sketch.iconBlock == 0) {
+        if (sketch.iconBlock == 0) {
             // No icon available; use default
             sketch.hasIcon = true;
             sketch.iconDirty = false;
             sketch.setIcon(SKETCH_DEFAULT_ICON);
-            itemFound->setIcon(sketch.icon);
         } else {
             // Schedule for loading
             sketch.iconDirty = true;
-            itemFound->setIcon(loadIcon);
         }
 
         // Check if current sketch
@@ -80,9 +86,7 @@ void SketchListWidget::refreshSketches() {
         }
 
         // Store sketch information in item
-        QVariant var;
-        var.setValue(sketch);
-        itemFound->setData(Qt::UserRole, var);
+        setItemSketch(itemFound, sketch);
     }
 
     // Remove any items past the count limit
@@ -113,7 +117,7 @@ void SketchListWidget::startLoadingIcons() {
     bool foundSketch = false;
     for (int i = 0; i < ui->list->count(); i++) {
         QListWidgetItem *item = ui->list->item(i);
-        SketchInfo itemSketch = qvariant_cast<SketchInfo>(item->data(Qt::UserRole));
+        SketchInfo itemSketch = getItemSketch(item);
         if (itemSketch.iconDirty) {
             if (itemSketch.hasIcon) {
                 // Low priority, take first
@@ -145,11 +149,8 @@ void SketchListWidget::serialTaskFinished(stk500Task *task) {
     for (int i = 0; i < ui->list->count(); i++) {
         QListWidgetItem *item = ui->list->item(i);
         if (item->text() == sketchName) {
-            item->setIcon(sketch.icon);
-
-            QVariant var;
-            var.setValue(sketch);
-            item->setData(Qt::UserRole, var);
+            setItemSketch(item, sketch);
+            break;
         }
     }
 
@@ -174,24 +175,18 @@ void SketchListWidget::deleteSketch(const SketchInfo &sketch) {
     }
 }
 
-void SketchListWidget::updateSketch(SketchInfo info) {
-    qDebug() << "UPDATE!";
+void SketchListWidget::updateSketch(SketchInfo sketch) {
     QListWidgetItem* item;
-    if ((info.index < 0) || (info.index >= ui->list->count())) {
+    if ((sketch.index < 0) || (sketch.index >= ui->list->count())) {
         // Add the item
-        info.index = ui->list->count();
-        item = new QListWidgetItem(info.name);
+        sketch.index = ui->list->count();
+        item = new QListWidgetItem(sketch.name);
         ui->list->addItem(item);
-        qDebug() << "ADDED.";
     } else {
         // Update existing item
-        item = ui->list->item(info.index);
+        item = ui->list->item(sketch.index);
     }
-    QVariant var;
-    var.setValue(info);
-    item->setData(Qt::UserRole, var);
-    item->setText(info.name);
-    item->setIcon(info.icon);
+    setItemSketch(item, sketch);
 }
 
 bool SketchListWidget::hasSelectedSketch() {
@@ -205,32 +200,26 @@ QString SketchListWidget::getSelectedName() {
 }
 
 SketchInfo SketchListWidget::getSelectedSketch() {
-    SketchInfo info;
+    SketchInfo sketch;
     QList<QListWidgetItem*> items = ui->list->selectedItems();
     if (!items.isEmpty()) {
-        info = qvariant_cast<SketchInfo>(items[0]->data(Qt::UserRole));
+        sketch = getItemSketch(items[0]);
 
         // If icon not yet loaded, load it now.
-        if (info.iconDirty) {
-            stk500LoadIcon task(info);
+        if (sketch.iconDirty) {
+            stk500LoadIcon task(sketch);
             serial->execute(task);
-            info = task.sketch;
-            QVariant var;
-            var.setValue(info);
-            items[0]->setData(Qt::UserRole, var);
-            items[0]->setIcon(info.hasIcon ? info.icon : defaultIcon);
+            sketch = task.sketch;
+            setItemSketch(items[0], sketch);
         }
     }
-    return info;
+    return sketch;
 }
 
-void SketchListWidget::setSelectedSketch(const SketchInfo &info) {
+void SketchListWidget::setSelectedSketch(const SketchInfo &sketch) {
     QList<QListWidgetItem*> items = ui->list->selectedItems();
     if (!items.isEmpty()) {
-        QVariant var;
-        var.setValue(info);
-        items[0]->setData(Qt::UserRole, var);
-        items[0]->setIcon(info.icon);
+        setItemSketch(items[0], sketch);
     }
 }
 

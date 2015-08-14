@@ -558,3 +558,46 @@ void MainWindow::on_sketches_deleteBtn_clicked()
     serial->execute(task);
     ui->sketchesWidget->deleteSketch(sketch);
 }
+
+void MainWindow::on_sketches_renameBtn_clicked()
+{
+    if (!ui->sketchesWidget->hasSelectedSketch()) {
+        return;
+    }
+    SketchInfo sketch = ui->sketchesWidget->getSelectedSketch();
+
+    // First ask the user to enter the new sketch name
+    AskNameDialog dialog(this);
+    dialog.setWindowTitle("Rename sketch");
+    dialog.setHelpTitle("Please enter the new name for your sketch");
+    dialog.setName(sketch.name);
+    dialog.setMaxLength(8);
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    // Convert the name to a short name
+    QString name = dialog.name().toUpper();
+    if (name.length() > 8) {
+        name = name.remove(8);
+    }
+
+    // Ignore if left unchanged
+    if (name == sketch.name) return;
+
+    // Check if this name is not already taken; fail in that case
+    QList<QString> names = ui->sketchesWidget->getSketchNames();
+    if (names.contains(name)) {
+        QMessageBox::critical(this, "Failed to rename", "A sketch with this name already exists");
+        return;
+    }
+
+    // Rename the HEX and SKI files on the Micro-SD
+    stk500Rename taskHex(sketch.name + ".HEX", name + ".HEX", true);
+    stk500Rename taskSki(sketch.name + ".SKI", name + ".SKI", true);
+    serial->executeAll(QList<stk500Task*>() << &taskHex << &taskSki);
+
+    // Rename the sketch in the sketch list if successful
+    if (taskHex.isSuccessful() && taskSki.isSuccessful()) {
+        sketch.name = sketch.fullName = name;
+        ui->sketchesWidget->updateSketch(sketch);
+    }
+}

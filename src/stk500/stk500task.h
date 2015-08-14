@@ -108,12 +108,15 @@ public:
 
 class stk500Rename : public stk500Task {
 public:
-    stk500Rename(QString filePath, QString newFileName) : stk500Task("Renaming file"), filePath(filePath), newFileName(newFileName) {}
+    stk500Rename(QString filePath, QString newFileName, bool ignoreMissing = false)
+        : stk500Task("Renaming file"), filePath(filePath), newFileName(newFileName), ignoreMissing(ignoreMissing), isMissing(false) {}
     virtual void run();
 
     QString filePath;
     QString newFileName;
     QList<DirectoryInfo> currentFiles;
+    bool ignoreMissing;
+    bool isMissing;
 };
 
 class stk500RenameVolume : public stk500Task {

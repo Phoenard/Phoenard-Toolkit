@@ -1255,6 +1255,8 @@ void stk500Rename::run() {
         existingShortNames.append(info.shortName());
     }
     if (!oldFileFirstPtr.isValid()) {
+        isMissing = true;
+        if (ignoreMissing) return;
         throw ProtocolException("File not found in directory");
     }
     if (newNameTaken) {
@@ -1296,12 +1298,8 @@ void stk500ListSketches::run() {
 
         /* Generate a temporary entry for comparison and adding */
         SketchInfo sketch;
-        int tmpLen = 0;
-        QString sketchName;
-        for (; tmpLen < 8 && (entry.name_raw[tmpLen] != ' '); tmpLen++) {
-            sketchName.append(entry.name_raw[tmpLen]);
-        }
-        sketch.name = sketchName;
+        sketch.name = stk500::trimFileExt(info.shortName());
+        sketch.fullName = stk500::trimFileExt(info.name());
         sketch.hasIcon = false;
         sketch.iconDirty = true;
         sketch.iconBlock = 0;
@@ -1350,7 +1348,11 @@ void stk500LaunchSketch::run() {
 }
 
 void stk500LoadIcon::run() {
-    sketch.setIcon(protocol->sd().cacheBlock(sketch.iconBlock, true, false, false));
+    if (sketch.iconBlock == 0) {
+        sketch.setIcon(SKETCH_DEFAULT_ICON);
+    } else {
+        sketch.setIcon(protocol->sd().cacheBlock(sketch.iconBlock, true, false, false));
+    }
     sketch.iconDirty = false;
     sketch.hasIcon = true;
 }

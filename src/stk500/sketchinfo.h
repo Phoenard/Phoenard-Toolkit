@@ -9,6 +9,7 @@ extern const char SKETCH_DEFAULT_ICON[512];
 
 typedef struct SketchInfo {
     QString name;
+    QString fullName;
     quint32 iconBlock;
     char iconData[512];
     QIcon icon;
