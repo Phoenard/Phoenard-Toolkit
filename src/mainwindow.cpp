@@ -407,12 +407,12 @@ void MainWindow::showSaveDialog(QWidget *at, ImageViewer *editorDialog) {
             return;
         }
         QString filePath = dialog.selectedFiles().at(0);
-        editorDialog->image().saveImageTo(filePath);
+        editorDialog->image().saveFile(filePath);
     } else if (result == sdOpt) {
         //TODO: Show dialog for browsing on the micro-SD
         return;
     } else if (result == codeOpt) {
-        QByteArray data = editorDialog->image().saveImage();
+        QByteArray data = editorDialog->image().saveData();
 
         /* Allow the user to copy code  */
         CodeSelectDialog dialog(this);

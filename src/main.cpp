@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         if (parser.isSet(skiFormat)) {
             image.setFormat(LCD1);
             image.setHeader(false);
-            image.saveImageTo(dest);
+            image.saveFile(dest);
         }
         exit(0);
     }

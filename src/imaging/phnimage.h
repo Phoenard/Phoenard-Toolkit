@@ -28,12 +28,16 @@ public:
     int height() { return this->quant.height; }
     bool isNull() { return !this->sourceImageValid; }
 
+    void create(int width, int height);
+
     void loadFile(const QString &filePath);
     void loadData(QByteArray &data);
     void loadData(int width, int height, int bpp, QByteArray &data);
     void loadData(int width, int height, int bpp, QByteArray &data, QList<QColor> &pixelmap);
-    QByteArray saveImage();
-    void saveImageTo(QString destFilePath);
+
+    QByteArray saveData();
+    void saveFile(QString destFilePath);
+
     const ImageFormat imageFormat() { return sourceImageFormat; }
     const ImageFormat outputImageFormat() { return destImageFormat; }
     const bool imageValid() { return sourceImageValid; }

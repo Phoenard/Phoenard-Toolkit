@@ -29,7 +29,7 @@ void IconEditDialog::loadIcon(const char* iconData) {
 }
 
 void IconEditDialog::saveIcon(char* iconData) {
-    QByteArray data = image().saveImage();
+    QByteArray data = image().saveData();
     memcpy(iconData, data.data(), 512);
 }
 

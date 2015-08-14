@@ -15,16 +15,7 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     this->screen.cmd_len = 0;
     this->screenEnabled = false;
     ui->outputImage->setVisible(false);
-
-    QByteArray tmp;
-    QList<QColor> colors;
-    for (int i = 0; i < (2*240*320); i++) {
-        tmp.append((char) 0);
-    }
-
-    PHNImage &image = ui->outputImage->image();
-    image.loadData(320, 240, 16, tmp, colors);
-    image.setFormat(BMP24);
+    ui->outputImage->image().create(320, 240);
 }
 
 serialmonitorwidget::~serialmonitorwidget()

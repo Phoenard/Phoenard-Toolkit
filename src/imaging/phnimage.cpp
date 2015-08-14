@@ -109,6 +109,18 @@ void PHNImage::onChanged() {
     emit changed();
 }
 
+void PHNImage::create(int width, int height) {
+    sourceImage = QImage(width, height, QImage::Format_ARGB32);
+    sourceImage.fill(Qt::black);
+    sourceImageFormat = BMP24;
+    sourceImageValid = true;
+    destImageHeader = true;
+    destImageFormat = BMP24;
+    quant.loadImage(sourceImage);
+    _pixmap = QPixmap::fromImage(sourceImage);
+    onChanged();
+}
+
 void PHNImage::loadFile(const QString &filePath) {
     QFile sourceFile(filePath);
     sourceFile.open(QIODevice::ReadOnly);
@@ -458,7 +470,7 @@ void PHNImage::fill(QColor color) {
     }
 }
 
-QByteArray PHNImage::saveImage() {
+QByteArray PHNImage::saveData() {
     QByteArray dataArray;
     QDataStream out(&dataArray, QIODevice::WriteOnly);
     int x, y;
@@ -568,8 +580,8 @@ QByteArray PHNImage::saveImage() {
     return dataArray;
 }
 
-void PHNImage::saveImageTo(QString destFilePath) {
-    QByteArray data = saveImage();
+void PHNImage::saveFile(QString destFilePath) {
+    QByteArray data = saveData();
     QFile file(destFilePath);
     if (file.open(QIODevice::WriteOnly)) {
         file.write(data.data(), data.length());
