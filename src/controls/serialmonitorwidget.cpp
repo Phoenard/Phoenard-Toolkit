@@ -176,6 +176,10 @@ void serialmonitorwidget::receiveScreen(quint8 byte)
             quint32 data_cnt = 1;
             if (this->screen.cmd_len == 6) {
                 data_cnt = *((quint32*) (this->screen.cmd_buff + 2));
+
+                // Make sure to limit it to the amount of pixels we have
+                // In case it glitches, we won't be stuck in a loop
+                if (data_cnt > (320*240)) data_cnt = (320*240);
             }
             this->screen.cmd_len = 0;
             // Process the command with the data known

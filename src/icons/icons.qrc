@@ -28,5 +28,8 @@
         <file>icon_edit.png</file>
         <file>newsketch.png</file>
         <file>rename.png</file>
+        <file>sketchhex.png</file>
+        <file>sketchski.png</file>
+        <file>filelcd.png</file>
     </qresource>
 </RCC>

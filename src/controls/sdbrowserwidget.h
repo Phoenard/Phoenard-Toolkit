@@ -8,6 +8,7 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include "mainmenutab.h"
+#include "../imaging/phniconprovider.h"
 
 class SDBrowserWidget : public QTreeWidget, public MainMenuTab
 {
@@ -40,6 +41,7 @@ protected:
     QTreeWidgetItem *getItemAtPath(QString path);
     bool itemHasSelectedParent(QTreeWidgetItem *item);
     bool itemIsFolder(QTreeWidgetItem *item);
+    void updateItemIcon(QTreeWidgetItem *item);
 
 private slots:
     void on_itemExpanded(QTreeWidgetItem *item);
@@ -48,6 +50,7 @@ private slots:
 
 private:
     bool _isRefreshing;
+    PHNIconProvider iconProvider;
 };
 
 #endif // SDBROWSERWIDGET_H

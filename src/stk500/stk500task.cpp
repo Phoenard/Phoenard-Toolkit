@@ -1286,13 +1286,13 @@ void stk500ListSketches::run() {
         DirectoryEntry entry = info.entry();
         QString shortName = info.shortName();
         QString shortExt = stk500::getFileExt(shortName);
-        bool isIcon = (shortExt == "SKI");
+        bool isIcon = (shortExt == ".SKI");
 
         /* Update current progress */
         setProgress((double) entryIdx / (double) rootEntries.length());
 
         /* Check if this entry is a HEX or SKI file */
-        if (info.isDirectory() || (!isIcon && (shortExt != "HEX"))) {
+        if (info.isDirectory() || (!isIcon && (shortExt != ".HEX"))) {
             continue;
         }
 

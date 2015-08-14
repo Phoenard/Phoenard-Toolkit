@@ -112,9 +112,27 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
         if (item->text(0) != newText) {
             item->setText(0, newText);
         }
+        updateItemIcon(item);
     } else {
         item->setText(0, oldText);
     }
+}
+
+void SDBrowserWidget::updateItemIcon(QTreeWidgetItem *item) {
+    QIcon icon;
+    if (item->childIndicatorPolicy() == QTreeWidgetItem::ShowIndicator) {
+        if ((topLevelItemCount() == 0) || (item == topLevelItem(0))) {
+            // Drive
+            icon = iconProvider.getDriveIcon();
+        } else {
+            // Folder
+            icon = iconProvider.getFolderIcon();
+        }
+    } else {
+        // File
+        icon = iconProvider.getIcon(item->text(0));
+    }
+    item->setIcon(0, icon);
 }
 
 void SDBrowserWidget::dragEnterEvent(QDragEnterEvent *event) {
@@ -418,14 +436,6 @@ void SDBrowserWidget::refreshItem(QTreeWidgetItem *item, QList<DirectoryInfo> su
             childItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsSelectable);
         }
 
-        // Apply name and file size text to the item
-        setupItemName(childItem, itemName);
-        if (isFolder) {
-            childItem->setText(1, "");
-        } else {
-            childItem->setText(1, directory.fileSizeText());
-        }
-
         // Calculate and apply item tooltip information
         QString toolTip;
         toolTip.append("Short name: ").append(directory.shortName());
@@ -438,8 +448,17 @@ void SDBrowserWidget::refreshItem(QTreeWidgetItem *item, QList<DirectoryInfo> su
         childItem->setToolTip(0, toolTip);
         childItem->setToolTip(1, toolTip);
 
+        // If it is a folder, apply property
         if (isFolder) {
             childItem->setChildIndicatorPolicy(QTreeWidgetItem::ShowIndicator);
+        }
+
+        // Apply name and file size text to the item
+        setupItemName(childItem, itemName);
+        if (isFolder) {
+            childItem->setText(1, "");
+        } else {
+            childItem->setText(1, directory.fileSizeText());
         }
 
         // If not found, we need to add it
@@ -477,6 +496,7 @@ void SDBrowserWidget::setupItemName(QTreeWidgetItem *item, QString name) {
     item->setText(0, name);
     flags |= Qt::ItemIsEditable;
     item->setFlags(flags);
+    updateItemIcon(item);
 }
 
 QString SDBrowserWidget::getPath(QTreeWidgetItem *item) {

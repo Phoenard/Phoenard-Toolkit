@@ -208,7 +208,7 @@ void Cube::setColormapSize(int colorCount) {
 void Cube::swapColors(uint indexA, uint indexB) {
     // Some safety checks
     if (trueColor || (indexA == indexB)) return;
-    if ((indexA >= colors) || (indexB >= colors)) return;
+    if (((int) indexA >= colors) || ((int) indexB >= colors)) return;
 
     // Swap the entries in the colormap
     std::swap(colormap[indexA], colormap[indexB]);
@@ -282,7 +282,7 @@ uint Cube::findColor(Pixel color, uint startIndex) {
     // If equal, we are done entirely
     int minDist = INT_MAX;
     uint mapIdx = 0;
-    for (uint i = startIndex; i < this->colors; i++) {
+    for (uint i = startIndex; (int) i < this->colors; i++) {
         int dist = calc_distance(this->colormap[i], color);
         if (dist < minDist) {
             minDist = dist;

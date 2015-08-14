@@ -850,7 +850,7 @@ QString stk500::getFileName(const QString &filePath) {
 }
 
 QString stk500::trimFileExt(const QString &filePath) {
-    return filePath.left(filePath.length() - getFileExt(filePath).length() - 1);
+    return filePath.left(filePath.length() - getFileExt(filePath).length());
 }
 
 QString stk500::getFileExt(const QString &filePath) {
@@ -863,7 +863,7 @@ QString stk500::getFileExt(const QString &filePath) {
     if (filePath.indexOf('\\', dotIdx) != -1) return "";
 
     /* Valid extension */
-    return filePath.right(filePath.length() - dotIdx - 1);
+    return filePath.right(filePath.length() - dotIdx);
 }
 
 QString stk500::getSizeText(quint32 size) {
