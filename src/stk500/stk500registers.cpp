@@ -13,8 +13,16 @@ void ChipRegisters::resetChanges() {
     memcpy(regDataLast, regData, sizeof(regDataLast));
 }
 
-quint8& ChipRegisters::operator[] (const int nIndex) {
-    return regData[nIndex];
+// Redefine the values to represent case statements inside the function
+#undef CHIPREG_V
+#define CHIPREG_V(name, index) case name : return "##name";
+
+QString ChipRegisters::name(int index) {
+    ChipReg reg = (ChipReg) index;
+    switch (reg) {
+    CHIPREG_ENUM_VALUES
+    default: return "UNKNOWN";
+    }
 }
 
 void stk500registers::write(const ChipRegisters &registers) {
@@ -25,7 +33,7 @@ void stk500registers::write(const ChipRegisters &registers) {
     for (int i = 0; i < registers.count(); i++) {
         quint8 changeMask = registers[i] ^ lastReg[i];
         if (changeMask) {
-            lastReg[i] = _handler->RAM_writeByte(i, registers[i], changeMask);
+            lastReg[i] = _handler->RAM_writeByte(i + CHIPREG_OFFSET, registers[i], changeMask);
         }
     }
 }
@@ -35,7 +43,7 @@ void stk500registers::read(ChipRegisters &registers) {
     registers.resetChanges();
 
     // Read the current registers
-    _handler->RAM_read(0, (char*) registers.data(), registers.count());
+    _handler->RAM_read(CHIPREG_OFFSET, (char*) registers.data(), registers.count());
 
     // Update the last known register values
     lastReg = registers;
