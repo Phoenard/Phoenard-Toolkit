@@ -20,17 +20,20 @@
 
 // Pre-define components up front
 class stk500sd;
+class stk500registers;
 
 // Main STK500 protocol handling class
 class stk500
 {
 public:
     stk500(QSerialPort *port = NULL);
+    ~stk500();
     void reset();
     void resetDelayed();
     quint64 idleTime();
     bool isTimeout();
     stk500sd& sd() { return *sd_handler; }
+    stk500registers& reg() { return *reg_handler; }
 
     /* Commands */
     QString signOn();
@@ -79,6 +82,7 @@ private:
     uint sequenceNumber;
     quint32 currentAddress;
     stk500sd *sd_handler;
+    stk500registers *reg_handler;
     bool signedOn;
 };
 
@@ -95,5 +99,6 @@ struct ProtocolException : public std::exception {
 
 // Include all components after (!) stk500
 #include "stk500sd.h"
+#include "stk500registers.h"
 
 #endif // STK500_H

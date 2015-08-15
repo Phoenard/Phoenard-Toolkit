@@ -6,7 +6,13 @@ stk500::stk500(QSerialPort *port)
     this->port = port;
     this->lastCmdTime = 0;
     this->sd_handler = new stk500sd(this);
+    this->reg_handler = new stk500registers(this);
     this->signedOn = false;
+}
+
+stk500::~stk500() {
+    delete this->sd_handler;
+    delete this->reg_handler;
 }
 
 void stk500::printData(char* title, char* data, int len) {
