@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->microSDWidget->setSerial(serial);
     ui->serialmonitor->setSerial(serial);
     ui->sketchesWidget->setSerial(serial);
+    ui->chipControlWidget->setSerial(serial);
 
     // Connect serial signal events
     connect(serial, SIGNAL(statusChanged(QString)),
@@ -57,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     allButtons[0] = ui->serialButton;
     allButtons[1] = ui->sketchesButton;
     allButtons[2] = ui->microSDButton;
-    allButtons[3] = ui->memoriesButton;
+    allButtons[3] = ui->chipControlButton;
     allButtons[4] = ui->imageEditorButton;
 
     for (QSerialPortInfo info : QSerialPortInfo::availablePorts()) {
@@ -78,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < allButtons_len; i++) {
         allButtons[i]->setIsTab(true);
     }
-    setSelectedTab(1, true);
+    setSelectedTab(3, true);
 
     this->openSerial();
 
@@ -167,6 +168,11 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
         if (prevIndex == 1) {
             ui->sketchesWidget->stopLoadingIcons();
         }
+
+        /* Stop updating when closing the chip control tab */
+        if (prevIndex == 3) {
+            ui->chipControlWidget->setActive(false);
+        }
     }
 
     if (doEvents) {
@@ -184,6 +190,11 @@ void MainWindow::setSelectedTab(int index, bool forceUpdate) {
         if (index == 2) {
             ui->microSDWidget->refreshFiles();
             on_microSDWidget_itemSelectionChanged();
+        }
+
+        /* Start updating when opening the chip control tab */
+        if (index == 3) {
+            ui->chipControlWidget->setActive(true);
         }
 
         /* Refresh image format when opening Images tab */
@@ -209,7 +220,7 @@ void MainWindow::on_microSDButton_clicked() {
     setSelectedTab(2);
 }
 
-void MainWindow::on_memoriesButton_clicked() {
+void MainWindow::on_chipControlButton_clicked() {
     setSelectedTab(3);
 }
 

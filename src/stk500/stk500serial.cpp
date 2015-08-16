@@ -185,6 +185,10 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
     }
 }
 
+bool stk500Serial::isExecuting() {
+    return process->isProcessing || !process->tasks.isEmpty();
+}
+
 void stk500Serial::cancelTasks() {
     process->cancelTasks();
 }

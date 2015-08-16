@@ -246,11 +246,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             /* ============================== */
         }
     }
-    QString cmdCode = QString("%1").arg((uint) command, 0, 16).toUpper();
-    if (cmdCode.length() == 1) {
-        cmdCode.insert(0, '0');
-    }
-    cmdCode.insert(0, "0x");
+    QString cmdCode = getHexText((uint) command);
     if (!processed) {
         // Log the error
         if (errorInfo.isEmpty()) {
@@ -543,4 +539,13 @@ QString stk500::getSizeText(quint32 size) {
     rval.append(' ');
     rval.append(unit);
     return rval;
+}
+
+QString stk500::getHexText(uint value) {
+    QString hex = QString("%1").arg((uint) value, 0, 16).toUpper();
+    if (hex.length() == 1) {
+        hex.insert(0, '0');
+    }
+    hex.insert(0, "0x");
+    return hex;
 }

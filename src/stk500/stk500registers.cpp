@@ -15,13 +15,12 @@ void ChipRegisters::resetChanges() {
 
 // Redefine the values to represent case statements inside the function
 #undef CHIPREG_V
-#define CHIPREG_V(name, index) case name : return "##name";
+#define CHIPREG_V(index, name) case (index - CHIPREG_OFFSET) : return #name;
 
 QString ChipRegisters::name(int index) {
-    ChipReg reg = (ChipReg) index;
-    switch (reg) {
+    switch (index) {
     CHIPREG_ENUM_VALUES
-    default: return "UNKNOWN";
+    default: return "RESERVED";
     }
 }
 

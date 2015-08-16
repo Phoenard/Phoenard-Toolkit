@@ -205,9 +205,9 @@
        </widget>
       </item>
       <item>
-       <widget class="MenuButton" name="memoriesButton">
+       <widget class="MenuButton" name="chipControlButton">
         <property name="text">
-         <string>Memories</string>
+         <string>Control</string>
         </property>
         <property name="icon">
          <iconset resource="icons/icons.qrc">
@@ -257,7 +257,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="page_10">
          <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -641,7 +641,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="page_3">
        <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -726,7 +726,13 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="page_2"/>
+      <widget class="QWidget" name="page_2">
+       <layout class="QVBoxLayout" name="verticalLayout_11">
+        <item>
+         <widget class="ChipControlWidget" name="chipControlWidget" native="true"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="page_9">
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
@@ -805,6 +811,12 @@
    <class>SketchListWidget</class>
    <extends>QWidget</extends>
    <header>controls/sketchlistwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ChipControlWidget</class>
+   <extends>QWidget</extends>
+   <header>controls/chipcontrolwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

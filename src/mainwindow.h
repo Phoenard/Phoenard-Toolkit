@@ -45,7 +45,7 @@ private slots:
 
     void on_microSDButton_clicked();
 
-    void on_memoriesButton_clicked();
+    void on_chipControlButton_clicked();
 
     void on_sd_refreshButton_clicked();
 

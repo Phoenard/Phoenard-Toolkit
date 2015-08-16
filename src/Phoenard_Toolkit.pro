@@ -39,7 +39,8 @@ SOURCES += main.cpp\
     stk500/sketchinfo.cpp \
     imaging/phniconprovider.cpp \
     stk500/stk500sd.cpp \
-    stk500/stk500registers.cpp
+    stk500/stk500registers.cpp \
+    controls/chipcontrolwidget.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -68,7 +69,8 @@ HEADERS  += mainwindow.h \
     dialogs/asknamedialog.h \
     imaging/phniconprovider.h \
     stk500/stk500sd.h \
-    stk500/stk500registers.h
+    stk500/stk500registers.h \
+    controls/chipcontrolwidget.h
 
 FORMS    += mainwindow.ui \
     dialogs/progressdialog.ui \
@@ -77,7 +79,8 @@ FORMS    += mainwindow.ui \
     dialogs/iconeditdialog.ui \
     controls/serialmonitorwidget.ui \
     controls/sketchlistwidget.ui \
-    dialogs/asknamedialog.ui
+    dialogs/asknamedialog.ui \
+    controls/chipcontrolwidget.ui
 
 OTHER_FILES +=
 

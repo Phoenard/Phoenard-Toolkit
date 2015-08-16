@@ -25,6 +25,7 @@ public:
     void openSerial(int baudrate);
     void closeSerial();
     bool isSerialOpen();
+    bool isExecuting();
     int read(char* buff, int buffLen);
     void write(const char* buff, int buffLen);
     void write(const QString &message);

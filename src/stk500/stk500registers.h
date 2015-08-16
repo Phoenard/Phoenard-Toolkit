@@ -207,6 +207,7 @@ public:
     bool changed(int index);
     quint8* data() { return regData; }
     QString name(int index);
+    int addr(int index) const { return index + CHIPREG_OFFSET; }
 
     quint8 operator [](int i) const { return regData[i]; }
     quint8& operator [](int i) { return regData[i]; }

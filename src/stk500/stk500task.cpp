@@ -1356,3 +1356,10 @@ void stk500LoadIcon::run() {
     sketch.iconDirty = false;
     sketch.hasIcon = true;
 }
+
+void stk500UpdateRegisters::run() {
+    protocol->reg().write(this->reg);
+    if (read) {
+        protocol->reg().read(this->reg);
+    }
+}

@@ -157,4 +157,13 @@ public:
     SketchInfo sketch;
 };
 
+class stk500UpdateRegisters : public stk500Task {
+public:
+    stk500UpdateRegisters(ChipRegisters &reg, bool read = true) : stk500Task("Updating registers"), reg(reg), read(read) {}
+    virtual void run();
+
+    ChipRegisters reg;
+    bool read;
+};
+
 #endif // STK500TASK_H

@@ -60,6 +60,7 @@ public:
     static QString getFileExt(const QString &filePath);
     static QString getSizeText(quint32 size);
     static QString getTimeText(qint64 timeMillis);
+    static QString getHexText(uint value);
     static void printData(char* title, char* data, int len);
 
 private:
