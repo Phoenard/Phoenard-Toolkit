@@ -207,6 +207,7 @@ public:
     bool changed(int index);
     quint8* data() { return regData; }
     QString name(int index);
+    QStringList bitNames(int index);
     int addr(int index) const { return index + CHIPREG_OFFSET; }
 
     quint8 operator [](int i) const { return regData[i]; }
@@ -214,21 +215,23 @@ public:
     quint8 operator [](ChipReg reg) const { return regData[(int) reg]; }
     quint8& operator [](ChipReg reg) { return regData[(int) reg]; }
 
-private:
-    quint8 regData[CHIPREG_COUNT];
-    quint8 regDataLast[CHIPREG_COUNT];
+    friend class stk500registers;
+
+protected:
+    quint8 regData[CHIPREG_COUNT];     // Live values, changed by the user
+    quint8 regDataRead[CHIPREG_COUNT]; // Live values, original to track user changes
+    quint8 regDataLast[CHIPREG_COUNT]; // Live values from last time
 };
 
 class stk500registers
 {
 public:
     stk500registers(stk500 *handler) : _handler(handler) {}
-    void write(const ChipRegisters &registers);
+    void write(ChipRegisters &registers);
     void read(ChipRegisters &registers);
 
 private:
     stk500 *_handler;
-    ChipRegisters lastReg;
 };
 
 #endif // STK500REGISTERS_H

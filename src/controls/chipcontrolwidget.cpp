@@ -67,12 +67,23 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
             // Setup the vertical header item
             tab->setVerticalHeaderItem(i, new QTableWidgetItem(_reg.name(i)));
 
+            // Obtain a list of names to use for this row
+            QStringList bitNames = _reg.bitNames(i);
+
             // Create the full row of columns
             for (int col = 0; col < 10; col++) {
                 QTableWidgetItem *item = new QTableWidgetItem("");
-                if (col == 0) item->setText(stk500::getHexText(_reg.addr(i)));
                 item->setBackgroundColor(QColor(Qt::white));
                 item->setTextAlignment(Qt::AlignCenter);
+                if (col == 0) {
+                    // Register name
+                    item->setText(stk500::getHexText(_reg.addr(i)));
+                } else if (col == 1) {
+                    // Register value
+                } else {
+                    // Bit values
+                    item->setText(bitNames[col-2]);
+                }
                 tab->setItem(i, col, item);
             }
 
@@ -106,7 +117,7 @@ void ChipControlWidget::updateEntry(int index, bool forceUpdate) {
             bool isOn = ((value & (1 << b)) != 0);
             QTableWidgetItem *item = tab->item(index, 2 + b);
             item->setBackgroundColor(QColor(isOn ? Qt::yellow : Qt::white));
-            item->setText(isOn ? "1" : "0");
+            //item->setText(isOn ? "1" : "0");
         }
     } else {
         QColor c = tab->item(index, 1)->backgroundColor();
