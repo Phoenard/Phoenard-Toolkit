@@ -75,37 +75,70 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     if (tab->rowCount() == 0) {
 
         // Set up the column header; exclude first element (is vertical header)
-        int columns = CHIPREG_DATA_COLUMNS - 1;
+        const int columns = CHIPREG_DATA_COLUMNS - 1;
+        const int header_padding = 12;
+        const ChipRegisterInfo &headerInfo = _reg.infoHeader();
+        int* columnWidths = new int[columns];
         QStringList headerValues;
-        for (int i = 0; i < columns; i++) {
-            headerValues.append(_reg.infoHeader().values[i + 1]);
-        }
-        tab->setColumnCount(columns);
-        tab->setHorizontalHeaderLabels(headerValues);
+        QFontMetrics fontMetrics(tab->font());
+
+        // Go by all columns and refresh the header values
         tab->setSelectionMode(QAbstractItemView::SingleSelection);
+        tab->setColumnCount(columns);
+        for (int col = 0; col < columns; col++) {
+            QString colHeader = headerInfo.values[col + 1];
+            headerValues.append(colHeader);
+            columnWidths[col] = fontMetrics.width(colHeader) + header_padding;
+
+            tab->setHorizontalHeaderItem(col, new QTableWidgetItem(colHeader));
+        }
 
         // Fill the table with the initial items
         tab->setRowCount(_reg.count());
-        for (int i = 0; i < _reg.count(); i++) {
+        int moduleRowStart = 0;
+        for (int row = 0; row < _reg.count(); row++) {
 
             // Read the information
-            const ChipRegisterInfo &info = _reg.infoByIndex(i);
+            const ChipRegisterInfo &info = _reg.infoByIndex(row);
 
             // Setup the vertical header item
-            tab->setVerticalHeaderItem(i, new QTableWidgetItem(info.address));
+            tab->setVerticalHeaderItem(row, new QTableWidgetItem(info.address));
 
             // Create the full row of columns
             for (int col = 0; col < columns; col++) {
+
+                // Update and add the cell item
                 QTableWidgetItem *item = new QTableWidgetItem(info.values[col+1]);
                 item->setBackgroundColor(QColor(Qt::white));
-                item->setTextAlignment(Qt::AlignCenter);
                 if (col != 3) {
                     item->setFlags((item->flags() & ~Qt::ItemIsEditable));
                 }
+                if (col >= 3) {
+                    item->setTextAlignment(Qt::AlignCenter);
+                }
                 item->setFlags((item->flags() & ~Qt::ItemIsUserCheckable));
-                tab->setItem(i, col, item);
+                tab->setItem(row, col, item);
+
+                // Increase the column width as needed
+                int colWidth = fontMetrics.width(item->text()) + header_padding;
+                if (columnWidths[col] < colWidth) {
+                    columnWidths[col] = colWidth;
+                }
+            }
+
+            // If module name is the same as the row above; merge
+            if (row > 0 && (_reg.infoByIndex(moduleRowStart).module == info.module) && (info.module != "-")) {
+                tab->setSpan(moduleRowStart, 1, row-moduleRowStart+1, 1);
+            } else {
+                moduleRowStart = row;
             }
         }
+
+        // Apply column widths
+        for (int col = 0; col < columns; col++) {
+            tab->setColumnWidth(col, columnWidths[col]);
+        }
+        delete[] columnWidths;
 
         // Next, refresh all the cells
         forceItemUpdate = true;
@@ -122,8 +155,9 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
 void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {
     // Check if there are any changes or if it is forced to update
     int address = getItemAddress(item);
+    bool valueError = _reg.error(address);
     bool valueChanged = _reg.changed(address);
-    bool refreshNeeded = (valueChanged || forcedUpdate);
+    bool refreshNeeded = (valueChanged || valueError || forcedUpdate);
 
     // If it has a bit mask, it is a bit item. Update it as such.
     int bitMask = getItemBitMask(item);
@@ -149,7 +183,7 @@ void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {
 
     // Update the displayed text in the value column
     if (item->column() == 3) {
-        if (_reg.error(address)) {
+        if (valueError) {
             item->setBackgroundColor(QColor(Qt::red));
         } else if (valueChanged) {
             item->setBackgroundColor(QColor(Qt::yellow));
