@@ -35,6 +35,16 @@ void ChipControlWidget::setActive(bool active) {
     }
 }
 
+void ChipControlWidget::on_registerTable_cellDoubleClicked(int row, int column)
+{
+    int address = _reg.infoByIndex(row).addressValue;
+    int bitIndex = (11 - column);
+    if ((bitIndex >= 0) && (bitIndex < 8) && (address != -1)) {
+        _reg[address] ^= (1 << bitIndex);
+        qDebug() << "NEW VALUE: " << stk500::getHexText(_reg[address]);
+    }
+}
+
 void ChipControlWidget::startUpdating() {
     // Start a new asynchronous task while active
     if (_active) {
@@ -47,42 +57,44 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     // Check if this is our task containing updated registers
     if (task != lastTask) return;
 
-    // Refresh local reg variable and delete the task again
-    _reg = lastTask->reg;
+    // Refresh reg variable and delete the task again
+    ChipRegisters newReg = lastTask->reg;
     delete lastTask;
     lastTask = NULL;
 
+    // Start updating with the current changes
+    startUpdating();
+    _reg = newReg;
+
     QTableWidget *tab = ui->registerTable;
     if (tab->rowCount() == 0) {
-        // Set up the column count and column header
-        tab->setColumnCount(10);
-        tab->setHorizontalHeaderLabels(QStringList() << "Address" << "Value"
-                                       << "b0" << "b1" << "b2" << "b3"
-                                       << "b4" << "b5" << "b6" << "b7");
+
+        // Set up the column header; exclude first element (is vertical header)
+        int columns = CHIPREG_DATA_COLUMNS - 1;
+        QStringList headerValues;
+        for (int i = 0; i < columns; i++) {
+            headerValues.append(_reg.infoHeader().values[i + 1]);
+        }
+        tab->setColumnCount(columns);
+        tab->setHorizontalHeaderLabels(headerValues);
 
         // Fill the table with the initial items
         tab->setRowCount(_reg.count());
         for (int i = 0; i < _reg.count(); i++) {
 
-            // Setup the vertical header item
-            tab->setVerticalHeaderItem(i, new QTableWidgetItem(_reg.name(i)));
+            // Read the information
+            const ChipRegisterInfo &info = _reg.infoByIndex(i);
 
-            // Obtain a list of names to use for this row
-            QStringList bitNames = _reg.bitNames(i);
+            // Setup the vertical header item
+            tab->setVerticalHeaderItem(i, new QTableWidgetItem(info.address));
 
             // Create the full row of columns
-            for (int col = 0; col < 10; col++) {
-                QTableWidgetItem *item = new QTableWidgetItem("");
+            for (int col = 0; col < columns; col++) {
+                QTableWidgetItem *item = new QTableWidgetItem(info.values[col+1]);
                 item->setBackgroundColor(QColor(Qt::white));
                 item->setTextAlignment(Qt::AlignCenter);
-                if (col == 0) {
-                    // Register name
-                    item->setText(stk500::getHexText(_reg.addr(i)));
-                } else if (col == 1) {
-                    // Register value
-                } else {
-                    // Bit values
-                    item->setText(bitNames[col-2]);
+                if (col != 3) {
+                    item->setFlags(item->flags() ^ Qt::ItemIsEditable);
                 }
                 tab->setItem(i, col, item);
             }
@@ -96,31 +108,37 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
             updateEntry(i, false);
         }
     }
-
-    // Execute the next update
-    startUpdating();
 }
 
 void ChipControlWidget::updateEntry(int index, bool forceUpdate) {
-    QTableWidget *tab = ui->registerTable;
-    bool valueChanged = (!forceUpdate && _reg.changed(index));
-    if (valueChanged || forceUpdate) {
-        if (!forceUpdate) {
-            tab->item(index, 1)->setBackgroundColor(QColor(Qt::yellow));
-        }
+    int address = _reg.infoByIndex(index).addressValue;
+    bool valueChanged = (!forceUpdate && _reg.changed(address));
+    QTableWidgetItem* valueItem = ui->registerTable->item(index, 3);
 
-        uint value = (uint) _reg[index];
-        tab->item(index, 1)->setText(stk500::getHexText(value));
+    // Highlight the value cell when value changes; fades out
+    if (valueChanged) {
+        valueItem->setBackgroundColor(QColor(Qt::yellow));
+    }
+
+    // Refresh the bit fields and value text
+    if (valueChanged || forceUpdate) {
+        uint value = (uint) _reg[address];
+        valueItem->setText(stk500::getHexText(value));
 
         // Update the bit values
         for (int b = 0; b < 8; b++) {
             bool isOn = ((value & (1 << b)) != 0);
-            QTableWidgetItem *item = tab->item(index, 2 + b);
+            QTableWidgetItem *item = ui->registerTable->item(index, 11-b);
             item->setBackgroundColor(QColor(isOn ? Qt::yellow : Qt::white));
-            //item->setText(isOn ? "1" : "0");
+
+            QString text = item->text();
+            if ((text == "0") || (text == "1")) {
+                item->setText(isOn ? "1" : "0");
+            }
         }
     } else {
-        QColor c = tab->item(index, 1)->backgroundColor();
+        // Fade the value cell to white if it is colored
+        QColor c = valueItem->backgroundColor();
         if (c != QColor(Qt::white)) {
             int r = c.red(), g = c.green(), b = c.blue();
             r += 8;
@@ -129,7 +147,7 @@ void ChipControlWidget::updateEntry(int index, bool forceUpdate) {
             if (r > 255) r = 255;
             if (g > 255) g = 255;
             if (b > 255) b = 255;
-            tab->item(index, 1)->setBackgroundColor(QColor::fromRgb(r, g, b));
+            valueItem->setBackgroundColor(QColor::fromRgb(r, g, b));
         }
     }
 }

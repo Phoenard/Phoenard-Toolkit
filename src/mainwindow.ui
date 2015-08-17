@@ -20,7 +20,7 @@
    <string>Phoenard Toolkit</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="icons/icons.qrc">
+   <iconset resource="resources.qrc">
     <normaloff>:/icons/Icon.png</normaloff>:/icons/Icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -168,7 +168,7 @@
          <string>Serial</string>
         </property>
         <property name="icon">
-         <iconset resource="icons/icons.qrc">
+         <iconset resource="resources.qrc">
           <normaloff>:/icons/serialmonitor.png</normaloff>:/icons/serialmonitor.png</iconset>
         </property>
         <property name="checkable">
@@ -182,7 +182,7 @@
          <string>Sketches</string>
         </property>
         <property name="icon">
-         <iconset resource="icons/icons.qrc">
+         <iconset resource="resources.qrc">
           <normaloff>:/icons/sketches.png</normaloff>:/icons/sketches.png</iconset>
         </property>
         <property name="checkable">
@@ -196,7 +196,7 @@
          <string>Micro-SD</string>
         </property>
         <property name="icon">
-         <iconset resource="icons/icons.qrc">
+         <iconset resource="resources.qrc">
           <normaloff>:/icons/microsd.png</normaloff>:/icons/microsd.png</iconset>
         </property>
         <property name="checkable">
@@ -210,7 +210,7 @@
          <string>Control</string>
         </property>
         <property name="icon">
-         <iconset resource="icons/icons.qrc">
+         <iconset resource="resources.qrc">
           <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
         </property>
         <property name="checkable">
@@ -224,7 +224,7 @@
          <string>Images</string>
         </property>
         <property name="icon">
-         <iconset resource="icons/icons.qrc">
+         <iconset resource="resources.qrc">
           <normaloff>:/icons/images.png</normaloff>:/icons/images.png</iconset>
         </property>
         <property name="checkable">
@@ -281,7 +281,7 @@
                <string>Screen</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/images.png</normaloff>:/icons/images.png</iconset>
               </property>
               <property name="checkable">
@@ -337,7 +337,7 @@
                <string>Run</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/run.png</normaloff>:/icons/run.png</iconset>
               </property>
              </widget>
@@ -348,7 +348,7 @@
                <string>Icon</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/icon_edit.png</normaloff>:/icons/icon_edit.png</iconset>
               </property>
              </widget>
@@ -359,7 +359,7 @@
                <string>New</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/newsketch.png</normaloff>:/icons/newsketch.png</iconset>
               </property>
              </widget>
@@ -370,7 +370,7 @@
                <string>Rename</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/rename.png</normaloff>:/icons/rename.png</iconset>
               </property>
              </widget>
@@ -381,7 +381,7 @@
                <string>Delete</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
               </property>
              </widget>
@@ -431,7 +431,7 @@
                <string>Refresh</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/refresh.png</normaloff>:/icons/refresh.png</iconset>
               </property>
              </widget>
@@ -445,7 +445,7 @@
                <string>Save</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/saveto.png</normaloff>:/icons/saveto.png</iconset>
               </property>
              </widget>
@@ -459,7 +459,7 @@
                <string>Import</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/Import.png</normaloff>:/icons/Import.png</iconset>
               </property>
              </widget>
@@ -473,7 +473,7 @@
                <string>New</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/newfile.png</normaloff>:/icons/newfile.png</iconset>
               </property>
              </widget>
@@ -484,7 +484,7 @@
                <string>Delete</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
               </property>
              </widget>
@@ -534,7 +534,7 @@
                <string>Memories</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
               </property>
              </widget>
@@ -584,7 +584,7 @@
                <string>Load</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/Import.png</normaloff>:/icons/Import.png</iconset>
               </property>
              </widget>
@@ -595,7 +595,7 @@
                <string>Format</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/fmt_bmp24.png</normaloff>:/icons/fmt_bmp24.png</iconset>
               </property>
              </widget>
@@ -606,7 +606,7 @@
                <string>Save</string>
               </property>
               <property name="icon">
-               <iconset resource="icons/icons.qrc">
+               <iconset resource="resources.qrc">
                 <normaloff>:/icons/saveto.png</normaloff>:/icons/saveto.png</iconset>
               </property>
              </widget>
@@ -821,7 +821,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="icons/icons.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections/>
 </ui>

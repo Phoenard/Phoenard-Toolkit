@@ -1,0 +1,38 @@
+<RCC>
+    <qresource prefix="">
+        <file>icons/serialmonitor.png</file>
+        <file>icons/Icon.png</file>
+        <file>icons/memories.png</file>
+        <file>icons/sketches.png</file>
+        <file>icons/microsd.png</file>
+        <file>icons/refresh.png</file>
+        <file>icons/delete.png</file>
+        <file>icons/saveto.png</file>
+        <file>icons/newfile.png</file>
+        <file>icons/newfolder.png</file>
+        <file>icons/Import.png</file>
+        <file>icons/images.png</file>
+        <file>icons/fmt_bmp8.png</file>
+        <file>icons/fmt_bmp24.png</file>
+        <file>icons/fmt_lcd1.png</file>
+        <file>icons/fmt_lcd2.png</file>
+        <file>icons/fmt_lcd4.png</file>
+        <file>icons/fmt_lcd8.png</file>
+        <file>icons/fmt_lcd16.png</file>
+        <file>icons/code.png</file>
+        <file>icons/checkbox_checked.png</file>
+        <file>icons/checkbox_unchecked.png</file>
+        <file>icons/run.png</file>
+        <file>icons/sketchdefault.png</file>
+        <file>icons/sketchloading.png</file>
+        <file>icons/icon_edit.png</file>
+        <file>icons/newsketch.png</file>
+        <file>icons/rename.png</file>
+        <file>icons/sketchhex.png</file>
+        <file>icons/sketchski.png</file>
+        <file>icons/filelcd.png</file>
+    </qresource>
+	<qresource prefix="">
+	    <file>data/registers.csv</file>
+	</qresource>
+</RCC>

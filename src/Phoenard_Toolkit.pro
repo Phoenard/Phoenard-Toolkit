@@ -85,4 +85,4 @@ FORMS    += mainwindow.ui \
 OTHER_FILES +=
 
 RESOURCES += \
-    icons/icons.qrc
+    resources.qrc

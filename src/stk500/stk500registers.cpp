@@ -1,5 +1,10 @@
 #include "stk500registers.h"
 
+bool ChipRegisters::registerInfoInit = false;
+ChipRegisterInfo ChipRegisters::registerInfo[CHIPREG_COUNT];
+ChipRegisterInfo* ChipRegisters::registerInfoByIndex[CHIPREG_COUNT];
+ChipRegisterInfo ChipRegisters::registerInfoHeader;
+
 ChipRegisters::ChipRegisters() {
     memset(regData, 0, sizeof(regData));
     memset(regDataLast, 0, sizeof(regDataLast));
@@ -14,47 +19,105 @@ void ChipRegisters::resetChanges() {
     memcpy(regDataLast, regData, sizeof(regDataLast));
 }
 
-// Redefine the values to represent case statements inside the function
-#undef CHIPREG_V
-#define CHIPREG_V(index, name) case (index - CHIPREG_OFFSET) : return #name;
+ChipRegisterInfo::ChipRegisterInfo() {
+    load(QStringList());
+}
 
-QString ChipRegisters::name(int index) {
-    switch (index) {
-    CHIPREG_ENUM_VALUES
-    default: return "RESERVED";
+ChipRegisterInfo::ChipRegisterInfo(QStringList &values) {
+    load(values);
+}
+
+void ChipRegisterInfo::load(QStringList &values) {
+    for (int i = 0; i < CHIPREG_DATA_COLUMNS; i++) {
+        this->values[i] = (i < values.count()) ? values[i] : "-";
+    }
+
+    this->index = -1;
+    this->address = this->values[0];
+    this->name = this->values[1];
+    this->module = this->values[2];
+    this->function = this->values[3];
+    for (int i = 0; i < 8; i++) {
+        this->bitNames[7-i] = this->values[i + 4];
+    }
+    bool succ = false;
+    this->addressValue = this->address.toInt(&succ, 16);
+    if (!succ) this->addressValue = -1;
+}
+
+const ChipRegisterInfo &ChipRegisters::info(int address) {
+    if (!registerInfoInit) {
+        registerInfoInit = true;
+
+        // Default entry if none exists
+        ChipRegisterInfo defaultEntry;
+
+        // Read all entries
+        QList<ChipRegisterInfo> entries;
+        QFile registersFile(":/data/registers.csv");
+        if (registersFile.open(QIODevice::ReadOnly)) {
+            QTextStream textStream(&registersFile);
+            while (!textStream.atEnd()) {
+                // Read the next entry
+                ChipRegisterInfo entry(textStream.readLine().split(","));
+
+                // Handle different entry types
+                if (entry.address == "OTHER") {
+                    // OTHER default constant
+                    defaultEntry = entry;
+                } else if (entry.addressValue == -1) {
+                    // Header - no valid address
+                    registerInfoHeader = entry;
+                } else {
+                    // Entry with valid address
+                    entries.append(entry);
+                }
+            }
+        }
+
+        // Initialize all register info entries to the default values
+        for (int i = 0; i < CHIPREG_COUNT; i++) {
+            registerInfo[i] = defaultEntry;
+            registerInfo[i].addressValue = i;
+            registerInfo[i].address = stk500::getHexText(i);
+            registerInfo[i].values[0] = registerInfo[i].address;
+        }
+
+        // Store all entries at the addresses
+        int index = 0;
+        for (ChipRegisterInfo &entry : entries) {
+            int addr = entry.addressValue;
+            if ((addr >= 0) && (addr < CHIPREG_COUNT)) {
+                registerInfo[addr] = entry;
+                registerInfo[addr].index = index;
+                registerInfoByIndex[index] = &registerInfo[addr];
+                index++;
+            }
+        }
+
+        // Fill the remaining entries with the 'OTHER' registers
+        for (int i = 0; i < CHIPREG_COUNT; i++) {
+            if (registerInfo[i].index == -1) {
+                registerInfo[i].index = index;
+                registerInfoByIndex[index] = &registerInfo[i];
+                index++;
+            }
+        }
+    }
+    if ((address >= 0) && (address < CHIPREG_COUNT)) {
+        return registerInfo[address];
+    } else {
+        return registerInfoHeader;
     }
 }
 
-static QStringList bitNamesGeneric(QString name) {
-    QStringList names;
-    for (int i = 0; i < 8; i++) names << (name + QString::number(i));
-    return names;
-}
-
-QStringList ChipRegisters::bitNames(int index) {
-    QString name = this->name(index);
-    if (name.startsWith("PORT") || name.startsWith("PIN") || name.startsWith("DDR")) {
-        return bitNamesGeneric("P" + name.right(1));
+const ChipRegisterInfo &ChipRegisters::infoByIndex(int index) {
+    info(-1); // Ensure initialized
+    if ((index >= 0) && (index < CHIPREG_COUNT)) {
+        return *registerInfoByIndex[index];
+    } else {
+        return registerInfoHeader;
     }
-    if (name == "RESERVED") {
-        return QStringList() << "" << "" << "" << "" << "" << "" << "" << "";
-    }
-
-    QStringList names;
-    switch ((ChipReg) index) {
-
-    case REG_TIFR0:  names << "-" << "-" << "-" << "-" << "-" << "OCF0B" << "OCF0A" << "TOV0"; break;
-    case REG_TIFR1:  names << "-" << "-" << "ICF1" << "-" << "OCF1C" << "OCF1B" << "OCF1A" << "TOV1"; break;
-    case REG_TIFR2:  names << "-" << "-" << "-" << "-" << "-" << "OCF2B" << "OCF2A" << "TOV2"; break;
-    case REG_TIFR3:  names << "-" << "-" << "ICF3" << "-" << "OCF3C" << "OCF3B" << "OCF3A" << "TOV3"; break;
-    case REG_TIFR4:  names << "-" << "-" << "ICF4" << "-" << "OCF4C" << "OCF4B" << "OCF4A" << "TOV4"; break;
-    case REG_TIFR5:  names << "-" << "-" << "ICF5" << "-" << "OCF5C" << "OCF5B" << "OCF5A" << "TOV5"; break;
-
-    default:
-        names << "-" << "-" << "-" << "-" << "-" << "-" << "-" << "-";
-        break;
-    }
-    return names;
 }
 
 void stk500registers::write(ChipRegisters &registers) {
@@ -65,7 +128,8 @@ void stk500registers::write(ChipRegisters &registers) {
     for (int i = 0; i < registers.count(); i++) {
         quint8 changeMask = registers.regData[i] ^ registers.regDataRead[i];
         if (changeMask) {
-            registers.regDataRead[i] = _handler->RAM_writeByte(i + CHIPREG_OFFSET, registers[i], changeMask);
+            qDebug() << "CHANGED!";
+            registers.regDataRead[i] = _handler->RAM_writeByte(i, registers[i], changeMask);
         }
     }
 }
@@ -75,6 +139,6 @@ void stk500registers::read(ChipRegisters &registers) {
     registers.resetChanges();
 
     // Read the current registers
-    _handler->RAM_read(CHIPREG_OFFSET, (char*) registers.regDataRead, registers.count());
+    _handler->RAM_read(0, (char*) registers.regDataRead, registers.count());
     memcpy(registers.regData, registers.regDataRead, sizeof(registers.regData));
 }

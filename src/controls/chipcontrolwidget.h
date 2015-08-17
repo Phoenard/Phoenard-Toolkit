@@ -20,6 +20,8 @@ public:
 private slots:
     void serialTaskFinished(stk500Task *task);
 
+    void on_registerTable_cellDoubleClicked(int row, int column);
+
 private:
     void startUpdating();
     void updateEntry(int index, bool forceUpdate);

@@ -149,7 +149,7 @@
             <string>Import</string>
            </property>
            <property name="icon">
-            <iconset resource="../icons/icons.qrc">
+            <iconset resource="../resources.qrc">
              <normaloff>:/icons/Import.png</normaloff>:/icons/Import.png</iconset>
            </property>
           </widget>
@@ -160,7 +160,7 @@
             <string>Reset</string>
            </property>
            <property name="icon">
-            <iconset resource="../icons/icons.qrc">
+            <iconset resource="../resources.qrc">
              <normaloff>:/icons/refresh.png</normaloff>:/icons/refresh.png</iconset>
            </property>
           </widget>
@@ -184,7 +184,7 @@
             <string>Cancel</string>
            </property>
            <property name="icon">
-            <iconset resource="../icons/icons.qrc">
+            <iconset resource="../resources.qrc">
              <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
            </property>
           </widget>
@@ -195,7 +195,7 @@
             <string>Save</string>
            </property>
            <property name="icon">
-            <iconset resource="../icons/icons.qrc">
+            <iconset resource="../resources.qrc">
              <normaloff>:/icons/saveto.png</normaloff>:/icons/saveto.png</iconset>
            </property>
           </widget>
@@ -222,7 +222,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>
