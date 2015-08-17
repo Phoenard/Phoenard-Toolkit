@@ -4,8 +4,11 @@
 #include "stk500.h"
 #include <QDebug>
 
-#define CHIPREG_COUNT 300
-#define CHIPREG_DATA_COLUMNS 13
+#define CHIPREG_ADDR_START    0x20
+#define CHIPREG_ADDR_END      0x1FF
+#define CHIPREG_BUFFSIZE      (CHIPREG_ADDR_END+1)
+#define CHIPREG_COUNT         (CHIPREG_BUFFSIZE-CHIPREG_ADDR_START)
+#define CHIPREG_DATA_COLUMNS  13
 
 typedef struct ChipRegisterInfo {
     ChipRegisterInfo();
@@ -25,7 +28,7 @@ typedef struct ChipRegisterInfo {
 class ChipRegisters {
 public:
     ChipRegisters();
-    int count() const { return sizeof(regData); }
+    int count() const { return CHIPREG_COUNT; }
     void resetUserChanges();
     bool changed(int address);
     bool hasUserChanges();
@@ -41,12 +44,12 @@ public:
     friend class stk500registers;
 
 protected:
-    quint8 regData[CHIPREG_COUNT];      // Live values, changed by the user
-    quint8 regDataRead[CHIPREG_COUNT];  // Live values, original to track user changes
-    quint8 regDataLast[CHIPREG_COUNT];  // Live values from last time
-    quint8 regDataError[CHIPREG_COUNT]; // Contains the bits it failed to write out last time
+    quint8 regData[CHIPREG_BUFFSIZE];      // Live values, changed by the user
+    quint8 regDataRead[CHIPREG_BUFFSIZE];  // Live values, original to track user changes
+    quint8 regDataLast[CHIPREG_BUFFSIZE];  // Live values from last time
+    quint8 regDataError[CHIPREG_BUFFSIZE]; // Contains the bits it failed to write out last time
 private:
-    static ChipRegisterInfo registerInfo[CHIPREG_COUNT];
+    static ChipRegisterInfo registerInfo[CHIPREG_BUFFSIZE];
     static ChipRegisterInfo registerInfoHeader;
     static ChipRegisterInfo* registerInfoByIndex[CHIPREG_COUNT];
     static bool registerInfoInit;

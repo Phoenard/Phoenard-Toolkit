@@ -1,7 +1,7 @@
 #include "stk500registers.h"
 
 bool ChipRegisters::registerInfoInit = false;
-ChipRegisterInfo ChipRegisters::registerInfo[CHIPREG_COUNT];
+ChipRegisterInfo ChipRegisters::registerInfo[CHIPREG_BUFFSIZE];
 ChipRegisterInfo* ChipRegisters::registerInfoByIndex[CHIPREG_COUNT];
 ChipRegisterInfo ChipRegisters::registerInfoHeader;
 
@@ -85,11 +85,11 @@ const ChipRegisterInfo &ChipRegisters::info(int address) {
         }
 
         // Initialize all register info entries to the default values
-        for (int i = 0; i < CHIPREG_COUNT; i++) {
-            registerInfo[i] = defaultEntry;
-            registerInfo[i].addressValue = i;
-            registerInfo[i].address = stk500::getHexText(i);
-            registerInfo[i].values[0] = registerInfo[i].address;
+        for (int addr = 0; addr < CHIPREG_BUFFSIZE; addr++) {
+            registerInfo[addr] = defaultEntry;
+            registerInfo[addr].addressValue = addr;
+            registerInfo[addr].address = stk500::getHexText(addr);
+            registerInfo[addr].values[0] = registerInfo[addr].address;
         }
 
         // Store all entries at the addresses
@@ -105,7 +105,7 @@ const ChipRegisterInfo &ChipRegisters::info(int address) {
         }
 
         // Fill the remaining entries with the 'OTHER' registers
-        for (int i = 0; i < CHIPREG_COUNT; i++) {
+        for (int i = CHIPREG_ADDR_START; i < CHIPREG_BUFFSIZE; i++) {
             if (registerInfo[i].index == -1) {
                 registerInfo[i].index = index;
                 registerInfoByIndex[index] = &registerInfo[i];
@@ -113,7 +113,7 @@ const ChipRegisterInfo &ChipRegisters::info(int address) {
             }
         }
     }
-    if ((address >= 0) && (address < CHIPREG_COUNT)) {
+    if ((address >= CHIPREG_ADDR_START) && (address < CHIPREG_BUFFSIZE)) {
         return registerInfo[address];
     } else {
         return registerInfoHeader;
@@ -133,10 +133,10 @@ void stk500registers::write(ChipRegisters &registers) {
     // For any bytes that differ, write the byte to the chip
     // Only write out the bits that changed for added safety
     // When done, reset the value to the read one
-    for (int i = 0; i < registers.count(); i++) {
-        quint8 changeMask = registers.regData[i] ^ registers.regDataRead[i];
+    for (int addr = CHIPREG_ADDR_START; addr < CHIPREG_BUFFSIZE; addr++) {
+        quint8 changeMask = registers.regData[addr] ^ registers.regDataRead[addr];
         if (changeMask) {
-            _handler->RAM_writeByte(i, registers[i], changeMask);
+            _handler->RAM_writeByte(addr, registers[addr], changeMask);
         }
     }
 }
@@ -146,13 +146,13 @@ void stk500registers::read(ChipRegisters &registers) {
     memcpy(registers.regDataLast, registers.regDataRead, sizeof(registers.regDataLast));
 
     // Read the current registers
-    _handler->RAM_read(0, (char*) registers.regDataRead, registers.count());
+    _handler->RAM_read(CHIPREG_ADDR_START, (char*) registers.regDataRead + CHIPREG_ADDR_START, CHIPREG_COUNT);
 
     // Compare the last written values to the newly read values
     // If there is a difference, we failed to write those particular bits
-    for (int i = 0; i < registers.count(); i++) {
+    for (int i = CHIPREG_ADDR_START; i < CHIPREG_BUFFSIZE; i++) {
         if (registers.regDataLast[i] != registers.regData[i]) {
-            registers.regDataError[i] = registers.regDataRead[i] ^ registers.regData[i];
+            registers.regDataError[i] = (registers.regDataRead[i] ^ registers.regData[i]);
         } else {
             registers.regDataError[i] = 0;
         }

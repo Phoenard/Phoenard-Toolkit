@@ -40,6 +40,7 @@ private:
     Ui::ChipControlWidget *ui;
     stk500UpdateRegisters *lastTask;
     bool _active;
+    bool _ignoreChanges;
     ChipRegisters _reg;
 };
 

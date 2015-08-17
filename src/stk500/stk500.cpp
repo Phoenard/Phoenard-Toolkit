@@ -389,8 +389,14 @@ void stk500::EEPROM_write(quint32 address, const char* src, int srcLen) {
 }
 
 void stk500::RAM_read(quint16 address, char* dest, int destLen) {
-    readData(READ_RAM_ISP, address, dest, destLen);
-    currentAddress += destLen;
+    while (destLen) {
+        int step = std::min(512, destLen);
+        readData(READ_RAM_ISP, address, dest, step);
+        currentAddress += step;
+        address += step;
+        dest += step;
+        destLen -= step;
+    }
 }
 
 void stk500::RAM_write(quint16 address, const char* src, int srcLen) {

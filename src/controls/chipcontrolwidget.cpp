@@ -9,6 +9,7 @@ ChipControlWidget::ChipControlWidget(QWidget *parent) :
     ui->setupUi(this);
 
     _active = false;
+    _ignoreChanges = false;
     lastTask = NULL;
 }
 
@@ -73,6 +74,9 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
 
     QTableWidget *tab = ui->registerTable;
     if (tab->rowCount() == 0) {
+
+        // While initializing the table, do not fire events
+        _ignoreChanges = true;
 
         // Set up the column header; exclude first element (is vertical header)
         const int columns = CHIPREG_DATA_COLUMNS - 1;
@@ -142,6 +146,9 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
 
         // Next, refresh all the cells
         forceItemUpdate = true;
+
+        // Done.
+        _ignoreChanges = false;
     }
 
     // Update all the cells displayed
@@ -153,6 +160,9 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
 }
 
 void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {
+    // While updating, do not cause any events
+    _ignoreChanges = true;
+
     // Check if there are any changes or if it is forced to update
     int address = getItemAddress(item);
     bool valueError = _reg.error(address);
@@ -205,6 +215,9 @@ void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {
             }
         }
     }
+
+    // We are done.
+    _ignoreChanges = false;
 }
 
 void ChipControlWidget::on_registerTable_currentItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous)
@@ -222,19 +235,44 @@ void ChipControlWidget::on_registerTable_currentItemChanged(QTableWidgetItem *cu
 
 void ChipControlWidget::on_registerTable_itemChanged(QTableWidgetItem *item)
 {
-    // Read the bitmask for the item. If there is one, continue
-    int bitMask = getItemBitMask(item);
-    if (!bitMask) return;
+    if (_ignoreChanges) return;
 
-    // Check that the item is checkable
-    if (item->data(Qt::CheckStateRole).type() == QVariant::Invalid) return;
-
-    // Toggle the bit if needed
     int address = getItemAddress(item);
-    bool bitWasSet = (_reg[address] & bitMask) == bitMask;
-    bool itemChecked = (item->checkState() == Qt::Checked);
-    if (bitWasSet != itemChecked) {
-        _reg[address] ^= bitMask;
+    if (item->column() == 3) {
+        // The value text item was changed
+        // Compare against the actual value and check for differences
+        QString text = item->text();
+        QString expectedText = stk500::getHexText((uint) _reg[address]);
+        if (expectedText != text) {
+            // Attempt to parse this value
+            int value;
+            bool succ = false;
+            if (text.startsWith("0x", Qt::CaseInsensitive)) {
+                value = text.toInt(&succ, 16);
+            } else {
+                value = text.toInt(&succ, 10);
+            }
+            if (succ) {
+                _reg[address] = value;
+            } else {
+                item->setText(expectedText);
+            }
+        }
+
+    } else {
+        // Read the bitmask for the item. If there is one, stop.
+        int bitMask = getItemBitMask(item);
+        if (!bitMask) return;
+
+        // Check that the item is checkable
+        if (item->data(Qt::CheckStateRole).type() == QVariant::Invalid) return;
+
+        // Toggle the bit if needed
+        bool bitWasSet = (_reg[address] & bitMask) == bitMask;
+        bool itemChecked = (item->checkState() == Qt::Checked);
+        if (bitWasSet != itemChecked) {
+            _reg[address] ^= bitMask;
+        }
     }
 }
 
