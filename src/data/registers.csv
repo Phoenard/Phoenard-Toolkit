@@ -56,7 +56,7 @@ Address,Name,Module,Function,Value,Bit 7,Bit 6,Bit 5,Bit 4,Bit 3,Bit 2,Bit 1,Bit
 0x3F,EECR,EEPROM,Control Register,0x00,-,-,EEPM1,EEPM0,EERIE,EEMPE,EEPE,EERE
 0x40,EEDR,EEPROM,Data Register,0x00,0,0,0,0,0,0,0,0
 0x41,EEARL,EEPROM,Address Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x42,EEARH,EEPROM,Address High Byte Register,0x00,-,-,-,-,01,00,0,0
+0x42,EEARH,EEPROM,Address High Byte Register,0x00,-,-,-,-,0,0,0,0
 0x3E,GPIOR0,General Purpose,I/O Register 0,0x00,0,0,0,0,0,0,0,0
 0x4A,GPIOR1,General Purpose,I/O Register 1,0x00,0,0,0,0,0,0,0,0
 0x4B,GPIOR2,General Purpose,I/O Register 2,0x00,0,0,0,0,0,0,0,0
@@ -79,7 +79,7 @@ Address,Name,Module,Function,Value,Bit 7,Bit 6,Bit 5,Bit 4,Bit 3,Bit 2,Bit 1,Bit
 0x74,XMCRA,External Memory,Control Register A,0x00,SRE,SRL2,SRL1,SRL0,SRW11,SRW10,SRW01,SRW00
 0x75,XMCRB,External Memory,Control Register B,0x00,XMBK,-,-,-,-,XMM2,XMM1,XMM0
 0x78,ADCL,ADC,Data Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x79,ADCH,ADC,Data High Byte Register,0x00,05,04,03,02,01,00,0,0
+0x79,ADCH,ADC,Data High Byte Register,0x00,0,0,0,0,0,0,0,0
 0x7A,ADCSRA,ADC,Status Register A,0x00,ADEN,ADSC,ADATE,ADIF,ADIE,ADPS2,ADPS1,ADPS0
 0x7B,ADCSRB,ADC,Status Register B,0x00,-,ACME,-,-,MUX5,ADTS2,ADTS1,ADTS0
 0x7C,ADMUX,ADC,Multiplexer Selection Register,0x00,REFS1,REFS0,ADLAR,MUX4,MUX3,MUX2,MUX1,MUX0
@@ -99,25 +99,25 @@ Address,Name,Module,Function,Value,Bit 7,Bit 6,Bit 5,Bit 4,Bit 3,Bit 2,Bit 1,Bit
 0xC1,UCSR0B,USART0,Control and Status Register B,0x00,RXCIE0,TXCIE0,UDRIE0,RXEN0,TXEN0,UCSZ02,RXB80,TXB80
 0xC2,UCSR0C,USART0,Control and Status Register C,0x00,UMSEL01,UMSEL00,UPM01,UPM00,USBS0,UCSZ01,UCSZ00,UCPOL0
 0xC4,UBRR0L,USART0,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xC5,UBRR0H,USART0,Baud Rate High Byte Register,0x00,-,-,-,-,01,00,0,0
+0xC5,UBRR0H,USART0,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
 0xC6,UDR0,USART0,I/O Data Register,0x00,0,0,0,0,0,0,0,0
 0xC8,UCSR1A,USART1,Control and Status Register A,0x00,RXC1,TXC1,UDRE1,FE1,DOR1,UPE1,U2X1,MPCM1
 0xC9,UCSR1B,USART1,Control and Status Register B,0x00,RXCIE1,TXCIE1,UDRIE1,RXEN1,TXEN1,UCSZ12,RXB81,TXB81
 0xCA,UCSR1C,USART1,Control and Status Register C,0x00,UMSEL11,UMSEL10,UPM11,UPM10,USBS1,UCSZ11,UCSZ10,UCPOL1
 0xCC,UBRR1L,USART1,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xCD,UBRR1H,USART1,Baud Rate High Byte Register,0x00,-,-,-,-,01,00,0,0
+0xCD,UBRR1H,USART1,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
 0xCE,UDR1,USART1,I/O Data Register,0x00,0,0,0,0,0,0,0,0
 0xD0,UCSR2A,USART2,Control and Status Register A,0x00,RXC2,TXC2,UDRE2,FE2,DOR2,UPE2,U2X2,MPCM2
 0xD1,UCSR2B,USART2,Control and Status Register B,0x00,RXCIE2,TXCIE2,UDRIE2,RXEN2,TXEN2,UCSZ22,RXB82,TXB82
 0xD2,UCSR2C,USART2,Control and Status Register C,0x00,UMSEL21,UMSEL20,UPM21,UPM20,USBS2,UCSZ21,UCSZ20,UCPOL2
 0xD4,UBRR2L,USART2,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xD5,UBRR2H,USART2,Baud Rate High Byte Register,0x00,-,-,-,-,01,00,0,0
+0xD5,UBRR2H,USART2,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
 0xD6,UDR2,USART2,I/O Data Register,0x00,0,0,0,0,0,0,0,0
 0x130,UCSR3A,USART3,Control and Status Register A,0x00,RXC3,TXC3,UDRE3,FE3,DOR3,UPE3,U2X3,MPCM3
 0x131,UCSR3B,USART3,Control and Status Register B,0x00,RXCIE3,TXCIE3,UDRIE3,RXEN3,TXEN3,UCSZ32,RXB83,TXB83
 0x132,UCSR3C,USART3,Control and Status Register C,0x00,UMSEL31,UMSEL30,UPM31,UPM30,USBS3,UCSZ31,UCSZ30,UCPOL3
 0x134,UBRR3L,USART3,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x135,UBRR3H,USART3,Baud Rate High Byte Register,0x00,-,-,-,-,01,00,0,0
+0x135,UBRR3H,USART3,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
 0x136,UDR3,USART3,I/O Data Register,0x00,0,0,0,0,0,0,0,0
 0x43,GTCCR,Timer/Counter,General Control Register,0x00,TSM,-,-,-,-,-,PSRASY,PSRSYNC
 0x44,TCCR0A,Timer/Counter 0,Control Register A,0x00,COM0A1,COM0A0,COM0B1,COM0B0,-,-,WGM01,WGM00

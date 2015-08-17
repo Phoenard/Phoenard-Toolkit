@@ -26,9 +26,11 @@ class ChipRegisters {
 public:
     ChipRegisters();
     int count() const { return sizeof(regData); }
-    void resetChanges();
+    void resetUserChanges();
     bool changed(int address);
+    bool hasUserChanges();
     quint8* data() { return regData; }
+    quint8 error(int address);
     const ChipRegisterInfo &info(int address);
     const ChipRegisterInfo &infoHeader() { return info(-1); }
     const ChipRegisterInfo &infoByIndex(int index);
@@ -39,9 +41,10 @@ public:
     friend class stk500registers;
 
 protected:
-    quint8 regData[CHIPREG_COUNT];     // Live values, changed by the user
-    quint8 regDataRead[CHIPREG_COUNT]; // Live values, original to track user changes
-    quint8 regDataLast[CHIPREG_COUNT]; // Live values from last time
+    quint8 regData[CHIPREG_COUNT];      // Live values, changed by the user
+    quint8 regDataRead[CHIPREG_COUNT];  // Live values, original to track user changes
+    quint8 regDataLast[CHIPREG_COUNT];  // Live values from last time
+    quint8 regDataError[CHIPREG_COUNT]; // Contains the bits it failed to write out last time
 private:
     static ChipRegisterInfo registerInfo[CHIPREG_COUNT];
     static ChipRegisterInfo registerInfoHeader;

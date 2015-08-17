@@ -21,7 +21,7 @@ public:
     void suppressCancel(bool suppress) { _cancelSuppress = suppress; }
     const bool isCancelSuppressed() { return _cancelSuppress; }
     const ProtocolException getError() { return _exception; }
-    const char* getErrorMessage() { return _exception.what(); }
+    QString getErrorMessage() { return QString(_exception.what()); }
     void setError(ProtocolException exception);
     void cancel() { _isCancelled = true; }
     void finish() { _isFinished = true; }

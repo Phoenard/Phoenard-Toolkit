@@ -9,14 +9,23 @@ ChipRegisters::ChipRegisters() {
     memset(regData, 0, sizeof(regData));
     memset(regDataLast, 0, sizeof(regDataLast));
     memset(regDataRead, 0, sizeof(regDataRead));
+    memset(regDataError, 0, sizeof(regDataError));
 }
 
-bool ChipRegisters::changed(int index) {
-    return regDataLast[index] != regData[index];
+bool ChipRegisters::changed(int address) {
+    return regDataLast[address] != regData[address];
 }
 
-void ChipRegisters::resetChanges() {
-    memcpy(regDataLast, regData, sizeof(regDataLast));
+quint8 ChipRegisters::error(int address) {
+    return regDataError[address];
+}
+
+bool ChipRegisters::hasUserChanges() {
+    return memcmp(regDataRead, regData, sizeof(regData)) != 0;
+}
+
+void ChipRegisters::resetUserChanges() {
+    memcpy(regData, regDataRead, sizeof(regData));
 }
 
 ChipRegisterInfo::ChipRegisterInfo() {
@@ -123,22 +132,32 @@ const ChipRegisterInfo &ChipRegisters::infoByIndex(int index) {
 void stk500registers::write(ChipRegisters &registers) {
     // For any bytes that differ, write the byte to the chip
     // Only write out the bits that changed for added safety
-    // There is a possibility to write all bytes out in one go
-    // For the moment, we do it safe and 'slow'
+    // When done, reset the value to the read one
     for (int i = 0; i < registers.count(); i++) {
         quint8 changeMask = registers.regData[i] ^ registers.regDataRead[i];
         if (changeMask) {
-            qDebug() << "CHANGED!";
-            registers.regDataRead[i] = _handler->RAM_writeByte(i, registers[i], changeMask);
+            _handler->RAM_writeByte(i, registers[i], changeMask);
         }
     }
 }
 
 void stk500registers::read(ChipRegisters &registers) {
-    // Clear any changes stored within
-    registers.resetChanges();
+    // Store the previously read values into the last registers
+    memcpy(registers.regDataLast, registers.regDataRead, sizeof(registers.regDataLast));
 
     // Read the current registers
     _handler->RAM_read(0, (char*) registers.regDataRead, registers.count());
+
+    // Compare the last written values to the newly read values
+    // If there is a difference, we failed to write those particular bits
+    for (int i = 0; i < registers.count(); i++) {
+        if (registers.regDataLast[i] != registers.regData[i]) {
+            registers.regDataError[i] = registers.regDataRead[i] ^ registers.regData[i];
+        } else {
+            registers.regDataError[i] = 0;
+        }
+    }
+
+    // Synchronize the current register values with the last ones read
     memcpy(registers.regData, registers.regDataRead, sizeof(registers.regData));
 }

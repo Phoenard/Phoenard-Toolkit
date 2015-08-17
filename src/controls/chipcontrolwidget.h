@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "mainmenutab.h"
+#include <QTableWidget>
 
 namespace Ui {
 class ChipControlWidget;
@@ -20,11 +21,21 @@ public:
 private slots:
     void serialTaskFinished(stk500Task *task);
 
-    void on_registerTable_cellDoubleClicked(int row, int column);
+    void on_registerTable_currentItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous);
+
+    void on_registerTable_itemChanged(QTableWidgetItem *item);
+
+    void on_registerTable_itemDoubleClicked(QTableWidgetItem *item);
 
 private:
+    /// Triggers the automatic update loop
     void startUpdating();
-    void updateEntry(int index, bool forceUpdate);
+    /// Refreshes the state of a single item
+    void updateItem(QTableWidgetItem *item, bool forcedUpdate);
+    /// Gets the bit mask for an item; returns 0 when not a bit column item
+    int getItemBitMask(QTableWidgetItem *item);
+    /// Gets the address associated with the row of an item
+    int getItemAddress(QTableWidgetItem *item);
 
     Ui::ChipControlWidget *ui;
     stk500UpdateRegisters *lastTask;

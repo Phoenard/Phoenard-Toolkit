@@ -291,7 +291,11 @@ void stk500_ProcessThread::run() {
         port.setReadBufferSize(4096);
         port.setSettingsRestoredOnClose(false);
         port.setBaudRate(115200);
-        port.open(QIODevice::ReadWrite);
+
+        /* Close again if opening fails */
+        if (!port.open(QIODevice::ReadWrite)) {
+            this->closeRequested = true;
+        }
 
         /* Run process loop while not being closed */
         bool needSignOn = true;

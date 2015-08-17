@@ -1,5 +1,6 @@
 #include "chipcontrolwidget.h"
 #include "ui_chipcontrolwidget.h"
+#include <QMessageBox>
 
 ChipControlWidget::ChipControlWidget(QWidget *parent) :
     QWidget(parent),
@@ -35,16 +36,6 @@ void ChipControlWidget::setActive(bool active) {
     }
 }
 
-void ChipControlWidget::on_registerTable_cellDoubleClicked(int row, int column)
-{
-    int address = _reg.infoByIndex(row).addressValue;
-    int bitIndex = (11 - column);
-    if ((bitIndex >= 0) && (bitIndex < 8) && (address != -1)) {
-        _reg[address] ^= (1 << bitIndex);
-        qDebug() << "NEW VALUE: " << stk500::getHexText(_reg[address]);
-    }
-}
-
 void ChipControlWidget::startUpdating() {
     // Start a new asynchronous task while active
     if (_active) {
@@ -56,9 +47,23 @@ void ChipControlWidget::startUpdating() {
 void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     // Check if this is our task containing updated registers
     if (task != lastTask) return;
+    bool forceItemUpdate = false;
 
     // Refresh reg variable and delete the task again
     ChipRegisters newReg = lastTask->reg;
+    if (!lastTask->isSuccessful()) {
+        if (newReg.hasUserChanges() && !lastTask->isCancelled()) {
+            QMessageBox::critical(this, "Communication Error",
+                                  "An error occurred while updating the device. "
+                                  "This can happen when changing registers that "
+                                  "control the Serial communication or influence general operation."
+                                  "\n\nError: " + lastTask->getErrorMessage());
+        }
+
+        newReg = _reg;
+        newReg.resetUserChanges();
+        forceItemUpdate = true;
+    }
     delete lastTask;
     lastTask = NULL;
 
@@ -77,6 +82,7 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
         }
         tab->setColumnCount(columns);
         tab->setHorizontalHeaderLabels(headerValues);
+        tab->setSelectionMode(QAbstractItemView::SingleSelection);
 
         // Fill the table with the initial items
         tab->setRowCount(_reg.count());
@@ -94,60 +100,125 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
                 item->setBackgroundColor(QColor(Qt::white));
                 item->setTextAlignment(Qt::AlignCenter);
                 if (col != 3) {
-                    item->setFlags(item->flags() ^ Qt::ItemIsEditable);
+                    item->setFlags((item->flags() & ~Qt::ItemIsEditable));
                 }
+                item->setFlags((item->flags() & ~Qt::ItemIsUserCheckable));
                 tab->setItem(i, col, item);
             }
-
-            // Update the entry
-            updateEntry(i, true);
         }
-    } else {
-        // Update all the table entries that changed value
-        for (int i = 0; i < _reg.count(); i++) {
-            updateEntry(i, false);
+
+        // Next, refresh all the cells
+        forceItemUpdate = true;
+    }
+
+    // Update all the cells displayed
+    for (int row = 0; row < ui->registerTable->rowCount(); row++) {
+        for (int col = 0; col < ui->registerTable->columnCount(); col++) {
+            updateItem(ui->registerTable->item(row, col), forceItemUpdate);
         }
     }
 }
 
-void ChipControlWidget::updateEntry(int index, bool forceUpdate) {
-    int address = _reg.infoByIndex(index).addressValue;
-    bool valueChanged = (!forceUpdate && _reg.changed(address));
-    QTableWidgetItem* valueItem = ui->registerTable->item(index, 3);
+void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {
+    // Check if there are any changes or if it is forced to update
+    int address = getItemAddress(item);
+    bool valueChanged = _reg.changed(address);
+    bool refreshNeeded = (valueChanged || forcedUpdate);
 
-    // Highlight the value cell when value changes; fades out
-    if (valueChanged) {
-        valueItem->setBackgroundColor(QColor(Qt::yellow));
+    // If it has a bit mask, it is a bit item. Update it as such.
+    int bitMask = getItemBitMask(item);
+    if (bitMask && refreshNeeded) {
+        bool isSet = ((_reg[address] & bitMask) == bitMask);
+
+        // Update background color to reflect state
+        item->setBackgroundColor(QColor(isSet ? Qt::yellow : Qt::white));
+
+        // For checkable items, refresh checkbox
+        if (item->flags() & Qt::ItemIsUserCheckable) {
+            item->setCheckState(isSet ? Qt::Checked : Qt::Unchecked);
+        } else {
+            item->setData(Qt::CheckStateRole, QVariant(QVariant::Invalid));
+        }
+
+        // For items displaying 0/1, update the text
+        QString text = item->text();
+        if ((text == "0") || (text == "1")) {
+            item->setText(isSet ? "1" : "0");
+        }
     }
 
-    // Refresh the bit fields and value text
-    if (valueChanged || forceUpdate) {
-        uint value = (uint) _reg[address];
-        valueItem->setText(stk500::getHexText(value));
-
-        // Update the bit values
-        for (int b = 0; b < 8; b++) {
-            bool isOn = ((value & (1 << b)) != 0);
-            QTableWidgetItem *item = ui->registerTable->item(index, 11-b);
-            item->setBackgroundColor(QColor(isOn ? Qt::yellow : Qt::white));
-
-            QString text = item->text();
-            if ((text == "0") || (text == "1")) {
-                item->setText(isOn ? "1" : "0");
+    // Update the displayed text in the value column
+    if (item->column() == 3) {
+        if (_reg.error(address)) {
+            item->setBackgroundColor(QColor(Qt::red));
+        } else if (valueChanged) {
+            item->setBackgroundColor(QColor(Qt::yellow));
+        }
+        if (refreshNeeded) {
+            item->setText(stk500::getHexText((uint) _reg[address]));
+        } else {
+            // Fade the value cell to white if it is colored
+            QColor c = item->backgroundColor();
+            if (c != QColor(Qt::white)) {
+                int r = c.red(), g = c.green(), b = c.blue();
+                r += 16;
+                g += 16;
+                b += 16;
+                if (r > 255) r = 255;
+                if (g > 255) g = 255;
+                if (b > 255) b = 255;
+                item->setBackgroundColor(QColor::fromRgb(r, g, b));
             }
         }
-    } else {
-        // Fade the value cell to white if it is colored
-        QColor c = valueItem->backgroundColor();
-        if (c != QColor(Qt::white)) {
-            int r = c.red(), g = c.green(), b = c.blue();
-            r += 8;
-            g += 8;
-            b += 8;
-            if (r > 255) r = 255;
-            if (g > 255) g = 255;
-            if (b > 255) b = 255;
-            valueItem->setBackgroundColor(QColor::fromRgb(r, g, b));
-        }
+    }
+}
+
+void ChipControlWidget::on_registerTable_currentItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous)
+{
+    if (previous) {
+        previous->setFlags(previous->flags() & ~Qt::ItemIsUserCheckable);
+        updateItem(previous, true);
+    }
+    int currentBitMask = getItemBitMask(current);
+    if (currentBitMask) {
+        current->setFlags(current->flags() | Qt::ItemIsUserCheckable);
+        updateItem(current, true);
+    }
+}
+
+void ChipControlWidget::on_registerTable_itemChanged(QTableWidgetItem *item)
+{
+    // Read the bitmask for the item. If there is one, continue
+    int bitMask = getItemBitMask(item);
+    if (!bitMask) return;
+
+    // Check that the item is checkable
+    if (item->data(Qt::CheckStateRole).type() == QVariant::Invalid) return;
+
+    // Toggle the bit if needed
+    int address = getItemAddress(item);
+    bool bitWasSet = (_reg[address] & bitMask) == bitMask;
+    bool itemChecked = (item->checkState() == Qt::Checked);
+    if (bitWasSet != itemChecked) {
+        _reg[address] ^= bitMask;
+    }
+}
+
+int ChipControlWidget::getItemBitMask(QTableWidgetItem *item) {
+    if (item == NULL) return 0;
+    int bitIndex = (11 - item->column());
+    return ((bitIndex >= 0) && (bitIndex < 8)) ? (1 << bitIndex) : 0;
+}
+
+int ChipControlWidget::getItemAddress(QTableWidgetItem *item) {
+    if (item == NULL) return -1;
+    return _reg.infoByIndex(item->row()).addressValue;
+}
+
+void ChipControlWidget::on_registerTable_itemDoubleClicked(QTableWidgetItem *item)
+{
+    int bitMask = getItemBitMask(item);
+    if (bitMask) {
+        _reg[getItemAddress(item)] ^= bitMask;
     }
 }
