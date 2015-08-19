@@ -35,7 +35,7 @@ public:
     quint8* data() { return regData; }
     quint8 error(int address);
     const ChipRegisterInfo &info(int address);
-    const ChipRegisterInfo &infoHeader() { return info(-1); }
+    const ChipRegisterInfo &infoHeader();
     const ChipRegisterInfo &infoByIndex(int index);
 
     quint8 operator [](int i) const { return regData[i]; }
@@ -49,6 +49,7 @@ protected:
     quint8 regDataLast[CHIPREG_BUFFSIZE];  // Live values from last time
     quint8 regDataError[CHIPREG_BUFFSIZE]; // Contains the bits it failed to write out last time
 private:
+    static void initRegisters();
     static ChipRegisterInfo registerInfo[CHIPREG_BUFFSIZE];
     static ChipRegisterInfo registerInfoHeader;
     static ChipRegisterInfo* registerInfoByIndex[CHIPREG_COUNT];

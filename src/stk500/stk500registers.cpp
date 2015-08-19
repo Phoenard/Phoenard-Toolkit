@@ -5,6 +5,66 @@ ChipRegisterInfo ChipRegisters::registerInfo[CHIPREG_BUFFSIZE];
 ChipRegisterInfo* ChipRegisters::registerInfoByIndex[CHIPREG_COUNT];
 ChipRegisterInfo ChipRegisters::registerInfoHeader;
 
+void ChipRegisters::initRegisters() {
+    if (registerInfoInit) return;
+    registerInfoInit = true;
+
+    // Default entry if none exists
+    ChipRegisterInfo defaultEntry;
+
+    // Read all entries
+    QList<ChipRegisterInfo> entries;
+    QFile registersFile(":/data/registers.csv");
+    if (registersFile.open(QIODevice::ReadOnly)) {
+        QTextStream textStream(&registersFile);
+        while (!textStream.atEnd()) {
+            // Read the next entry
+            ChipRegisterInfo entry(textStream.readLine().split(","));
+
+            // Handle different entry types
+            if (entry.address == "OTHER") {
+                // OTHER default constant
+                defaultEntry = entry;
+            } else if (entry.addressValue == -1) {
+                // Header - no valid address
+                registerInfoHeader = entry;
+            } else {
+                // Entry with valid address
+                entries.append(entry);
+            }
+        }
+    }
+
+    // Initialize all register info entries to the default values
+    for (int addr = 0; addr < CHIPREG_BUFFSIZE; addr++) {
+        registerInfo[addr] = defaultEntry;
+        registerInfo[addr].addressValue = addr;
+        registerInfo[addr].address = stk500::getHexText(addr);
+        registerInfo[addr].values[0] = registerInfo[addr].address;
+    }
+
+    // Store all entries at the addresses
+    int index = 0;
+    for (ChipRegisterInfo &entry : entries) {
+        int addr = entry.addressValue;
+        if ((addr >= 0) && (addr < CHIPREG_COUNT)) {
+            registerInfo[addr] = entry;
+            registerInfo[addr].index = index;
+            registerInfoByIndex[index] = &registerInfo[addr];
+            index++;
+        }
+    }
+
+    // Fill the remaining entries with the 'OTHER' registers
+    for (int i = CHIPREG_ADDR_START; i < CHIPREG_BUFFSIZE; i++) {
+        if (registerInfo[i].index == -1) {
+            registerInfo[i].index = index;
+            registerInfoByIndex[index] = &registerInfo[i];
+            index++;
+        }
+    }
+}
+
 ChipRegisters::ChipRegisters() {
     memset(regData, 0, sizeof(regData));
     memset(regDataLast, 0, sizeof(regDataLast));
@@ -55,64 +115,7 @@ void ChipRegisterInfo::load(QStringList &values) {
 }
 
 const ChipRegisterInfo &ChipRegisters::info(int address) {
-    if (!registerInfoInit) {
-        registerInfoInit = true;
-
-        // Default entry if none exists
-        ChipRegisterInfo defaultEntry;
-
-        // Read all entries
-        QList<ChipRegisterInfo> entries;
-        QFile registersFile(":/data/registers.csv");
-        if (registersFile.open(QIODevice::ReadOnly)) {
-            QTextStream textStream(&registersFile);
-            while (!textStream.atEnd()) {
-                // Read the next entry
-                ChipRegisterInfo entry(textStream.readLine().split(","));
-
-                // Handle different entry types
-                if (entry.address == "OTHER") {
-                    // OTHER default constant
-                    defaultEntry = entry;
-                } else if (entry.addressValue == -1) {
-                    // Header - no valid address
-                    registerInfoHeader = entry;
-                } else {
-                    // Entry with valid address
-                    entries.append(entry);
-                }
-            }
-        }
-
-        // Initialize all register info entries to the default values
-        for (int addr = 0; addr < CHIPREG_BUFFSIZE; addr++) {
-            registerInfo[addr] = defaultEntry;
-            registerInfo[addr].addressValue = addr;
-            registerInfo[addr].address = stk500::getHexText(addr);
-            registerInfo[addr].values[0] = registerInfo[addr].address;
-        }
-
-        // Store all entries at the addresses
-        int index = 0;
-        for (ChipRegisterInfo &entry : entries) {
-            int addr = entry.addressValue;
-            if ((addr >= 0) && (addr < CHIPREG_COUNT)) {
-                registerInfo[addr] = entry;
-                registerInfo[addr].index = index;
-                registerInfoByIndex[index] = &registerInfo[addr];
-                index++;
-            }
-        }
-
-        // Fill the remaining entries with the 'OTHER' registers
-        for (int i = CHIPREG_ADDR_START; i < CHIPREG_BUFFSIZE; i++) {
-            if (registerInfo[i].index == -1) {
-                registerInfo[i].index = index;
-                registerInfoByIndex[index] = &registerInfo[i];
-                index++;
-            }
-        }
-    }
+    initRegisters();
     if ((address >= CHIPREG_ADDR_START) && (address < CHIPREG_BUFFSIZE)) {
         return registerInfo[address];
     } else {
@@ -121,12 +124,17 @@ const ChipRegisterInfo &ChipRegisters::info(int address) {
 }
 
 const ChipRegisterInfo &ChipRegisters::infoByIndex(int index) {
-    info(-1); // Ensure initialized
+    initRegisters();
     if ((index >= 0) && (index < CHIPREG_COUNT)) {
         return *registerInfoByIndex[index];
     } else {
         return registerInfoHeader;
     }
+}
+
+const ChipRegisterInfo &ChipRegisters::infoHeader() {
+    initRegisters();
+    return registerInfoHeader;
 }
 
 void stk500registers::write(ChipRegisters &registers) {
