@@ -517,13 +517,25 @@ void MainWindow::on_sketches_addnewBtn_clicked()
         return;
     }
 
+    // Generate an icon, enable editing it before saving
+    char iconData[512];
+    memcpy(iconData, SKETCH_DEFAULT_ICON, sizeof(iconData));
+
+    IconEditDialog iconDialog(this);
+    iconDialog.setModal(true);
+    iconDialog.setWindowTitle(QString("Editing icon of ") + name);
+    iconDialog.loadIcon(iconData);
+    if (iconDialog.exec() == QDialog::Accepted) {
+        iconDialog.saveIcon(iconData);
+    }
+
     // Write the icon data to a temporary .SKI file
     QString tmpSkiFileName = stk500::getTempFile(name + ".SKI");
     QFile tmpSkiFile(tmpSkiFileName);
     if (!tmpSkiFile.open(QIODevice::WriteOnly)) {
         tmpSkiFileName = "";
     } else {
-        tmpSkiFile.write(SKETCH_DEFAULT_ICON, sizeof(SKETCH_DEFAULT_ICON));
+        tmpSkiFile.write(iconData, sizeof(iconData));
         tmpSkiFile.close();
     }
 
@@ -540,7 +552,7 @@ void MainWindow::on_sketches_addnewBtn_clicked()
     newSketch.iconDirty = false;
     newSketch.hasIcon = true;
     newSketch.index = -1;
-    newSketch.setIcon(SKETCH_DEFAULT_ICON);
+    newSketch.setIcon(iconData);
     ui->sketchesWidget->updateSketch(newSketch);
 }
 
