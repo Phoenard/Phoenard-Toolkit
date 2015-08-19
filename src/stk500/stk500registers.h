@@ -9,11 +9,12 @@
 #define CHIPREG_BUFFSIZE      (CHIPREG_ADDR_END+1)
 #define CHIPREG_COUNT         (CHIPREG_BUFFSIZE-CHIPREG_ADDR_START)
 #define CHIPREG_DATA_COLUMNS  13
+#define PINMAP_DATA_COLUMNS   5
 
 typedef struct ChipRegisterInfo {
     ChipRegisterInfo();
-    ChipRegisterInfo(QStringList &values);
-    void load(QStringList &values);
+    ChipRegisterInfo(const QStringList &values);
+    void load(const QStringList &values);
 
     QString values[CHIPREG_DATA_COLUMNS];
     int index;
@@ -24,6 +25,24 @@ typedef struct ChipRegisterInfo {
     QString function;
     QString bitNames[8];
 } ChipRegisterInfo;
+
+typedef struct PinMapInfo {
+    PinMapInfo();
+    PinMapInfo(const QStringList &values);
+    void load(const QStringList &values);
+
+    QString values[PINMAP_DATA_COLUMNS];
+    int index;
+    int pin;
+    int addr_pin;
+    int addr_ddr;
+    int addr_port;
+    int addr_mask;
+    QString port;
+    QString name;
+    QString module;
+    QString function;
+} PinMapInfo;
 
 class ChipRegisters {
 public:
@@ -37,6 +56,8 @@ public:
     const ChipRegisterInfo &info(int address);
     const ChipRegisterInfo &infoHeader();
     const ChipRegisterInfo &infoByIndex(int index);
+    static int findRegisterAddress(const QString &name);
+    const QList<PinMapInfo> &pinMap();
 
     quint8 operator [](int i) const { return regData[i]; }
     quint8& operator [](int i) { return regData[i]; }
@@ -53,6 +74,8 @@ private:
     static ChipRegisterInfo registerInfo[CHIPREG_BUFFSIZE];
     static ChipRegisterInfo registerInfoHeader;
     static ChipRegisterInfo* registerInfoByIndex[CHIPREG_COUNT];
+    static QList<PinMapInfo> pinMapInfo;
+    static PinMapInfo pinMapInfoHeader;
     static bool registerInfoInit;
 };
 

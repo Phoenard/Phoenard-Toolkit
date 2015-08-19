@@ -1,4 +1,4 @@
-Pin,Port,Name,Name,Module,Function
+Pin,Port,Name,Module,Function
 38,D7,D38,Function,SELECT Button Pin,
 13,B7,PWM13,Function,Pin 13 LED Indicator,
 4,G5,PWM4,PhoenEx,PWM Pin 4,

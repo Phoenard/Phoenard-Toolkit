@@ -4,6 +4,8 @@ bool ChipRegisters::registerInfoInit = false;
 ChipRegisterInfo ChipRegisters::registerInfo[CHIPREG_BUFFSIZE];
 ChipRegisterInfo* ChipRegisters::registerInfoByIndex[CHIPREG_COUNT];
 ChipRegisterInfo ChipRegisters::registerInfoHeader;
+QList<PinMapInfo> ChipRegisters::pinMapInfo;
+PinMapInfo ChipRegisters::pinMapInfoHeader;
 
 void ChipRegisters::initRegisters() {
     if (registerInfoInit) return;
@@ -33,6 +35,7 @@ void ChipRegisters::initRegisters() {
                 entries.append(entry);
             }
         }
+        registersFile.close();
     }
 
     // Initialize all register info entries to the default values
@@ -63,7 +66,93 @@ void ChipRegisters::initRegisters() {
             index++;
         }
     }
+
+    // Load all registers into a list
+    pinMapInfo = QList<PinMapInfo>();
+    QFile pinmapFile(":/data/pinmapping.csv");
+    if (pinmapFile.open(QIODevice::ReadOnly)) {
+        QTextStream textStream(&pinmapFile);
+        while (!textStream.atEnd()) {
+            // Read the next entry
+            PinMapInfo entry(textStream.readLine().split(","));
+            if (entry.pin == -1) {
+                // Header
+                pinMapInfoHeader = entry;
+            } else {
+                // Add valid entry
+                pinMapInfo.append(entry);
+            }
+        }
+        pinmapFile.close();
+    }
 }
+
+/* Pin Mapping information element initialization and logic */
+
+PinMapInfo::PinMapInfo() {
+    load(QStringList());
+}
+
+PinMapInfo::PinMapInfo(const QStringList &values) {
+    load(values);
+}
+
+void PinMapInfo::load(const QStringList &values) {
+    for (int i = 0; i < PINMAP_DATA_COLUMNS; i++) {
+        this->values[i] = (i < values.count()) ? values[i] : "-";
+    }
+
+    // Parse the pin number
+    bool pinSucc = false;
+    this->pin = this->values[0].toInt(&pinSucc, 10);
+    if (!pinSucc) this->pin = -1;
+
+    // Textual values
+    this->port = this->values[1];
+    this->name = this->values[2];
+    this->module = this->values[3];
+    this->function = this->values[4];
+
+    // Parse port name into the addresses and mask to use
+    this->addr_pin = this->addr_ddr = this->addr_port = -1;
+    this->addr_mask = 0;
+    if (this->port.length() == 2) {
+        this->addr_mask = (1 << this->port.right(1).toInt());
+        this->addr_pin = ChipRegisters::findRegisterAddress("PIN" + this->port[0]);
+        this->addr_ddr = ChipRegisters::findRegisterAddress("DDR" + this->port[0]);
+        this->addr_port = ChipRegisters::findRegisterAddress("PORT" + this->port[0]);
+    }
+}
+
+/* Chip register information element initialization and logic */
+
+ChipRegisterInfo::ChipRegisterInfo() {
+    load(QStringList());
+}
+
+ChipRegisterInfo::ChipRegisterInfo(const QStringList &values) {
+    load(values);
+}
+
+void ChipRegisterInfo::load(const QStringList &values) {
+    for (int i = 0; i < CHIPREG_DATA_COLUMNS; i++) {
+        this->values[i] = (i < values.count()) ? values[i] : "-";
+    }
+
+    this->index = -1;
+    this->address = this->values[0];
+    this->name = this->values[1];
+    this->module = this->values[2];
+    this->function = this->values[3];
+    for (int i = 0; i < 8; i++) {
+        this->bitNames[7-i] = this->values[i + 4];
+    }
+    bool succ = false;
+    this->addressValue = this->address.toInt(&succ, 16);
+    if (!succ) this->addressValue = -1;
+}
+
+/* Chip register container initialization and properties */
 
 ChipRegisters::ChipRegisters() {
     memset(regData, 0, sizeof(regData));
@@ -88,32 +177,6 @@ void ChipRegisters::resetUserChanges() {
     memcpy(regData, regDataRead, sizeof(regData));
 }
 
-ChipRegisterInfo::ChipRegisterInfo() {
-    load(QStringList());
-}
-
-ChipRegisterInfo::ChipRegisterInfo(QStringList &values) {
-    load(values);
-}
-
-void ChipRegisterInfo::load(QStringList &values) {
-    for (int i = 0; i < CHIPREG_DATA_COLUMNS; i++) {
-        this->values[i] = (i < values.count()) ? values[i] : "-";
-    }
-
-    this->index = -1;
-    this->address = this->values[0];
-    this->name = this->values[1];
-    this->module = this->values[2];
-    this->function = this->values[3];
-    for (int i = 0; i < 8; i++) {
-        this->bitNames[7-i] = this->values[i + 4];
-    }
-    bool succ = false;
-    this->addressValue = this->address.toInt(&succ, 16);
-    if (!succ) this->addressValue = -1;
-}
-
 const ChipRegisterInfo &ChipRegisters::info(int address) {
     initRegisters();
     if ((address >= CHIPREG_ADDR_START) && (address < CHIPREG_BUFFSIZE)) {
@@ -136,6 +199,22 @@ const ChipRegisterInfo &ChipRegisters::infoHeader() {
     initRegisters();
     return registerInfoHeader;
 }
+
+const QList<PinMapInfo> &ChipRegisters::pinMap() {
+    initRegisters();
+    return pinMapInfo;
+}
+
+int ChipRegisters::findRegisterAddress(const QString &name) {
+    for (int i = 0; i < CHIPREG_COUNT; i++) {
+        if (registerInfoByIndex[i]->name == name) {
+            return registerInfoByIndex[i]->addressValue;
+        }
+    }
+    return -1;
+}
+
+/* stk500 Register handler functions */
 
 void stk500registers::write(ChipRegisters &registers) {
     // For any bytes that differ, write the byte to the chip
