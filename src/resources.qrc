@@ -32,7 +32,8 @@
         <file>icons/sketchski.png</file>
         <file>icons/filelcd.png</file>
     </qresource>
-	<qresource prefix="">
-	    <file>data/registers.csv</file>
-	</qresource>
+    <qresource prefix="">
+        <file>data/registers.csv</file>
+        <file>data/pinmapping.csv</file>
+    </qresource>
 </RCC>
