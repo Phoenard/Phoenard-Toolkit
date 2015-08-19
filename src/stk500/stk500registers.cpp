@@ -142,11 +142,15 @@ void stk500registers::write(ChipRegisters &registers) {
 }
 
 void stk500registers::read(ChipRegisters &registers) {
+    // Read the latest registers
+    char reg[CHIPREG_COUNT];
+    _handler->RAM_read(CHIPREG_ADDR_START, reg, CHIPREG_COUNT);
+
     // Store the previously read values into the last registers
     memcpy(registers.regDataLast, registers.regDataRead, sizeof(registers.regDataLast));
 
-    // Read the current registers
-    _handler->RAM_read(CHIPREG_ADDR_START, (char*) registers.regDataRead + CHIPREG_ADDR_START, CHIPREG_COUNT);
+    // Refresh the registers
+    memcpy(registers.regDataRead + CHIPREG_ADDR_START, reg, CHIPREG_COUNT);
 
     // Compare the last written values to the newly read values
     // If there is a difference, we failed to write those particular bits
