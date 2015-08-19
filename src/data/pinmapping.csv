@@ -1,92 +1,86 @@
-Pin,Port,Name,Module,Function
-38,D7,D38,Function,SELECT Button Pin,
-13,B7,PWM13,Function,Pin 13 LED Indicator,
-4,G5,PWM4,PhoenEx,PWM Pin 4,
-5,E3,PWM5,PhoenEx,PWM Pin 5,
-6,H3,PWM6,PhoenEx,PWM Pin 6,
-7,H4,PWM7,PhoenEx,PWM Pin 7,
-9,H6,PWM9,PhoenEx,PWM Pin 9,
-54,F0,A0,PhoenEx,Analog Pin A0,
-55,F1,A1,PhoenEx,Analog Pin A1,
-56,F2,A2,PhoenEx,Analog Pin A2,
-57,F3,A3,PhoenEx,Analog Pin A3,
-58,F4,A4,PhoenEx,Analog Pin A4,
-59,F5,A5,PhoenEx,Analog Pin A5,
-1,E1,TX0,PhoenEx,Serial 0 TX / Pin 1,
-0,E0,RX0,PhoenEx,Serial 0 RX / Pin 0,
-52,B1,SCK,PhoenEx,SPI SCK / Pin 52
-51,B2,MOSI,PhoenEx,SPI MOSI / Pin 51
-50,B3,MISO,PhoenEx,SPI MISO / Pin 50
-21,D0,SCL,PhoenEx,I2C (2-Wire) SCL
-20,D1,SDA,PhoenEx,I2C (2-Wire) SDA
-52,B1,SCK,PhoenOn,SPI SCK / Pin 52
-51,B2,MOSI,PhoenOn,SPI MOSI / Pin 51
-50,B3,MISO,PhoenOn,SPI MISO / Pin 50
-21,D0,SCL,PhoenOn,I2C (2-Wire) SCL
-20,D1,SDA,PhoenOn,I2C (2-Wire) SDA
-13,B7,PWM13,PhoenOn,Pin 13 (Tied to LED Indicator)
-21,D0,SCL,I2C,I2C (2-Wire) SCL
-20,D1,SDA,I2C,I2C (2-Wire) SDA
-50,B3,MISO,SPI,MISO Data Pin
-51,B2,MOSI,SPI,MOSI Data Pin
-52,B1,SCK,SPI,SCK Clock Pin
-53,B0,SS,SPI,SS Select Pin
-10,B4,PWM10,SPI,Micro-SD CS Pin (Chip-Select)
-62,K0,A8,SPI,Ex-SRAM Hold Pin (Chip-Select)
-0,E0,RX0,Serial UART,Serial 0 (monitor) RX
-1,E1,TX0,Serial UART,Serial 0 (monitor) TX
-15,J0,RX3,Serial UART,Serial 3 (gps) RX
-14,J1,TX3,Serial UART,Serial 3 (gps) TX
-17,H0,RX2,Serial UART,Serial 2 (bluetooth/wifi) RX
-16,H1,TX2,Serial UART,Serial 2 (bluetooth/wifi) TX
-19,D2,RX1,Serial UART,Serial 1 (sim) RX
-18,D3,TX1,Serial UART,Serial 1 (sim) TX
-17,H0,RX2,BlueTooth,Serial 2 UART RX
-16,H1,TX2,BlueTooth,Serial 2 UART TX
-12,B6,PWM12,BlueTooth,Key Pin
-47,L2,D47,BlueTooth,Reset Pin
-17,H0,RX2,WiFi,Serial 2 UART RX
-16,H1,TX2,WiFi,Serial 2 UART TX
-49,L0,D49,WiFi,Power Key Pin
-19,D2,RX1,Sim908,GSM Serial 1 UART RX
-18,D3,TX1,Sim908,GSM Serial 1 UART TX
-15,J0,RX3,Sim908,GPS Serial 3 UART RX
-14,J1,TX3,Sim908,GPS Serial 3 UART TX
-3,E5,PWM3,Sim908,RI Interrupt Pin
-39,G2,D39,Sim908,Status Pin
-40,G1,D40,Sim908,Power Key Pin
-41,G0,D41,Sim908,DTRS Pin
-2,E4,PWM2,VS1053,DREQ Interrupt Pin
-8,H5,PWM8,VS1053,DCS Pin
-11,B5,PWM11,VS1053,GPIO Pin
-43,L6,D43,VS1053,Power Pin
-45,L4,D45,VS1053,Chipselect Pin
-46,L3,D46,VS1053,Reset Pin
-48,L1,D48,VS1053,IRX Pin
-44,L5,D44,TFTLCD,Backlight Pin
-65,K3,A11,TFTLCD,Reset Pin
-66,K4,A12,TFTLCD,RD Read Pin
-67,K5,A13,TFTLCD,WR Write Pin / Touch YP Pin
-68,K6,A14,TFTLCD,RS Register-Select Pin / Touch XM Pin
-69,K7,A15,TFTLCD,CS Chip-Select Pin
-30,C7,D30,TFTLCD,Data Bit 7 / Touch YM Pin
-31,C6,D31,TFTLCD,Data Bit 6 / Touch XP Pin
-32,C5,D32,TFTLCD,Data Bit 5
-33,C4,D33,TFTLCD,Data Bit 4
-34,C3,D34,TFTLCD,Data Bit 3
-35,C2,D35,TFTLCD,Data Bit 2
-36,C1,D36,TFTLCD,Data Bit 1
-37,C0,D37,TFTLCD,Data Bit 0
-22,A0,D22,Unused,Digital Pin 22
-23,A1,D23,Unused,Digital Pin 23
-24,A2,D24,Unused,Digital Pin 24
-25,A3,D25,Unused,Digital Pin 25
-26,A4,D26,Unused,Digital Pin 26
-27,A5,D27,Unused,Digital Pin 27
-28,A6,D28,Unused,Digital Pin 28
-29,A7,D29,Unused,Digital Pin 29
-42,L7,D42,Unused,Digital Pin 42
-60,F6,A6,Unused,Analog Pin A6
-61,F7,A7,Unused,Analog Pin A7
-63,K1,A9,Unused,Analog Pin A9
-64,K2,A10,Unused,Analog Pin A10
+Port,Module,Function,Name,Pin
+D7,System,SELECT Button,D38,38
+B7,System,Pin 13 LED Indicator,PWM13,13
+G5,Extension,PWM Pin 4,PWM4,4
+E3,Extension,PWM Pin 5,PWM5,5
+H3,Extension,PWM Pin 6,PWM6,6
+H4,Extension,PWM Pin 7,PWM7,7
+H6,Extension,PWM Pin 9,PWM9,9
+F0,Extension,Analog Pin A0,A0,54
+F1,Extension,Analog Pin A1,A1,55
+F2,Extension,Analog Pin A2,A2,56
+F3,Extension,Analog Pin A3,A3,57
+F4,Extension,Analog Pin A4,A4,58
+F5,Extension,Analog Pin A5,A5,59
+E0,Extension,Serial 0 RX / Pin 0,RX0,0
+E1,Extension,Serial 0 TX / Pin 1,TX0,1
+B1,Extension,SPI SCK / Pin 52,SCK,52
+B2,Extension,SPI MOSI / Pin 51,MOSI,51
+B3,Extension,SPI MISO / Pin 50,MISO,50
+D0,Extension,I2C (2-Wire) SCL,SCL,21
+D1,Extension,I2C (2-Wire) SDA,SDA,20
+D0,I2C,I2C (2-Wire) SCL,SCL,21
+D1,I2C,I2C (2-Wire) SDA,SDA,20
+B3,SPI,MISO Data Pin,MISO,50
+B2,SPI,MOSI Data Pin,MOSI,51
+B1,SPI,SCK Clock Pin,SCK,52
+B0,SPI,SS Select Pin,SS,53
+B4,SPI,Micro-SD CS (Chip-Select),PWM10,10
+K0,SPI,Ex-SRAM Hold (Chip-Select),A8,62
+E0,Serial UART,Serial 0 (monitor) RX,RX0,0
+E1,Serial UART,Serial 0 (monitor) TX,TX0,1
+J0,Serial UART,Serial 3 (gps) RX,RX3,15
+J1,Serial UART,Serial 3 (gps) TX,TX3,14
+H0,Serial UART,Serial 2 (bluetooth/wifi) RX,RX2,17
+H1,Serial UART,Serial 2 (bluetooth/wifi) TX,TX2,16
+D2,Serial UART,Serial 1 (sim) RX,RX1,19
+D3,Serial UART,Serial 1 (sim) TX,TX1,18
+H0,BlueTooth,Serial 2 UART RX,RX2,17
+H1,BlueTooth,Serial 2 UART TX,TX2,16
+B6,BlueTooth,Key,PWM12,12
+L2,BlueTooth,Reset,D47,47
+H0,WiFi,Serial 2 UART RX,RX2,17
+H1,WiFi,Serial 2 UART TX,TX2,16
+L0,WiFi,Power Key,D49,49
+D2,Sim908,GSM Serial 1 UART RX,RX1,19
+D3,Sim908,GSM Serial 1 UART TX,TX1,18
+J0,Sim908,GPS Serial 3 UART RX,RX3,15
+J1,Sim908,GPS Serial 3 UART TX,TX3,14
+E5,Sim908,RI Interrupt,PWM3,3
+G2,Sim908,Status,D39,39
+G1,Sim908,Power Key,D40,40
+G0,Sim908,DTRS,D41,41
+E4,VS1053,DREQ Interrupt,PWM2,2
+H5,VS1053,DCS,PWM8,8
+B5,VS1053,GPIO,PWM11,11
+L6,VS1053,Power,D43,43
+L4,VS1053,Chipselect,D45,45
+L3,VS1053,Reset,D46,46
+L1,VS1053,IRX,D48,48
+L5,TFTLCD,LED Backlight,D44,44
+K3,TFTLCD,RESET,A11,65
+K4,TFTLCD,RD,A12,66
+K5,TFTLCD,WR / Touch YP,A13,67
+K6,TFTLCD,RS / Touch XM,A14,68
+K7,TFTLCD,CS,A15,69
+C7,TFTLCD,Data Bit 7 / Touch YM,D30,30
+C6,TFTLCD,Data Bit 6 / Touch XP,D31,31
+C5,TFTLCD,Data Bit 5,D32,32
+C4,TFTLCD,Data Bit 4,D33,33
+C3,TFTLCD,Data Bit 3,D34,34
+C2,TFTLCD,Data Bit 2,D35,35
+C1,TFTLCD,Data Bit 1,D36,36
+C0,TFTLCD,Data Bit 0,D37,37
+A0,Unused,Digital Pin 22,D22,22
+A1,Unused,Digital Pin 23,D23,23
+A2,Unused,Digital Pin 24,D24,24
+A3,Unused,Digital Pin 25,D25,25
+A4,Unused,Digital Pin 26,D26,26
+A5,Unused,Digital Pin 27,D27,27
+A6,Unused,Digital Pin 28,D28,28
+A7,Unused,Digital Pin 29,D29,29
+L7,Unused,Digital Pin 42,D42,42
+F6,Unused,Analog Pin A6,A6,60
+F7,Unused,Analog Pin A7,A7,61
+K1,Unused,Analog Pin A9,A9,63
+K2,Unused,Analog Pin A10,A10,64

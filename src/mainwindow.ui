@@ -529,13 +529,19 @@
              <number>4</number>
             </property>
             <item>
-             <widget class="MenuButton" name="memoriesButton_8">
+             <widget class="MenuButton" name="control_registersBtn">
               <property name="text">
-               <string>Memories</string>
+               <string>Registers</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
                 <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
               </property>
              </widget>
             </item>

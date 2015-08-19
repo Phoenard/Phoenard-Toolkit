@@ -79,6 +79,8 @@ private slots:
 
     void on_sketches_renameBtn_clicked();
 
+    void on_control_registersBtn_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;

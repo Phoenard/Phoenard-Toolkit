@@ -619,3 +619,8 @@ void MainWindow::on_sketches_renameBtn_clicked()
         ui->sketchesWidget->updateSketch(sketch);
     }
 }
+
+void MainWindow::on_control_registersBtn_toggled(bool checked)
+{
+    ui->chipControlWidget->setShowRegisters(checked);
+}

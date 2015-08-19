@@ -104,14 +104,14 @@ void PinMapInfo::load(const QStringList &values) {
 
     // Parse the pin number
     bool pinSucc = false;
-    this->pin = this->values[0].toInt(&pinSucc, 10);
+    this->pin = this->values[4].toInt(&pinSucc, 10);
     if (!pinSucc) this->pin = -1;
 
     // Textual values
-    this->port = this->values[1];
-    this->name = this->values[2];
-    this->module = this->values[3];
-    this->function = this->values[4];
+    this->name = this->values[3];
+    this->module = this->values[1];
+    this->function = this->values[2];
+    this->port = this->values[0];
 
     // Parse port name into the addresses and mask to use
     this->addr_pin = this->addr_ddr = this->addr_port = -1;
@@ -200,7 +200,7 @@ const ChipRegisterInfo &ChipRegisters::infoHeader() {
     return registerInfoHeader;
 }
 
-const QList<PinMapInfo> &ChipRegisters::pinMap() {
+const QList<PinMapInfo> &ChipRegisters::pinmap() {
     initRegisters();
     return pinmapInfo;
 }

@@ -4,6 +4,8 @@
 #include <QWidget>
 #include "mainmenutab.h"
 #include <QTableWidget>
+#include <QMessageBox>
+#include <QComboBox>
 
 namespace Ui {
 class ChipControlWidget;
@@ -17,6 +19,7 @@ public:
     explicit ChipControlWidget(QWidget *parent = 0);
     ~ChipControlWidget();
     void setActive(bool active);
+    void setShowRegisters(bool showRegisters);
 
 private slots:
     void serialTaskFinished(stk500Task *task);
@@ -27,6 +30,8 @@ private slots:
 
     void on_registerTable_itemDoubleClicked(QTableWidgetItem *item);
 
+    void on_pinmapTable_cellDoubleClicked(int row, int column);
+
 private:
     /// Triggers the automatic update loop
     void startUpdating();
@@ -36,6 +41,9 @@ private:
     int getItemBitMask(QTableWidgetItem *item);
     /// Gets the address associated with the row of an item
     int getItemAddress(QTableWidgetItem *item);
+
+    /// Refreshes a single pinmapping row
+    void updatePinRow(int row, bool forcedUpdate);
 
     Ui::ChipControlWidget *ui;
     stk500UpdateRegisters *lastTask;

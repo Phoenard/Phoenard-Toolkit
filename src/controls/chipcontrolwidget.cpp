@@ -1,6 +1,10 @@
 #include "chipcontrolwidget.h"
 #include "ui_chipcontrolwidget.h"
-#include <QMessageBox>
+
+#define PINMAP_COL_READ   4
+#define PINMAP_COL_MODE   5
+#define PINMAP_COL_WRITE  6
+#define PINMAP_COL_ADC    7
 
 ChipControlWidget::ChipControlWidget(QWidget *parent) :
     QWidget(parent),
@@ -34,6 +38,14 @@ void ChipControlWidget::setActive(bool active) {
     }
     if (active && !serial->isExecuting()) {
         startUpdating();
+    }
+}
+
+void ChipControlWidget::setShowRegisters(bool showRegisters) {
+    if (showRegisters) {
+        ui->stackedWidget->setCurrentWidget(ui->registerPage);
+    } else {
+        ui->stackedWidget->setCurrentWidget(ui->pinmapPage);
     }
 }
 
@@ -72,91 +84,226 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     startUpdating();
     _reg = newReg;
 
-    QTableWidget *tab = ui->registerTable;
-    if (tab->rowCount() == 0) {
+    if (ui->stackedWidget->currentWidget() == ui->registerPage) {
+        QTableWidget *tab = ui->registerTable;
+        if (tab->rowCount() == 0) {
 
-        // While initializing the table, do not fire events
-        _ignoreChanges = true;
+            // While initializing the table, do not fire events
+            _ignoreChanges = true;
 
-        // Set up the column header; exclude first element (is vertical header)
-        const int columns = CHIPREG_DATA_COLUMNS - 1;
-        const int header_padding = 12;
-        const ChipRegisterInfo &headerInfo = _reg.infoHeader();
-        int* columnWidths = new int[columns];
-        QStringList headerValues;
-        QFontMetrics fontMetrics(tab->font());
+            // Set up the column header; exclude first element (is vertical header)
+            const int columns = CHIPREG_DATA_COLUMNS - 1;
+            const int header_padding = 12;
+            const ChipRegisterInfo &headerInfo = _reg.infoHeader();
+            int* columnWidths = new int[columns];
+            QFontMetrics fontMetrics(tab->font());
 
-        // Go by all columns and refresh the header values
-        tab->setSelectionMode(QAbstractItemView::SingleSelection);
-        tab->setColumnCount(columns);
-        for (int col = 0; col < columns; col++) {
-            QString colHeader = headerInfo.values[col + 1];
-            headerValues.append(colHeader);
-            columnWidths[col] = fontMetrics.width(colHeader) + header_padding;
-
-            tab->setHorizontalHeaderItem(col, new QTableWidgetItem(colHeader));
-        }
-
-        // Fill the table with the initial items
-        tab->setRowCount(_reg.count());
-        int moduleRowStart = 0;
-        for (int row = 0; row < _reg.count(); row++) {
-
-            // Read the information
-            const ChipRegisterInfo &info = _reg.infoByIndex(row);
-
-            // Setup the vertical header item
-            tab->setVerticalHeaderItem(row, new QTableWidgetItem(info.address));
-
-            // Create the full row of columns
+            // Go by all columns and refresh the header values
+            tab->setSelectionMode(QAbstractItemView::SingleSelection);
+            tab->setColumnCount(columns);
             for (int col = 0; col < columns; col++) {
+                QString colHeader = headerInfo.values[col + 1];
+                columnWidths[col] = fontMetrics.width(colHeader) + header_padding;
+                tab->setHorizontalHeaderItem(col, new QTableWidgetItem(colHeader));
+            }
 
-                // Update and add the cell item
-                QTableWidgetItem *item = new QTableWidgetItem(info.values[col+1]);
-                item->setBackgroundColor(QColor(Qt::white));
-                if (col != 3) {
+            // Fill the table with the initial items
+            tab->setRowCount(_reg.count());
+            int moduleRowStart = 0;
+            for (int row = 0; row < _reg.count(); row++) {
+
+                // Read the information
+                const ChipRegisterInfo &info = _reg.infoByIndex(row);
+
+                // Setup the vertical header item
+                tab->setVerticalHeaderItem(row, new QTableWidgetItem(info.address));
+
+                // Create the full row of columns
+                for (int col = 0; col < columns; col++) {
+
+                    // Update and add the cell item
+                    QTableWidgetItem *item = new QTableWidgetItem(info.values[col+1]);
+                    item->setBackgroundColor(QColor(Qt::white));
+                    if (col != 3) {
+                        item->setFlags((item->flags() & ~Qt::ItemIsEditable));
+                    }
+                    if (col >= 3) {
+                        item->setTextAlignment(Qt::AlignCenter);
+                    }
+                    item->setFlags((item->flags() & ~Qt::ItemIsUserCheckable));
+                    tab->setItem(row, col, item);
+
+                    // Increase the column width as needed
+                    int colWidth = fontMetrics.width(item->text()) + header_padding;
+                    if (columnWidths[col] < colWidth) {
+                        columnWidths[col] = colWidth;
+                    }
+                }
+
+                // If module name is the same as the row above; merge
+                if (row > 0 && (_reg.infoByIndex(moduleRowStart).module == info.module) && (info.module != "-")) {
+                    tab->setSpan(moduleRowStart, 1, row-moduleRowStart+1, 1);
+                } else {
+                    moduleRowStart = row;
+                }
+            }
+
+            // Apply column widths
+            for (int col = 0; col < columns; col++) {
+                tab->setColumnWidth(col, columnWidths[col]);
+            }
+            delete[] columnWidths;
+
+            // Next, refresh all the cells
+            forceItemUpdate = true;
+
+            // Done.
+            _ignoreChanges = false;
+        }
+
+        // Update all the cells displayed
+        for (int row = 0; row < ui->registerTable->rowCount(); row++) {
+            for (int col = 0; col < ui->registerTable->columnCount(); col++) {
+                updateItem(ui->registerTable->item(row, col), forceItemUpdate);
+            }
+        }
+
+    } else if (ui->stackedWidget->currentWidget() == ui->pinmapPage) {
+
+        // Initialize pinmap table
+        QTableWidget *tab = ui->pinmapTable;
+        if (tab->rowCount() == 0) {
+            const PinMapInfo &pinmapHeader = _reg.pinmapHeader();
+            const QList<PinMapInfo> &pinmap = _reg.pinmap();
+
+            // Set up the column header; exclude first element (is vertical header)
+            const int columns = 8;
+            const int header_padding = 15;
+            int moduleRowStart = 0;
+            int* columnWidths = new int[columns];
+            QFontMetrics fontMetrics(tab->font());
+
+            // Go by all columns and refresh the header values
+            tab->setSelectionMode(QAbstractItemView::SingleSelection);
+            tab->setColumnCount(columns);
+            for (int col = 0; col < columns; col++) {
+                QString colHeader;
+                if (col == PINMAP_COL_READ) {
+                    colHeader = "Read";
+                    columnWidths[col] = 70;
+                } else if (col == PINMAP_COL_MODE) {
+                    colHeader = "Mode";
+                    columnWidths[col] = 70;
+                } else if (col == PINMAP_COL_WRITE) {
+                    colHeader = "Write";
+                    columnWidths[col] = 70;
+                } else if (col == PINMAP_COL_ADC) {
+                    colHeader = "ADC";
+                    columnWidths[col] = 60;
+                } else {
+                    colHeader = pinmapHeader.values[col + 1];
+                    columnWidths[col] = fontMetrics.width(colHeader) + header_padding;
+                }
+                tab->setHorizontalHeaderItem(col, new QTableWidgetItem(colHeader));
+            }
+
+            // Fill the table with the initial items
+            tab->setRowCount(pinmap.count());
+            for (int row = 0; row < tab->rowCount(); row++) {
+
+                // Read the information
+                const PinMapInfo &info = pinmap[row];
+
+                // Setup the vertical header item
+                tab->setVerticalHeaderItem(row, new QTableWidgetItem(info.values[0]));
+
+                // Create the full row of columns
+                for (int col = 0; col < columns; col++) {
+
+                    QString itemText;
+                    if (col >= PINMAP_COL_READ) {
+                        itemText = "Value";
+                    } else {
+                        itemText = info.values[col+1];
+                    }
+
+                    // Update and add the cell item
+                    QTableWidgetItem *item = new QTableWidgetItem(itemText);
+                    item->setBackgroundColor(QColor(Qt::white));
                     item->setFlags((item->flags() & ~Qt::ItemIsEditable));
-                }
-                if (col >= 3) {
-                    item->setTextAlignment(Qt::AlignCenter);
-                }
-                item->setFlags((item->flags() & ~Qt::ItemIsUserCheckable));
-                tab->setItem(row, col, item);
+                    if (col != 1) {
+                        item->setTextAlignment(Qt::AlignCenter);
+                    }
+                    tab->setItem(row, col, item);
 
-                // Increase the column width as needed
-                int colWidth = fontMetrics.width(item->text()) + header_padding;
-                if (columnWidths[col] < colWidth) {
-                    columnWidths[col] = colWidth;
+                    // Increase the column width as needed
+                    int colWidth = fontMetrics.width(item->text()) + header_padding;
+                    if (columnWidths[col] < colWidth) {
+                        columnWidths[col] = colWidth;
+                    }
+                }
+
+                // If module name is the same as the row above; merge
+                if (row > 0 && (pinmap[moduleRowStart].module == info.module)) {
+                    tab->setSpan(moduleRowStart, 0, row-moduleRowStart+1, 1);
+                } else {
+                    moduleRowStart = row;
                 }
             }
 
-            // If module name is the same as the row above; merge
-            if (row > 0 && (_reg.infoByIndex(moduleRowStart).module == info.module) && (info.module != "-")) {
-                tab->setSpan(moduleRowStart, 1, row-moduleRowStart+1, 1);
-            } else {
-                moduleRowStart = row;
+            // Apply column widths
+            for (int col = 0; col < columns; col++) {
+                tab->setColumnWidth(col, columnWidths[col]);
             }
+            delete[] columnWidths;
+
+            // Refresh all rows next time
+            forceItemUpdate = true;
         }
 
-        // Apply column widths
-        for (int col = 0; col < columns; col++) {
-            tab->setColumnWidth(col, columnWidths[col]);
-        }
-        delete[] columnWidths;
-
-        // Next, refresh all the cells
-        forceItemUpdate = true;
-
-        // Done.
-        _ignoreChanges = false;
-    }
-
-    // Update all the cells displayed
-    for (int row = 0; row < ui->registerTable->rowCount(); row++) {
-        for (int col = 0; col < ui->registerTable->columnCount(); col++) {
-            updateItem(ui->registerTable->item(row, col), forceItemUpdate);
+        // Update all rows
+        for (int row = 0; row < tab->rowCount(); row++) {
+            updatePinRow(row, forceItemUpdate);
         }
     }
+}
+
+void ChipControlWidget::updatePinRow(int row, bool forcedUpdate) {
+    // Refresh the states using the PIN, DDR and PORT addresses
+    const PinMapInfo &info = _reg.pinmap()[row];
+    int mask = info.addr_mask;
+
+    // Refresh the input state cell by reading PIN
+    if (forcedUpdate || _reg.changed(info.addr_pin)) {
+        bool isSet = ((_reg[info.addr_pin] & mask) == mask);
+
+        QTableWidgetItem *item = ui->pinmapTable->item(row, PINMAP_COL_READ);
+        item->setText(isSet ? "High" : "Low");
+        item->setBackgroundColor(QColor(isSet ? Qt::green : Qt::red));
+    }
+
+    // Refresh the mode cell by reading DDR
+    if (forcedUpdate || _reg.changed(info.addr_ddr)) {
+        bool isSet = ((_reg[info.addr_ddr] & mask) == mask);
+
+        QTableWidgetItem *item = ui->pinmapTable->item(row, PINMAP_COL_MODE);
+        item->setText(isSet ? "   Output →" : "← Input     ");
+
+        item->setBackgroundColor(QColor(isSet ? Qt::yellow : Qt::gray));
+    }
+
+    // Refresh the output cell by reading PORT
+    if (forcedUpdate || _reg.changed(info.addr_port)) {
+        bool isSet = ((_reg[info.addr_port] & mask) == mask);
+
+        QTableWidgetItem *item = ui->pinmapTable->item(row, PINMAP_COL_WRITE);
+        item->setText(isSet ? "High" : "Low");
+        item->setBackgroundColor(QColor(isSet ? Qt::green : Qt::red));
+    }
+
+    // Refresh the ADC value
+    QTableWidgetItem *adcitem = ui->pinmapTable->item(row, PINMAP_COL_ADC);
+    adcitem->setText("");
 }
 
 void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {
@@ -292,5 +439,16 @@ void ChipControlWidget::on_registerTable_itemDoubleClicked(QTableWidgetItem *ite
     int bitMask = getItemBitMask(item);
     if (bitMask) {
         _reg[getItemAddress(item)] ^= bitMask;
+    }
+}
+
+void ChipControlWidget::on_pinmapTable_cellDoubleClicked(int row, int column)
+{
+    const PinMapInfo &info = _reg.pinmap()[row];
+    if (column == PINMAP_COL_MODE) {
+        _reg[info.addr_ddr] ^= info.addr_mask;
+    }
+    if (column == PINMAP_COL_WRITE) {
+        _reg[info.addr_port] ^= info.addr_mask;
     }
 }
