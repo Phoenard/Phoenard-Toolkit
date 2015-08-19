@@ -57,7 +57,8 @@ public:
     const ChipRegisterInfo &infoHeader();
     const ChipRegisterInfo &infoByIndex(int index);
     static int findRegisterAddress(const QString &name);
-    const QList<PinMapInfo> &pinMap();
+    const QList<PinMapInfo> &pinmap();
+    const PinMapInfo &pinmapHeader();
 
     quint8 operator [](int i) const { return regData[i]; }
     quint8& operator [](int i) { return regData[i]; }
@@ -74,8 +75,8 @@ private:
     static ChipRegisterInfo registerInfo[CHIPREG_BUFFSIZE];
     static ChipRegisterInfo registerInfoHeader;
     static ChipRegisterInfo* registerInfoByIndex[CHIPREG_COUNT];
-    static QList<PinMapInfo> pinMapInfo;
-    static PinMapInfo pinMapInfoHeader;
+    static QList<PinMapInfo> pinmapInfo;
+    static PinMapInfo pinmapInfoHeader;
     static bool registerInfoInit;
 };
 

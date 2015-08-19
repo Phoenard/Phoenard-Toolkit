@@ -4,8 +4,8 @@ bool ChipRegisters::registerInfoInit = false;
 ChipRegisterInfo ChipRegisters::registerInfo[CHIPREG_BUFFSIZE];
 ChipRegisterInfo* ChipRegisters::registerInfoByIndex[CHIPREG_COUNT];
 ChipRegisterInfo ChipRegisters::registerInfoHeader;
-QList<PinMapInfo> ChipRegisters::pinMapInfo;
-PinMapInfo ChipRegisters::pinMapInfoHeader;
+QList<PinMapInfo> ChipRegisters::pinmapInfo;
+PinMapInfo ChipRegisters::pinmapInfoHeader;
 
 void ChipRegisters::initRegisters() {
     if (registerInfoInit) return;
@@ -68,7 +68,7 @@ void ChipRegisters::initRegisters() {
     }
 
     // Load all registers into a list
-    pinMapInfo = QList<PinMapInfo>();
+    pinmapInfo = QList<PinMapInfo>();
     QFile pinmapFile(":/data/pinmapping.csv");
     if (pinmapFile.open(QIODevice::ReadOnly)) {
         QTextStream textStream(&pinmapFile);
@@ -77,10 +77,10 @@ void ChipRegisters::initRegisters() {
             PinMapInfo entry(textStream.readLine().split(","));
             if (entry.pin == -1) {
                 // Header
-                pinMapInfoHeader = entry;
+                pinmapInfoHeader = entry;
             } else {
                 // Add valid entry
-                pinMapInfo.append(entry);
+                pinmapInfo.append(entry);
             }
         }
         pinmapFile.close();
@@ -202,7 +202,12 @@ const ChipRegisterInfo &ChipRegisters::infoHeader() {
 
 const QList<PinMapInfo> &ChipRegisters::pinMap() {
     initRegisters();
-    return pinMapInfo;
+    return pinmapInfo;
+}
+
+const PinMapInfo &ChipRegisters::pinmapHeader() {
+    initRegisters();
+    return pinmapInfoHeader;
 }
 
 int ChipRegisters::findRegisterAddress(const QString &name) {
