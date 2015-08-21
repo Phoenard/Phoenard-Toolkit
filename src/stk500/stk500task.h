@@ -159,11 +159,12 @@ public:
 
 class stk500UpdateRegisters : public stk500Task {
 public:
-    stk500UpdateRegisters(ChipRegisters &reg, bool read = true) : stk500Task("Updating registers"), reg(reg), read(read) {}
+    stk500UpdateRegisters(ChipRegisters &reg) : stk500Task("Updating registers"), reg(reg), read(true), readADC(true) {}
     virtual void run();
 
     ChipRegisters reg;
     bool read;
+    bool readADC;
 };
 
 #endif // STK500TASK_H

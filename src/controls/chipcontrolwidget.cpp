@@ -49,11 +49,17 @@ void ChipControlWidget::setShowRegisters(bool showRegisters) {
     }
 }
 
+bool ChipControlWidget::showRegisters() {
+    return (ui->stackedWidget->currentWidget() == ui->registerPage);
+}
+
 void ChipControlWidget::startUpdating() {
     // Start a new asynchronous task while active
     if (_active) {
         lastTask = new stk500UpdateRegisters(_reg);
+        lastTask->readADC = !showRegisters();
         serial->execute(*lastTask, true);
+        _reg.resetUserChanges();
     }
 }
 

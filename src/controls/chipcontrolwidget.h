@@ -20,6 +20,7 @@ public:
     ~ChipControlWidget();
     void setActive(bool active);
     void setShowRegisters(bool showRegisters);
+    bool showRegisters();
 
 private slots:
     void serialTaskFinished(stk500Task *task);

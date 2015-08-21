@@ -266,7 +266,9 @@ void stk500registers::read(ChipRegisters &registers) {
 
     // Synchronize the current register values with the last ones read
     memcpy(registers.regData, registers.regDataRead, sizeof(registers.regData));
+}
 
+void stk500registers::readADC(ChipRegisters &registers) {
     // Refresh the analog inputs
     for (int cnt = 0; cnt < ANALOG_PIN_INCREMENT; cnt++) {
         int pin = registers.analogDataIndex;

@@ -1362,4 +1362,7 @@ void stk500UpdateRegisters::run() {
     if (read) {
         protocol->reg().read(this->reg);
     }
+    if (readADC) {
+        protocol->reg().readADC(this->reg);
+    }
 }

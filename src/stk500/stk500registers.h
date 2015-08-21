@@ -92,6 +92,7 @@ public:
     stk500registers(stk500 *handler) : _handler(handler) {}
     void write(ChipRegisters &registers);
     void read(ChipRegisters &registers);
+    void readADC(ChipRegisters &registers);
 
 private:
     stk500 *_handler;
