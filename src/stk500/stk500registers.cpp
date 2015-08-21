@@ -177,6 +177,16 @@ void ChipRegisters::resetUserChanges() {
     memcpy(regData, regDataRead, sizeof(regData));
 }
 
+void ChipRegisters::applyUserChanges(const ChipRegisters& other) {
+    for (int i = 0; i < CHIPREG_BUFFSIZE; i++) {
+        quint8 changeMask = other.regData[i] ^ other.regDataRead[i];
+        if (changeMask) {
+            this->regData[i] &= ~changeMask;
+            this->regData[i] |= (other.regData[i] & changeMask);
+        }
+    }
+}
+
 const ChipRegisterInfo &ChipRegisters::info(int address) {
     initRegisters();
     if ((address >= CHIPREG_ADDR_START) && (address < CHIPREG_BUFFSIZE)) {
@@ -256,4 +266,11 @@ void stk500registers::read(ChipRegisters &registers) {
 
     // Synchronize the current register values with the last ones read
     memcpy(registers.regData, registers.regDataRead, sizeof(registers.regData));
+
+    // Refresh the analog inputs
+    for (int cnt = 0; cnt < ANALOG_PIN_INCREMENT; cnt++) {
+        int pin = registers.analogDataIndex;
+        registers.analogData[pin] = _handler->ANALOG_read(pin);
+        registers.analogDataIndex = (pin + 1) % ANALOG_PIN_COUNT;
+    }
 }

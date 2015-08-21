@@ -10,6 +10,8 @@
 #define CHIPREG_COUNT         (CHIPREG_BUFFSIZE-CHIPREG_ADDR_START)
 #define CHIPREG_DATA_COLUMNS  13
 #define PINMAP_DATA_COLUMNS   5
+#define ANALOG_PIN_COUNT      16
+#define ANALOG_PIN_INCREMENT  4
 
 typedef struct ChipRegisterInfo {
     ChipRegisterInfo();
@@ -49,10 +51,12 @@ public:
     ChipRegisters();
     int count() const { return CHIPREG_COUNT; }
     void resetUserChanges();
+    void applyUserChanges(const ChipRegisters& other);
     bool changed(int address);
     bool hasUserChanges();
     quint8* data() { return regData; }
     quint8 error(int address);
+    quint16 analog(int pinNr) const { return analogData[pinNr]; }
     const ChipRegisterInfo &info(int address);
     const ChipRegisterInfo &infoHeader();
     const ChipRegisterInfo &infoByIndex(int index);
@@ -70,6 +74,8 @@ protected:
     quint8 regDataRead[CHIPREG_BUFFSIZE];  // Live values, original to track user changes
     quint8 regDataLast[CHIPREG_BUFFSIZE];  // Live values from last time
     quint8 regDataError[CHIPREG_BUFFSIZE]; // Contains the bits it failed to write out last time
+    quint16 analogData[ANALOG_PIN_COUNT];  // Live updates analog input values
+    quint8 analogDataIndex;                // Index of the analog pin to be refreshed next
 private:
     static void initRegisters();
     static ChipRegisterInfo registerInfo[CHIPREG_BUFFSIZE];

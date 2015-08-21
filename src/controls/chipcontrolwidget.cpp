@@ -80,9 +80,12 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     delete lastTask;
     lastTask = NULL;
 
+    // Refresh the registers but keep user changes that happened while updating
+    newReg.applyUserChanges(_reg);
+    _reg = newReg;
+
     // Start updating with the current changes
     startUpdating();
-    _reg = newReg;
 
     if (ui->stackedWidget->currentWidget() == ui->registerPage) {
         QTableWidget *tab = ui->registerTable;
@@ -199,7 +202,7 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
                     columnWidths[col] = 70;
                 } else if (col == PINMAP_COL_ADC) {
                     colHeader = "ADC";
-                    columnWidths[col] = 60;
+                    columnWidths[col] = 90;
                 } else {
                     colHeader = pinmapHeader.values[col + 1];
                     columnWidths[col] = fontMetrics.width(colHeader) + header_padding;
@@ -221,7 +224,9 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
                 for (int col = 0; col < columns; col++) {
 
                     QString itemText;
-                    if (col >= PINMAP_COL_READ) {
+                    if (col == PINMAP_COL_ADC) {
+                        itemText = "";
+                    } else if (col >= PINMAP_COL_READ) {
                         itemText = "Value";
                     } else {
                         itemText = info.values[col+1];
@@ -301,9 +306,22 @@ void ChipControlWidget::updatePinRow(int row, bool forcedUpdate) {
         item->setBackgroundColor(QColor(isSet ? Qt::green : Qt::red));
     }
 
-    // Refresh the ADC value
-    QTableWidgetItem *adcitem = ui->pinmapTable->item(row, PINMAP_COL_ADC);
-    adcitem->setText("");
+    // Refresh the ADC value for A# items
+    QString name = info.name;
+    if (name.startsWith("A")) {
+        bool succ = false;
+        int analogPin = name.remove(0, 1).toInt(&succ, 10);
+        if (succ && (analogPin >= 0) && (analogPin < ANALOG_PIN_COUNT)) {
+            quint16 adc_value = _reg.analog(analogPin);
+            QString text = QString::number(adc_value);
+            text += " (";
+            text += QString::number((double) adc_value / 1023.0 * 3.3, '.', 2);
+            text += "v)";
+
+            QTableWidgetItem *adcItem = ui->pinmapTable->item(row, PINMAP_COL_ADC);
+            adcItem->setText(text);
+        }
+    }
 }
 
 void ChipControlWidget::updateItem(QTableWidgetItem *item, bool forcedUpdate) {

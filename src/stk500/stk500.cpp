@@ -424,26 +424,22 @@ quint8 stk500::RAM_writeByte(quint16 address, quint8 value, quint8 mask) {
     return output;
 }
 
-quint16 stk500::ANALOG_read(quint8 adc) {
-    char arguments[3];
+quint16 stk500::ANALOG_read(quint8 pin) {
     char output[2];
+    int analog_reference = 1;
+
+    /* allow for channel or pin numbers */
+    if (pin >= 54) pin -= 54;
 
     /* Setup the ADC registers to start a measurement */
-    arguments[0] = 0xC7 | (adc & 0xF); /* ADCSRA(0x7A) */
-    arguments[1] = 0x00;               /* ADCSRB(0x7B) */
-    arguments[2] = 0x40;               /* ADMUX (0x7C) */
+    unsigned char adcsra = 0x87 | (1 << 6);
+    unsigned char adcsrb = (pin & 0x8);
+    unsigned char admux = (analog_reference << 6) | (pin & 0x07);
 
-    const bool USE_ADC_CMD = true;
-    if (USE_ADC_CMD) {
-        /* Use the analog read command */
-        command(READ_ANALOG_ISP, arguments, sizeof(arguments), output, sizeof(output));
-        return (output[0] << 8) | (output[1] & 0xFF);
-    } else {
-        /* Write to the register and read the ADCL/ADCH registers */
-        RAM_write(0x7A, arguments, sizeof(arguments));
-        RAM_read(0x78, output, sizeof(output));
-        return (output[0] & 0xFF) | (output[1] << 8);
-    }
+    /* Use the analog read command */
+    char arguments[3] = { adcsra, adcsrb, admux };
+    command(READ_ANALOG_ISP, arguments, sizeof(arguments), output, sizeof(output));
+    return (output[0] << 8) | (output[1] & 0xFF);
 }
 
 /* ============================= Directory info =============================== */
