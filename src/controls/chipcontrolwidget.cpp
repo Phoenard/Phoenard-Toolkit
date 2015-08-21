@@ -139,7 +139,7 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
                     if (col != 3) {
                         item->setFlags((item->flags() & ~Qt::ItemIsEditable));
                     }
-                    if (col >= 3) {
+                    if (col >= 2) {
                         item->setTextAlignment(Qt::AlignCenter);
                     }
                     item->setFlags((item->flags() & ~Qt::ItemIsUserCheckable));
@@ -245,7 +245,7 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
                     QTableWidgetItem *item = new QTableWidgetItem(itemText);
                     item->setBackgroundColor(QColor(Qt::white));
                     item->setFlags((item->flags() & ~Qt::ItemIsEditable));
-                    if (col != 1) {
+                    if (col >= 2) {
                         item->setTextAlignment(Qt::AlignCenter);
                     }
                     tab->setItem(row, col, item);
