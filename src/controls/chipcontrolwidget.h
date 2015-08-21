@@ -50,6 +50,7 @@ private:
     stk500UpdateRegisters *lastTask;
     bool _active;
     bool _ignoreChanges;
+    bool _forceRefresh;
     ChipRegisters _reg;
 };
 

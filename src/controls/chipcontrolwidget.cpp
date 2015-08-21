@@ -14,6 +14,7 @@ ChipControlWidget::ChipControlWidget(QWidget *parent) :
 
     _active = false;
     _ignoreChanges = false;
+    _forceRefresh = false;
     lastTask = NULL;
 }
 
@@ -47,6 +48,7 @@ void ChipControlWidget::setShowRegisters(bool showRegisters) {
     } else {
         ui->stackedWidget->setCurrentWidget(ui->pinmapPage);
     }
+    _forceRefresh = true;
 }
 
 bool ChipControlWidget::showRegisters() {
@@ -66,7 +68,8 @@ void ChipControlWidget::startUpdating() {
 void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     // Check if this is our task containing updated registers
     if (task != lastTask) return;
-    bool forceItemUpdate = false;
+    bool forceItemUpdate = _forceRefresh;
+    _forceRefresh = false;
 
     // Refresh reg variable and delete the task again
     ChipRegisters newReg = lastTask->reg;
