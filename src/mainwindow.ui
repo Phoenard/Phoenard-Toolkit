@@ -211,7 +211,7 @@
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+          <normaloff>:/icons/control.png</normaloff>:/icons/control.png</iconset>
         </property>
         <property name="checkable">
          <bool>true</bool>

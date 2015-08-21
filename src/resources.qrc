@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="">
+    <qresource prefix="/">
         <file>icons/serialmonitor.png</file>
         <file>icons/Icon.png</file>
         <file>icons/memories.png</file>
@@ -31,9 +31,8 @@
         <file>icons/sketchhex.png</file>
         <file>icons/sketchski.png</file>
         <file>icons/filelcd.png</file>
-    </qresource>
-    <qresource prefix="">
         <file>data/registers.csv</file>
         <file>data/pinmapping.csv</file>
+        <file>icons/control.png</file>
     </qresource>
 </RCC>
