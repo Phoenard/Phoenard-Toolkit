@@ -141,9 +141,9 @@ void ChipRegisterInfo::load(const QStringList &values) {
 
     this->index = -1;
     this->address = this->values[0];
-    this->name = this->values[1];
-    this->module = this->values[2];
-    this->function = this->values[3];
+    this->module = this->values[1];
+    this->function = this->values[2];
+    this->name = this->values[3];
     for (int i = 0; i < 8; i++) {
         this->bitNames[7-i] = this->values[i + 4];
     }

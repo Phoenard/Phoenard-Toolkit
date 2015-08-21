@@ -154,7 +154,7 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
 
                 // If module name is the same as the row above; merge
                 if (row > 0 && (_reg.infoByIndex(moduleRowStart).module == info.module) && (info.module != "-")) {
-                    tab->setSpan(moduleRowStart, 1, row-moduleRowStart+1, 1);
+                    tab->setSpan(moduleRowStart, 0, row-moduleRowStart+1, 1);
                 } else {
                     moduleRowStart = row;
                 }

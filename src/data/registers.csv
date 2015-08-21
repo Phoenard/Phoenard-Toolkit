@@ -1,186 +1,186 @@
-Address,Name,Module,Function,Value,Bit 7,Bit 6,Bit 5,Bit 4,Bit 3,Bit 2,Bit 1,Bit 0
-0x20,PINA,Digital Port A,Data Input Register,0x00,A7,A6,A5,A4,A3,A2,A1,A0
-0x21,DDRA,Digital Port A,Data Direction Register,0x00,A7,A6,A5,A4,A3,A2,A1,A0
-0x22,PORTA,Digital Port A,Data Output Register,0x00,A7,A6,A5,A4,A3,A2,A1,A0
-0x23,PINB,Digital Port B,Data Input Register,0x00,B7,B6,B5,B4,B3,B2,B1,B0
-0x24,DDRB,Digital Port B,Data Direction Register,0x00,B7,B6,B5,B4,B3,B2,B1,B0
-0x25,PORTB,Digital Port B,Data Output Register,0x00,B7,B6,B5,B4,B3,B2,B1,B0
-0x26,PINC,Digital Port C,Data Input Register,0x00,C7,C6,C5,C4,C3,C2,C1,C0
-0x27,DDRC,Digital Port C,Data Direction Register,0x00,C7,C6,C5,C4,C3,C2,C1,C0
-0x28,PORTC,Digital Port C,Data Output Register,0x00,C7,C6,C5,C4,C3,C2,C1,C0
-0x29,PIND,Digital Port D,Data Input Register,0x00,D7,D6,D5,D4,D3,D2,D1,D0
-0x2A,DDRD,Digital Port D,Data Direction Register,0x00,D7,D6,D5,D4,D3,D2,D1,D0
-0x2B,PORTD,Digital Port D,Data Output Register,0x00,D7,D6,D5,D4,D3,D2,D1,D0
-0x2C,PINE,Digital Port E,Data Input Register,0x00,E7,E6,E5,E4,E3,E2,E1,E0
-0x2D,DDRE,Digital Port E,Data Direction Register,0x00,E7,E6,E5,E4,E3,E2,E1,E0
-0x2E,PORTE,Digital Port E,Data Output Register,0x00,E7,E6,E5,E4,E3,E2,E1,E0
-0x2F,PINF,Digital Port F,Data Input Register,0x00,F7,F6,F5,F4,F3,F2,F1,F0
-0x30,DDRF,Digital Port F,Data Direction Register,0x00,F7,F6,F5,F4,F3,F2,F1,F0
-0x31,PORTF,Digital Port F,Data Output Register,0x00,F7,F6,F5,F4,F3,F2,F1,F0
-0x32,PING,Digital Port G,Data Input Register,0x00,-,-,G5,G4,G3,G2,G1,G0
-0x33,DDRG,Digital Port G,Data Direction Register,0x00,-,-,G5,G4,G3,G2,G1,G0
-0x34,PORTG,Digital Port G,Data Output Register,0x00,-,-,G5,G4,G3,G2,G1,G0
-0x100,PINH,Digital Port H,Data Input Register,0x00,H7,H6,H5,H4,H3,H2,H1,H0
-0x101,DDRH,Digital Port H,Data Direction Register,0x00,H7,H6,H5,H4,H3,H2,H1,H0
-0x102,PORTH,Digital Port H,Data Output Register,0x00,H7,H6,H5,H4,H3,H2,H1,H0
-0x103,PINJ,Digital Port J,Data Input Register,0x00,J7,J6,J5,J4,J3,J2,J1,J0
-0x104,DDRJ,Digital Port J,Data Direction Register,0x00,J7,J6,J5,J4,J3,J2,J1,J0
-0x105,PORTJ,Digital Port J,Data Output Register,0x00,J7,J6,J5,J4,J3,J2,J1,J0
-0x106,PINK,Digital Port K,Data Input Register,0x00,K7,K6,K5,K4,K3,K2,K1,K0
-0x107,DDRK,Digital Port K,Data Direction Register,0x00,K7,K6,K5,K4,K3,K2,K1,K0
-0x108,PORTK,Digital Port K,Data Output Register,0x00,K7,K6,K5,K4,K3,K2,K1,K0
-0x109,PINL,Digital Port L,Data Input Register,0x00,L7,L6,L5,L4,L3,L2,L1,L0
-0x10A,DDRL,Digital Port L,Data Direction Register,0x00,L7,L6,L5,L4,L3,L2,L1,L0
-0x10B,PORTL,Digital Port L,Data Output Register,0x00,L7,L6,L5,L4,L3,L2,L1,L0
-0x35,TIFR0,Timer Interrupt,Timer 0 Flag Register,0x00,-,-,-,-,-,OCF0B,OCF0A,TOV0
-0x36,TIFR1,Timer Interrupt,Timer 1 Flag Register,0x00,-,-,ICF1,-,OCF1C,OCF1B,OCF1A,TOV1
-0x37,TIFR2,Timer Interrupt,Timer 2 Flag Register,0x00,-,-,-,-,-,OCF2B,OCF2A,TOV2
-0x38,TIFR3,Timer Interrupt,Timer 3 Flag Register,0x00,-,-,ICF3,-,OCF3C,OCF3B,OCF3A,TOV3
-0x39,TIFR4,Timer Interrupt,Timer 4 Flag Register,0x00,-,-,ICF4,-,OCF4C,OCF4B,OCF4A,TOV4
-0x3A,TIFR5,Timer Interrupt,Timer 5 Flag Register,0x00,-,-,ICF5,-,OCF5C,OCF5B,OCF5A,TOV5
-0x6E,TIMSK0,Timer Interrupt,Timer 0 Mask Register,0x00,-,-,-,-,-,OCIE0B,OCIE0A,TOIE0
-0x6F,TIMSK1,Timer Interrupt,Timer 1 Mask Register,0x00,-,-,ICIE1,-,OCIE1C,OCIE1B,OCIE1A,TOIE1
-0x70,TIMSK2,Timer Interrupt,Timer 2 Mask Register,0x00,-,-,-,-,-,OCIE2B,OCIE2A,TOIE2
-0x71,TIMSK3,Timer Interrupt,Timer 3 Mask Register,0x00,-,-,ICIE3,-,OCIE3C,OCIE3B,OCIE3A,TOIE3
-0x72,TIMSK4,Timer Interrupt,Timer 4 Mask Register,0x00,-,-,ICIE4,-,OCIE4C,OCIE4B,OCIE4A,TOIE4
-0x73,TIMSK5,Timer Interrupt,Timer 5 Mask Register,0x00,-,-,ICIE5,-,OCIE5C,OCIE5B,OCIE5A,TOIE5
-0x3B,PCIFR,Pin Change Interrupt,Flag Register,0x00,-,-,-,-,-,PCIF2,PCIF1,PCIF0
-0x68,PCICR,Pin Change Interrupt,Control Register,0x00,-,-,-,-,-,PCIE2,PCIE1,PCIE0
-0x6B,PCMSK0,Pin Change Interrupt,Mask Register 0,0x00,PCINT7,PCINT6,PCINT5,PCINT4,PCINT3,PCINT2,PCINT1,PCINT0
-0x6C,PCMSK1,Pin Change Interrupt,Mask Register 1,0x00,PCINT15,PCINT14,PCINT13,PCINT12,PCINT11,PCINT10,PCINT9,PCINT8
-0x6D,PCMSK2,Pin Change Interrupt,Mask Register 2,0x00,PCINT23,PCINT22,PCINT21,PCINT20,PCINT19,PCINT18,PCINT17,PCINT16
-0x3C,EIFR,External Interrupt,Flag Register,0x00,INTF7,INTF6,INTF5,INTF4,INTF3,INTF2,INTF1,INTF0
-0x3D,EIMSK,External Interrupt,Mask Register,0x00,INT7,INT6,INT5,INT4,INT3,INT2,INT1,INT0
-0x69,EICRA,External Interrupt,Control Register A,0x00,ISC31,ISC30,ISC21,ISC20,ISC11,ISC10,ISC01,ISC00
-0x6A,EICRB,External Interrupt,Control Register B,0x00,ISC71,ISC70,ISC61,ISC60,ISC51,ISC50,ISC41,ISC40
-0x3F,EECR,EEPROM,Control Register,0x00,-,-,EEPM1,EEPM0,EERIE,EEMPE,EEPE,EERE
-0x40,EEDR,EEPROM,Data Register,0x00,0,0,0,0,0,0,0,0
-0x41,EEARL,EEPROM,Address Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x42,EEARH,EEPROM,Address High Byte Register,0x00,-,-,-,-,0,0,0,0
-0x3E,GPIOR0,General Purpose,I/O Register 0,0x00,0,0,0,0,0,0,0,0
-0x4A,GPIOR1,General Purpose,I/O Register 1,0x00,0,0,0,0,0,0,0,0
-0x4B,GPIOR2,General Purpose,I/O Register 2,0x00,0,0,0,0,0,0,0,0
-0x50,ACSR,Analog Comparator,Control and Status Register,0x00,ACD,ACBG,ACO,ACI,ACIE,ACIC,ACIS1,ACIS0
-0x51,OCDR,On Chip Debugging,OCD Register,0x00,OCDR7,OCDR6,OCDR5,OCDR4,OCDR3,OCDR2,OCDR1,OCDR0
-0x53,SMCR,Sleep Mode,Control Register,0x00,-,-,-,-,SM2,SM1,SM0,SE
-0x54,MCUSR,MCU,Status Register,0x00,-,-,-,JTRF,WDRF,BORF,EXTRF,PORF
-0x55,MCUCR,MCU,Control Register,0x00,JTD,-,-,PUD,-,-,IVSEL,IVCE
-0x57,SPMCSR,Self-Programming,Control and Status Register,0x00,SPMIE,RWWSB,SIGRD,RWWSRE,BLBSET,PGWRT,PGERS,SPMEN
-0x5B,RAMPZ,Self-Programming,Z-Pointer Register,0x00,-,-,-,-,-,-,RAMPZ1,RAMPZ0
-0x5C,EIND,Extended Call/Jump,Extended Indirect Register,0x00,-,-,-,-,-,-,-,EIND0
-0x5D,SPL,Stack Pointer,Low Byte Register,0x00,SP7,SP6,SP5,SP4,SP3,SP2,SP1,SP0
-0x5E,SPH,Stack Pointer,High Byte Register,0x00,SP15,SP14,SP13,SP12,SP11,SP10,SP9,SP8
-0x5F,SREG,AVR,Status Register,0x00,I,T,H,S,V,N,Z,C
-0x60,WDTCSR,Watchdog Timer,Control Register,0x00,WDIF,WDIE,WDP3,WDCE,WDE,WDP2,WDP1,WDP0
-0x61,CLKPR,Clock,Clock Prescale Register,0x00,CLKPCE,-,-,-,CLKPS3,CLKPS2,CLKPS1,CLKPS0
-0x64,PRR0,Power Reduction,Control Register 0,0x00,PRTWI,PRTIM2,PRTIM0,-,PRTIM1,PRSPI,PRUSART0,PRADC
-0x65,PRR1,Power Reduction,Control Register 1,0x00,-,-,PRTIM5,PRTIM4,PRTIM3,PRUSART3,PRUSART2,PRUSART1
-0x66,OSCCAL,Oscillator,Calibration Register,0x00,0,0,0,0,0,0,0,0
-0x74,XMCRA,External Memory,Control Register A,0x00,SRE,SRL2,SRL1,SRL0,SRW11,SRW10,SRW01,SRW00
-0x75,XMCRB,External Memory,Control Register B,0x00,XMBK,-,-,-,-,XMM2,XMM1,XMM0
-0x78,ADCL,ADC,Data Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x79,ADCH,ADC,Data High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x7A,ADCSRA,ADC,Status Register A,0x00,ADEN,ADSC,ADATE,ADIF,ADIE,ADPS2,ADPS1,ADPS0
-0x7B,ADCSRB,ADC,Status Register B,0x00,-,ACME,-,-,MUX5,ADTS2,ADTS1,ADTS0
-0x7C,ADMUX,ADC,Multiplexer Selection Register,0x00,REFS1,REFS0,ADLAR,MUX4,MUX3,MUX2,MUX1,MUX0
-0x7E,DIDR0,ADC,Digital Input Disable Register 0,0x00,ADC7D,ADC6D,ADC5D,ADC4D,ADC3D,ADC2D,ADC1D,ADC0D
-0x7F,DIDR1,ADC,Digital Input Disable Register 1,0x00,-,-,-,-,-,-,AIN1D,AIN0D
-0x7D,DIDR2,ADC,Digital Input Disable Register 2,0x00,ADC15D,ADC14D,ADC13D,ADC12D,ADC11D,ADC10D,ADC9D,ADC8D
-0x4C,SPCR,SPI,Control Register,0x00,SPIE,SPE,DORD,MSTR,CPOL,CPHA,SPR1,SPR0
-0x4D,SPSR,SPI,Status Register,0x00,SPIF,WCOL,-,-,-,-,-,SPI2X
-0x4E,SPDR,SPI,Data Register,0x00,0,0,0,0,0,0,0,0
-0xB8,TWBR,2-Wire Serial Interface,Bit Rate Register,0x00,0,0,0,0,0,0,0,0
-0xB9,TWSR,2-Wire Serial Interface,Status Register,0x00,TWS7,TWS6,TWS5,TWS4,TWS3,-,TWPS1,TWPS0
-0xBA,TWAR,2-Wire Serial Interface,Address Register,0x00,TWA6,TWA5,TWA4,TWA3,TWA2,TWA1,TWA0,TWGCE
-0xBB,TWDR,2-Wire Serial Interface,Data Register,0x00,0,0,0,0,0,0,0,0
-0xBC,TWCR,2-Wire Serial Interface,Control Register,0x00,TWINT,TWEA,TWSTA,TWSTO,TWWC,TWEN,-,TWIE
-0xBD,TWAMR,2-Wire Serial Interface,Address Mask Register,0x00,TWAM6,TWAM5,TWAM4,TWAM3,TWAM2,TWAM1,TWAM0,-
-0xC0,UCSR0A,USART0,Control and Status Register A,0x00,RXC0,TXC0,UDRE0,FE0,DOR0,UPE0,U2X0,MPCM0
-0xC1,UCSR0B,USART0,Control and Status Register B,0x00,RXCIE0,TXCIE0,UDRIE0,RXEN0,TXEN0,UCSZ02,RXB80,TXB80
-0xC2,UCSR0C,USART0,Control and Status Register C,0x00,UMSEL01,UMSEL00,UPM01,UPM00,USBS0,UCSZ01,UCSZ00,UCPOL0
-0xC4,UBRR0L,USART0,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xC5,UBRR0H,USART0,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
-0xC6,UDR0,USART0,I/O Data Register,0x00,0,0,0,0,0,0,0,0
-0xC8,UCSR1A,USART1,Control and Status Register A,0x00,RXC1,TXC1,UDRE1,FE1,DOR1,UPE1,U2X1,MPCM1
-0xC9,UCSR1B,USART1,Control and Status Register B,0x00,RXCIE1,TXCIE1,UDRIE1,RXEN1,TXEN1,UCSZ12,RXB81,TXB81
-0xCA,UCSR1C,USART1,Control and Status Register C,0x00,UMSEL11,UMSEL10,UPM11,UPM10,USBS1,UCSZ11,UCSZ10,UCPOL1
-0xCC,UBRR1L,USART1,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xCD,UBRR1H,USART1,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
-0xCE,UDR1,USART1,I/O Data Register,0x00,0,0,0,0,0,0,0,0
-0xD0,UCSR2A,USART2,Control and Status Register A,0x00,RXC2,TXC2,UDRE2,FE2,DOR2,UPE2,U2X2,MPCM2
-0xD1,UCSR2B,USART2,Control and Status Register B,0x00,RXCIE2,TXCIE2,UDRIE2,RXEN2,TXEN2,UCSZ22,RXB82,TXB82
-0xD2,UCSR2C,USART2,Control and Status Register C,0x00,UMSEL21,UMSEL20,UPM21,UPM20,USBS2,UCSZ21,UCSZ20,UCPOL2
-0xD4,UBRR2L,USART2,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xD5,UBRR2H,USART2,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
-0xD6,UDR2,USART2,I/O Data Register,0x00,0,0,0,0,0,0,0,0
-0x130,UCSR3A,USART3,Control and Status Register A,0x00,RXC3,TXC3,UDRE3,FE3,DOR3,UPE3,U2X3,MPCM3
-0x131,UCSR3B,USART3,Control and Status Register B,0x00,RXCIE3,TXCIE3,UDRIE3,RXEN3,TXEN3,UCSZ32,RXB83,TXB83
-0x132,UCSR3C,USART3,Control and Status Register C,0x00,UMSEL31,UMSEL30,UPM31,UPM30,USBS3,UCSZ31,UCSZ30,UCPOL3
-0x134,UBRR3L,USART3,Baud Rate Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x135,UBRR3H,USART3,Baud Rate High Byte Register,0x00,-,-,-,-,0,0,0,0
-0x136,UDR3,USART3,I/O Data Register,0x00,0,0,0,0,0,0,0,0
-0x43,GTCCR,Timer/Counter,General Control Register,0x00,TSM,-,-,-,-,-,PSRASY,PSRSYNC
-0x44,TCCR0A,Timer/Counter 0,Control Register A,0x00,COM0A1,COM0A0,COM0B1,COM0B0,-,-,WGM01,WGM00
-0x45,TCCR0B,Timer/Counter 0,Control Register B,0x00,FOC0A,FOC0B,-,-,WGM02,CS02,CS01,CS00
-0x46,TCNT0,Timer/Counter 0,Counter Register,0x00,0,0,0,0,0,0,0,0
-0x47,OCR0A,Timer/Counter 0,Output Compare Register A,0x00,0,0,0,0,0,0,0,0
-0x48,OCR0B,Timer/Counter 0,Output Compare Register B,0x00,0,0,0,0,0,0,0,0
-0x80,TCCR1A,Timer/Counter 1,Control Register A,0x00,COM1A1,COM1A0,COM1B1,COM1B0,COM1C1,COM1C0,WGM11,WGM10
-0x81,TCCR1B,Timer/Counter 1,Control Register B,0x00,ICNC1,ICES1,-,WGM13,WGM12,CS12,CS11,CS10
-0x82,TCCR1C,Timer/Counter 1,Control Register C,0x00,FOC1A,FOC1B,FOC1C,-,-,-,-,-
-0x84,TCNT1L,Timer/Counter 1,Counter Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x85,TCNT1H,Timer/Counter 1,Counter High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x86,ICR1L,Timer/Counter 1,Input Capture Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x87,ICR1H,Timer/Counter 1,Input Capture High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x88,OCR1AL,Timer/Counter 1,Output Compare Register A Low Byte,0x00,0,0,0,0,0,0,0,0
-0x89,OCR1AH,Timer/Counter 1,Output Compare Register A High Byte,0x00,0,0,0,0,0,0,0,0
-0x8A,OCR1BL,Timer/Counter 1,Output Compare Register B Low Byte,0x00,0,0,0,0,0,0,0,0
-0x8B,OCR1BH,Timer/Counter 1,Output Compare Register B High Byte,0x00,0,0,0,0,0,0,0,0
-0x8C,OCR1CL,Timer/Counter 1,Output Compare Register C Low Byte,0x00,0,0,0,0,0,0,0,0
-0x8D,OCR1CH,Timer/Counter 1,Output Compare Register C High Byte,0x00,0,0,0,0,0,0,0,0
-0xB0,TCCR2A,Timer/Counter 2,Control Register A,0x00,COM2A1,COM2A0,COM2B1,COM2B0,-,-,WGM21,WGM20
-0xB1,TCCR2B,Timer/Counter 2,Control Register B,0x00,FOC2A,FOC2B,-,-,WGM22,CS22,CS21,CS20
-0xB2,TCNT2,Timer/Counter 2,Counter Register,0x00,0,0,0,0,0,0,0,0
-0xB3,OCR2A,Timer/Counter 2,Output Compare Register A,0x00,0,0,0,0,0,0,0,0
-0xB4,OCR2B,Timer/Counter 2,Output Compare Register B,0x00,0,0,0,0,0,0,0,0
-0xB6,ASSR,Timer/Counter 2,Asynchronous Status Register,0x00,-,EXCLK,AS2,TCN2UB,OCR2AUB,OCR2BUB,TCR2AUB,TCR2BUB
-0x90,TCCR3A,Timer/Counter 3,Control Register A,0x00,COM3A1,COM3A0,COM3B1,COM3B0,COM3C1,COM3C0,WGM31,WGM30
-0x91,TCCR3B,Timer/Counter 3,Control Register B,0x00,ICNC3,ICES3,-,WGM33,WGM32,CS32,CS31,CS30
-0x92,TCCR3C,Timer/Counter 3,Control Register C,0x00,FOC3A,FOC3B,FOC3C,-,-,-,-,-
-0x94,TCNT3L,Timer/Counter 3,Counter Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x95,TCNT3H,Timer/Counter 3,Counter High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x96,ICR3L,Timer/Counter 3,Input Capture Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x97,ICR3H,Timer/Counter 3,Input Capture High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x98,OCR3AL,Timer/Counter 3,Output Compare Register A Low Byte,0x00,0,0,0,0,0,0,0,0
-0x99,OCR3AH,Timer/Counter 3,Output Compare Register A High Byte,0x00,0,0,0,0,0,0,0,0
-0x9A,OCR3BL,Timer/Counter 3,Output Compare Register B Low Byte,0x00,0,0,0,0,0,0,0,0
-0x9B,OCR3BH,Timer/Counter 3,Output Compare Register B High Byte,0x00,0,0,0,0,0,0,0,0
-0x9C,OCR3CL,Timer/Counter 3,Output Compare Register C Low Byte,0x00,0,0,0,0,0,0,0,0
-0x9D,OCR3CH,Timer/Counter 3,Output Compare Register C High Byte,0x00,0,0,0,0,0,0,0,0
-0xA0,TCCR4A,Timer/Counter 4,Control Register A,0x00,COM4A1,COM4A0,COM4B1,COM4B0,COM4C1,COM4C0,WGM41,WGM40
-0xA1,TCCR4B,Timer/Counter 4,Control Register B,0x00,ICNC4,ICES4,-,WGM43,WGM42,CS42,CS41,CS40
-0xA2,TCCR4C,Timer/Counter 4,Control Register C,0x00,FOC4A,FOC4B,FOC4C,-,-,-,-,-
-0xA4,TCNT4L,Timer/Counter 4,Counter Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xA5,TCNT4H,Timer/Counter 4,Counter High Byte Register,0x00,0,0,0,0,0,0,0,0
-0xA6,ICR4L,Timer/Counter 4,Input Capture Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0xA7,ICR4H,Timer/Counter 4,Input Capture High Byte Register,0x00,0,0,0,0,0,0,0,0
-0xA8,OCR4AL,Timer/Counter 4,Output Compare Register A Low Byte,0x00,0,0,0,0,0,0,0,0
-0xA9,OCR4AH,Timer/Counter 4,Output Compare Register A High Byte,0x00,0,0,0,0,0,0,0,0
-0xAA,OCR4BL,Timer/Counter 4,Output Compare Register B Low Byte,0x00,0,0,0,0,0,0,0,0
-0xAB,OCR4BH,Timer/Counter 4,Output Compare Register B High Byte,0x00,0,0,0,0,0,0,0,0
-0xAC,OCR4CL,Timer/Counter 4,Output Compare Register C Low Byte,0x00,0,0,0,0,0,0,0,0
-0xAD,OCR4CH,Timer/Counter 4,Output Compare Register C High Byte,0x00,0,0,0,0,0,0,0,0
-0x120,TCCR5A,Timer/Counter 5,Control Register A,0x00,COM5A1,COM5A0,COM5B1,COM5B0,COM5C1,COM5C0,WGM51,WGM50
-0x121,TCCR5B,Timer/Counter 5,Control Register B,0x00,ICNC5,ICES5,-,WGM53,WGM52,CS52,CS51,CS50
-0x122,TCCR5C,Timer/Counter 5,Control Register C,0x00,FOC5A,FOC5B,FOC5C,-,-,-,-,-
-0x124,TCNT5L,Timer/Counter 5,Counter Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x125,TCNT5H,Timer/Counter 5,Counter High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x126,ICR5L,Timer/Counter 5,Input Capture Low Byte Register,0x00,0,0,0,0,0,0,0,0
-0x127,ICR5H,Timer/Counter 5,Input Capture High Byte Register,0x00,0,0,0,0,0,0,0,0
-0x128,OCR5AL,Timer/Counter 5,Output Compare Register A Low Byte,0x00,0,0,0,0,0,0,0,0
-0x129,OCR5AH,Timer/Counter 5,Output Compare Register A High Byte,0x00,0,0,0,0,0,0,0,0
-0x12A,OCR5BL,Timer/Counter 5,Output Compare Register B Low Byte,0x00,0,0,0,0,0,0,0,0
-0x12B,OCR5BH,Timer/Counter 5,Output Compare Register B High Byte,0x00,0,0,0,0,0,0,0,0
-0x12C,OCR5CL,Timer/Counter 5,Output Compare Register C Low Byte,0x00,0,0,0,0,0,0,0,0
-0x12D,OCR5CH,Timer/Counter 5,Output Compare Register C High Byte,0x00,0,0,0,0,0,0,0,0
-OTHER,RESERVED,-,-,0x00,0,0,0,0,0,0,0,0
+Address,Module,Function,Name,Value,Bit 7,Bit 6,Bit 5,Bit 4,Bit 3,Bit 2,Bit 1,Bit 0
+0x20,Digital Port A,Data Input Register,PINA,0x00,A7,A6,A5,A4,A3,A2,A1,A0
+0x21,Digital Port A,Data Direction Register,DDRA,0x00,A7,A6,A5,A4,A3,A2,A1,A0
+0x22,Digital Port A,Data Output Register,PORTA,0x00,A7,A6,A5,A4,A3,A2,A1,A0
+0x23,Digital Port B,Data Input Register,PINB,0x00,B7,B6,B5,B4,B3,B2,B1,B0
+0x24,Digital Port B,Data Direction Register,DDRB,0x00,B7,B6,B5,B4,B3,B2,B1,B0
+0x25,Digital Port B,Data Output Register,PORTB,0x00,B7,B6,B5,B4,B3,B2,B1,B0
+0x26,Digital Port C,Data Input Register,PINC,0x00,C7,C6,C5,C4,C3,C2,C1,C0
+0x27,Digital Port C,Data Direction Register,DDRC,0x00,C7,C6,C5,C4,C3,C2,C1,C0
+0x28,Digital Port C,Data Output Register,PORTC,0x00,C7,C6,C5,C4,C3,C2,C1,C0
+0x29,Digital Port D,Data Input Register,PIND,0x00,D7,D6,D5,D4,D3,D2,D1,D0
+0x2A,Digital Port D,Data Direction Register,DDRD,0x00,D7,D6,D5,D4,D3,D2,D1,D0
+0x2B,Digital Port D,Data Output Register,PORTD,0x00,D7,D6,D5,D4,D3,D2,D1,D0
+0x2C,Digital Port E,Data Input Register,PINE,0x00,E7,E6,E5,E4,E3,E2,E1,E0
+0x2D,Digital Port E,Data Direction Register,DDRE,0x00,E7,E6,E5,E4,E3,E2,E1,E0
+0x2E,Digital Port E,Data Output Register,PORTE,0x00,E7,E6,E5,E4,E3,E2,E1,E0
+0x2F,Digital Port F,Data Input Register,PINF,0x00,F7,F6,F5,F4,F3,F2,F1,F0
+0x30,Digital Port F,Data Direction Register,DDRF,0x00,F7,F6,F5,F4,F3,F2,F1,F0
+0x31,Digital Port F,Data Output Register,PORTF,0x00,F7,F6,F5,F4,F3,F2,F1,F0
+0x32,Digital Port G,Data Input Register,PING,0x00,-,-,G5,G4,G3,G2,G1,G0
+0x33,Digital Port G,Data Direction Register,DDRG,0x00,-,-,G5,G4,G3,G2,G1,G0
+0x34,Digital Port G,Data Output Register,PORTG,0x00,-,-,G5,G4,G3,G2,G1,G0
+0x100,Digital Port H,Data Input Register,PINH,0x00,H7,H6,H5,H4,H3,H2,H1,H0
+0x101,Digital Port H,Data Direction Register,DDRH,0x00,H7,H6,H5,H4,H3,H2,H1,H0
+0x102,Digital Port H,Data Output Register,PORTH,0x00,H7,H6,H5,H4,H3,H2,H1,H0
+0x103,Digital Port J,Data Input Register,PINJ,0x00,J7,J6,J5,J4,J3,J2,J1,J0
+0x104,Digital Port J,Data Direction Register,DDRJ,0x00,J7,J6,J5,J4,J3,J2,J1,J0
+0x105,Digital Port J,Data Output Register,PORTJ,0x00,J7,J6,J5,J4,J3,J2,J1,J0
+0x106,Digital Port K,Data Input Register,PINK,0x00,K7,K6,K5,K4,K3,K2,K1,K0
+0x107,Digital Port K,Data Direction Register,DDRK,0x00,K7,K6,K5,K4,K3,K2,K1,K0
+0x108,Digital Port K,Data Output Register,PORTK,0x00,K7,K6,K5,K4,K3,K2,K1,K0
+0x109,Digital Port L,Data Input Register,PINL,0x00,L7,L6,L5,L4,L3,L2,L1,L0
+0x10A,Digital Port L,Data Direction Register,DDRL,0x00,L7,L6,L5,L4,L3,L2,L1,L0
+0x10B,Digital Port L,Data Output Register,PORTL,0x00,L7,L6,L5,L4,L3,L2,L1,L0
+0x35,Timer Interrupt,Timer 0 Flag Register,TIFR0,0x00,-,-,-,-,-,OCF0B,OCF0A,TOV0
+0x36,Timer Interrupt,Timer 1 Flag Register,TIFR1,0x00,-,-,ICF1,-,OCF1C,OCF1B,OCF1A,TOV1
+0x37,Timer Interrupt,Timer 2 Flag Register,TIFR2,0x00,-,-,-,-,-,OCF2B,OCF2A,TOV2
+0x38,Timer Interrupt,Timer 3 Flag Register,TIFR3,0x00,-,-,ICF3,-,OCF3C,OCF3B,OCF3A,TOV3
+0x39,Timer Interrupt,Timer 4 Flag Register,TIFR4,0x00,-,-,ICF4,-,OCF4C,OCF4B,OCF4A,TOV4
+0x3A,Timer Interrupt,Timer 5 Flag Register,TIFR5,0x00,-,-,ICF5,-,OCF5C,OCF5B,OCF5A,TOV5
+0x6E,Timer Interrupt,Timer 0 Mask Register,TIMSK0,0x00,-,-,-,-,-,OCIE0B,OCIE0A,TOIE0
+0x6F,Timer Interrupt,Timer 1 Mask Register,TIMSK1,0x00,-,-,ICIE1,-,OCIE1C,OCIE1B,OCIE1A,TOIE1
+0x70,Timer Interrupt,Timer 2 Mask Register,TIMSK2,0x00,-,-,-,-,-,OCIE2B,OCIE2A,TOIE2
+0x71,Timer Interrupt,Timer 3 Mask Register,TIMSK3,0x00,-,-,ICIE3,-,OCIE3C,OCIE3B,OCIE3A,TOIE3
+0x72,Timer Interrupt,Timer 4 Mask Register,TIMSK4,0x00,-,-,ICIE4,-,OCIE4C,OCIE4B,OCIE4A,TOIE4
+0x73,Timer Interrupt,Timer 5 Mask Register,TIMSK5,0x00,-,-,ICIE5,-,OCIE5C,OCIE5B,OCIE5A,TOIE5
+0x3B,Pin Change Interrupt,Flag Register,PCIFR,0x00,-,-,-,-,-,PCIF2,PCIF1,PCIF0
+0x68,Pin Change Interrupt,Control Register,PCICR,0x00,-,-,-,-,-,PCIE2,PCIE1,PCIE0
+0x6B,Pin Change Interrupt,Mask Register 0,PCMSK0,0x00,PCINT7,PCINT6,PCINT5,PCINT4,PCINT3,PCINT2,PCINT1,PCINT0
+0x6C,Pin Change Interrupt,Mask Register 1,PCMSK1,0x00,PCINT15,PCINT14,PCINT13,PCINT12,PCINT11,PCINT10,PCINT9,PCINT8
+0x6D,Pin Change Interrupt,Mask Register 2,PCMSK2,0x00,PCINT23,PCINT22,PCINT21,PCINT20,PCINT19,PCINT18,PCINT17,PCINT16
+0x3C,External Interrupt,Flag Register,EIFR,0x00,INTF7,INTF6,INTF5,INTF4,INTF3,INTF2,INTF1,INTF0
+0x3D,External Interrupt,Mask Register,EIMSK,0x00,INT7,INT6,INT5,INT4,INT3,INT2,INT1,INT0
+0x69,External Interrupt,Control Register A,EICRA,0x00,ISC31,ISC30,ISC21,ISC20,ISC11,ISC10,ISC01,ISC00
+0x6A,External Interrupt,Control Register B,EICRB,0x00,ISC71,ISC70,ISC61,ISC60,ISC51,ISC50,ISC41,ISC40
+0x3F,EEPROM,Control Register,EECR,0x00,-,-,EEPM1,EEPM0,EERIE,EEMPE,EEPE,EERE
+0x40,EEPROM,Data Register,EEDR,0x00,0,0,0,0,0,0,0,0
+0x41,EEPROM,Address Low Byte Register,EEARL,0x00,0,0,0,0,0,0,0,0
+0x42,EEPROM,Address High Byte Register,EEARH,0x00,-,-,-,-,0,0,0,0
+0x3E,General Purpose,I/O Register 0,GPIOR0,0x00,0,0,0,0,0,0,0,0
+0x4A,General Purpose,I/O Register 1,GPIOR1,0x00,0,0,0,0,0,0,0,0
+0x4B,General Purpose,I/O Register 2,GPIOR2,0x00,0,0,0,0,0,0,0,0
+0x50,Analog Comparator,Control and Status Register,ACSR,0x00,ACD,ACBG,ACO,ACI,ACIE,ACIC,ACIS1,ACIS0
+0x51,On Chip Debugging,OCD Register,OCDR,0x00,OCDR7,OCDR6,OCDR5,OCDR4,OCDR3,OCDR2,OCDR1,OCDR0
+0x53,Sleep Mode,Control Register,SMCR,0x00,-,-,-,-,SM2,SM1,SM0,SE
+0x54,MCU,Status Register,MCUSR,0x00,-,-,-,JTRF,WDRF,BORF,EXTRF,PORF
+0x55,MCU,Control Register,MCUCR,0x00,JTD,-,-,PUD,-,-,IVSEL,IVCE
+0x57,Self-Programming,Control and Status Register,SPMCSR,0x00,SPMIE,RWWSB,SIGRD,RWWSRE,BLBSET,PGWRT,PGERS,SPMEN
+0x5B,Self-Programming,Z-Pointer Register,RAMPZ,0x00,-,-,-,-,-,-,RAMPZ1,RAMPZ0
+0x5C,Extended Call/Jump,Extended Indirect Register,EIND,0x00,-,-,-,-,-,-,-,EIND0
+0x5D,Stack Pointer,Low Byte Register,SPL,0x00,SP7,SP6,SP5,SP4,SP3,SP2,SP1,SP0
+0x5E,Stack Pointer,High Byte Register,SPH,0x00,SP15,SP14,SP13,SP12,SP11,SP10,SP9,SP8
+0x5F,AVR,Status Register,SREG,0x00,I,T,H,S,V,N,Z,C
+0x60,Watchdog Timer,Control Register,WDTCSR,0x00,WDIF,WDIE,WDP3,WDCE,WDE,WDP2,WDP1,WDP0
+0x61,Clock,Clock Prescale Register,CLKPR,0x00,CLKPCE,-,-,-,CLKPS3,CLKPS2,CLKPS1,CLKPS0
+0x64,Power Reduction,Control Register 0,PRR0,0x00,PRTWI,PRTIM2,PRTIM0,-,PRTIM1,PRSPI,PRUSART0,PRADC
+0x65,Power Reduction,Control Register 1,PRR1,0x00,-,-,PRTIM5,PRTIM4,PRTIM3,PRUSART3,PRUSART2,PRUSART1
+0x66,Oscillator,Calibration Register,OSCCAL,0x00,0,0,0,0,0,0,0,0
+0x74,External Memory,Control Register A,XMCRA,0x00,SRE,SRL2,SRL1,SRL0,SRW11,SRW10,SRW01,SRW00
+0x75,External Memory,Control Register B,XMCRB,0x00,XMBK,-,-,-,-,XMM2,XMM1,XMM0
+0x78,ADC,Data Low Byte Register,ADCL,0x00,0,0,0,0,0,0,0,0
+0x79,ADC,Data High Byte Register,ADCH,0x00,0,0,0,0,0,0,0,0
+0x7A,ADC,Status Register A,ADCSRA,0x00,ADEN,ADSC,ADATE,ADIF,ADIE,ADPS2,ADPS1,ADPS0
+0x7B,ADC,Status Register B,ADCSRB,0x00,-,ACME,-,-,MUX5,ADTS2,ADTS1,ADTS0
+0x7C,ADC,Multiplexer Selection Register,ADMUX,0x00,REFS1,REFS0,ADLAR,MUX4,MUX3,MUX2,MUX1,MUX0
+0x7E,ADC,Digital Input Disable Register 0,DIDR0,0x00,ADC7D,ADC6D,ADC5D,ADC4D,ADC3D,ADC2D,ADC1D,ADC0D
+0x7F,ADC,Digital Input Disable Register 1,DIDR1,0x00,-,-,-,-,-,-,AIN1D,AIN0D
+0x7D,ADC,Digital Input Disable Register 2,DIDR2,0x00,ADC15D,ADC14D,ADC13D,ADC12D,ADC11D,ADC10D,ADC9D,ADC8D
+0x4C,SPI,Control Register,SPCR,0x00,SPIE,SPE,DORD,MSTR,CPOL,CPHA,SPR1,SPR0
+0x4D,SPI,Status Register,SPSR,0x00,SPIF,WCOL,-,-,-,-,-,SPI2X
+0x4E,SPI,Data Register,SPDR,0x00,0,0,0,0,0,0,0,0
+0xB8,2-Wire Serial Interface,Bit Rate Register,TWBR,0x00,0,0,0,0,0,0,0,0
+0xB9,2-Wire Serial Interface,Status Register,TWSR,0x00,TWS7,TWS6,TWS5,TWS4,TWS3,-,TWPS1,TWPS0
+0xBA,2-Wire Serial Interface,Address Register,TWAR,0x00,TWA6,TWA5,TWA4,TWA3,TWA2,TWA1,TWA0,TWGCE
+0xBB,2-Wire Serial Interface,Data Register,TWDR,0x00,0,0,0,0,0,0,0,0
+0xBC,2-Wire Serial Interface,Control Register,TWCR,0x00,TWINT,TWEA,TWSTA,TWSTO,TWWC,TWEN,-,TWIE
+0xBD,2-Wire Serial Interface,Address Mask Register,TWAMR,0x00,TWAM6,TWAM5,TWAM4,TWAM3,TWAM2,TWAM1,TWAM0,-
+0xC0,USART0,Control and Status Register A,UCSR0A,0x00,RXC0,TXC0,UDRE0,FE0,DOR0,UPE0,U2X0,MPCM0
+0xC1,USART0,Control and Status Register B,UCSR0B,0x00,RXCIE0,TXCIE0,UDRIE0,RXEN0,TXEN0,UCSZ02,RXB80,TXB80
+0xC2,USART0,Control and Status Register C,UCSR0C,0x00,UMSEL01,UMSEL00,UPM01,UPM00,USBS0,UCSZ01,UCSZ00,UCPOL0
+0xC4,USART0,Baud Rate Low Byte Register,UBRR0L,0x00,0,0,0,0,0,0,0,0
+0xC5,USART0,Baud Rate High Byte Register,UBRR0H,0x00,-,-,-,-,0,0,0,0
+0xC6,USART0,I/O Data Register,UDR0,0x00,0,0,0,0,0,0,0,0
+0xC8,USART1,Control and Status Register A,UCSR1A,0x00,RXC1,TXC1,UDRE1,FE1,DOR1,UPE1,U2X1,MPCM1
+0xC9,USART1,Control and Status Register B,UCSR1B,0x00,RXCIE1,TXCIE1,UDRIE1,RXEN1,TXEN1,UCSZ12,RXB81,TXB81
+0xCA,USART1,Control and Status Register C,UCSR1C,0x00,UMSEL11,UMSEL10,UPM11,UPM10,USBS1,UCSZ11,UCSZ10,UCPOL1
+0xCC,USART1,Baud Rate Low Byte Register,UBRR1L,0x00,0,0,0,0,0,0,0,0
+0xCD,USART1,Baud Rate High Byte Register,UBRR1H,0x00,-,-,-,-,0,0,0,0
+0xCE,USART1,I/O Data Register,UDR1,0x00,0,0,0,0,0,0,0,0
+0xD0,USART2,Control and Status Register A,UCSR2A,0x00,RXC2,TXC2,UDRE2,FE2,DOR2,UPE2,U2X2,MPCM2
+0xD1,USART2,Control and Status Register B,UCSR2B,0x00,RXCIE2,TXCIE2,UDRIE2,RXEN2,TXEN2,UCSZ22,RXB82,TXB82
+0xD2,USART2,Control and Status Register C,UCSR2C,0x00,UMSEL21,UMSEL20,UPM21,UPM20,USBS2,UCSZ21,UCSZ20,UCPOL2
+0xD4,USART2,Baud Rate Low Byte Register,UBRR2L,0x00,0,0,0,0,0,0,0,0
+0xD5,USART2,Baud Rate High Byte Register,UBRR2H,0x00,-,-,-,-,0,0,0,0
+0xD6,USART2,I/O Data Register,UDR2,0x00,0,0,0,0,0,0,0,0
+0x130,USART3,Control and Status Register A,UCSR3A,0x00,RXC3,TXC3,UDRE3,FE3,DOR3,UPE3,U2X3,MPCM3
+0x131,USART3,Control and Status Register B,UCSR3B,0x00,RXCIE3,TXCIE3,UDRIE3,RXEN3,TXEN3,UCSZ32,RXB83,TXB83
+0x132,USART3,Control and Status Register C,UCSR3C,0x00,UMSEL31,UMSEL30,UPM31,UPM30,USBS3,UCSZ31,UCSZ30,UCPOL3
+0x134,USART3,Baud Rate Low Byte Register,UBRR3L,0x00,0,0,0,0,0,0,0,0
+0x135,USART3,Baud Rate High Byte Register,UBRR3H,0x00,-,-,-,-,0,0,0,0
+0x136,USART3,I/O Data Register,UDR3,0x00,0,0,0,0,0,0,0,0
+0x43,Timer/Counter,General Control Register,GTCCR,0x00,TSM,-,-,-,-,-,PSRASY,PSRSYNC
+0x44,Timer/Counter 0,Control Register A,TCCR0A,0x00,COM0A1,COM0A0,COM0B1,COM0B0,-,-,WGM01,WGM00
+0x45,Timer/Counter 0,Control Register B,TCCR0B,0x00,FOC0A,FOC0B,-,-,WGM02,CS02,CS01,CS00
+0x46,Timer/Counter 0,Counter Register,TCNT0,0x00,0,0,0,0,0,0,0,0
+0x47,Timer/Counter 0,Output Compare Register A,OCR0A,0x00,0,0,0,0,0,0,0,0
+0x48,Timer/Counter 0,Output Compare Register B,OCR0B,0x00,0,0,0,0,0,0,0,0
+0x80,Timer/Counter 1,Control Register A,TCCR1A,0x00,COM1A1,COM1A0,COM1B1,COM1B0,COM1C1,COM1C0,WGM11,WGM10
+0x81,Timer/Counter 1,Control Register B,TCCR1B,0x00,ICNC1,ICES1,-,WGM13,WGM12,CS12,CS11,CS10
+0x82,Timer/Counter 1,Control Register C,TCCR1C,0x00,FOC1A,FOC1B,FOC1C,-,-,-,-,-
+0x84,Timer/Counter 1,Counter Low Byte Register,TCNT1L,0x00,0,0,0,0,0,0,0,0
+0x85,Timer/Counter 1,Counter High Byte Register,TCNT1H,0x00,0,0,0,0,0,0,0,0
+0x86,Timer/Counter 1,Input Capture Low Byte Register,ICR1L,0x00,0,0,0,0,0,0,0,0
+0x87,Timer/Counter 1,Input Capture High Byte Register,ICR1H,0x00,0,0,0,0,0,0,0,0
+0x88,Timer/Counter 1,Output Compare Register A Low Byte,OCR1AL,0x00,0,0,0,0,0,0,0,0
+0x89,Timer/Counter 1,Output Compare Register A High Byte,OCR1AH,0x00,0,0,0,0,0,0,0,0
+0x8A,Timer/Counter 1,Output Compare Register B Low Byte,OCR1BL,0x00,0,0,0,0,0,0,0,0
+0x8B,Timer/Counter 1,Output Compare Register B High Byte,OCR1BH,0x00,0,0,0,0,0,0,0,0
+0x8C,Timer/Counter 1,Output Compare Register C Low Byte,OCR1CL,0x00,0,0,0,0,0,0,0,0
+0x8D,Timer/Counter 1,Output Compare Register C High Byte,OCR1CH,0x00,0,0,0,0,0,0,0,0
+0xB0,Timer/Counter 2,Control Register A,TCCR2A,0x00,COM2A1,COM2A0,COM2B1,COM2B0,-,-,WGM21,WGM20
+0xB1,Timer/Counter 2,Control Register B,TCCR2B,0x00,FOC2A,FOC2B,-,-,WGM22,CS22,CS21,CS20
+0xB2,Timer/Counter 2,Counter Register,TCNT2,0x00,0,0,0,0,0,0,0,0
+0xB3,Timer/Counter 2,Output Compare Register A,OCR2A,0x00,0,0,0,0,0,0,0,0
+0xB4,Timer/Counter 2,Output Compare Register B,OCR2B,0x00,0,0,0,0,0,0,0,0
+0xB6,Timer/Counter 2,Asynchronous Status Register,ASSR,0x00,-,EXCLK,AS2,TCN2UB,OCR2AUB,OCR2BUB,TCR2AUB,TCR2BUB
+0x90,Timer/Counter 3,Control Register A,TCCR3A,0x00,COM3A1,COM3A0,COM3B1,COM3B0,COM3C1,COM3C0,WGM31,WGM30
+0x91,Timer/Counter 3,Control Register B,TCCR3B,0x00,ICNC3,ICES3,-,WGM33,WGM32,CS32,CS31,CS30
+0x92,Timer/Counter 3,Control Register C,TCCR3C,0x00,FOC3A,FOC3B,FOC3C,-,-,-,-,-
+0x94,Timer/Counter 3,Counter Low Byte Register,TCNT3L,0x00,0,0,0,0,0,0,0,0
+0x95,Timer/Counter 3,Counter High Byte Register,TCNT3H,0x00,0,0,0,0,0,0,0,0
+0x96,Timer/Counter 3,Input Capture Low Byte Register,ICR3L,0x00,0,0,0,0,0,0,0,0
+0x97,Timer/Counter 3,Input Capture High Byte Register,ICR3H,0x00,0,0,0,0,0,0,0,0
+0x98,Timer/Counter 3,Output Compare Register A Low Byte,OCR3AL,0x00,0,0,0,0,0,0,0,0
+0x99,Timer/Counter 3,Output Compare Register A High Byte,OCR3AH,0x00,0,0,0,0,0,0,0,0
+0x9A,Timer/Counter 3,Output Compare Register B Low Byte,OCR3BL,0x00,0,0,0,0,0,0,0,0
+0x9B,Timer/Counter 3,Output Compare Register B High Byte,OCR3BH,0x00,0,0,0,0,0,0,0,0
+0x9C,Timer/Counter 3,Output Compare Register C Low Byte,OCR3CL,0x00,0,0,0,0,0,0,0,0
+0x9D,Timer/Counter 3,Output Compare Register C High Byte,OCR3CH,0x00,0,0,0,0,0,0,0,0
+0xA0,Timer/Counter 4,Control Register A,TCCR4A,0x00,COM4A1,COM4A0,COM4B1,COM4B0,COM4C1,COM4C0,WGM41,WGM40
+0xA1,Timer/Counter 4,Control Register B,TCCR4B,0x00,ICNC4,ICES4,-,WGM43,WGM42,CS42,CS41,CS40
+0xA2,Timer/Counter 4,Control Register C,TCCR4C,0x00,FOC4A,FOC4B,FOC4C,-,-,-,-,-
+0xA4,Timer/Counter 4,Counter Low Byte Register,TCNT4L,0x00,0,0,0,0,0,0,0,0
+0xA5,Timer/Counter 4,Counter High Byte Register,TCNT4H,0x00,0,0,0,0,0,0,0,0
+0xA6,Timer/Counter 4,Input Capture Low Byte Register,ICR4L,0x00,0,0,0,0,0,0,0,0
+0xA7,Timer/Counter 4,Input Capture High Byte Register,ICR4H,0x00,0,0,0,0,0,0,0,0
+0xA8,Timer/Counter 4,Output Compare Register A Low Byte,OCR4AL,0x00,0,0,0,0,0,0,0,0
+0xA9,Timer/Counter 4,Output Compare Register A High Byte,OCR4AH,0x00,0,0,0,0,0,0,0,0
+0xAA,Timer/Counter 4,Output Compare Register B Low Byte,OCR4BL,0x00,0,0,0,0,0,0,0,0
+0xAB,Timer/Counter 4,Output Compare Register B High Byte,OCR4BH,0x00,0,0,0,0,0,0,0,0
+0xAC,Timer/Counter 4,Output Compare Register C Low Byte,OCR4CL,0x00,0,0,0,0,0,0,0,0
+0xAD,Timer/Counter 4,Output Compare Register C High Byte,OCR4CH,0x00,0,0,0,0,0,0,0,0
+0x120,Timer/Counter 5,Control Register A,TCCR5A,0x00,COM5A1,COM5A0,COM5B1,COM5B0,COM5C1,COM5C0,WGM51,WGM50
+0x121,Timer/Counter 5,Control Register B,TCCR5B,0x00,ICNC5,ICES5,-,WGM53,WGM52,CS52,CS51,CS50
+0x122,Timer/Counter 5,Control Register C,TCCR5C,0x00,FOC5A,FOC5B,FOC5C,-,-,-,-,-
+0x124,Timer/Counter 5,Counter Low Byte Register,TCNT5L,0x00,0,0,0,0,0,0,0,0
+0x125,Timer/Counter 5,Counter High Byte Register,TCNT5H,0x00,0,0,0,0,0,0,0,0
+0x126,Timer/Counter 5,Input Capture Low Byte Register,ICR5L,0x00,0,0,0,0,0,0,0,0
+0x127,Timer/Counter 5,Input Capture High Byte Register,ICR5H,0x00,0,0,0,0,0,0,0,0
+0x128,Timer/Counter 5,Output Compare Register A Low Byte,OCR5AL,0x00,0,0,0,0,0,0,0,0
+0x129,Timer/Counter 5,Output Compare Register A High Byte,OCR5AH,0x00,0,0,0,0,0,0,0,0
+0x12A,Timer/Counter 5,Output Compare Register B Low Byte,OCR5BL,0x00,0,0,0,0,0,0,0,0
+0x12B,Timer/Counter 5,Output Compare Register B High Byte,OCR5BH,0x00,0,0,0,0,0,0,0,0
+0x12C,Timer/Counter 5,Output Compare Register C Low Byte,OCR5CL,0x00,0,0,0,0,0,0,0,0
+0x12D,Timer/Counter 5,Output Compare Register C High Byte,OCR5CH,0x00,0,0,0,0,0,0,0,0
+OTHER,-,-,RESERVED,0x00,0,0,0,0,0,0,0,0
