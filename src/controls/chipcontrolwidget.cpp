@@ -42,12 +42,8 @@ void ChipControlWidget::setActive(bool active) {
     }
 }
 
-void ChipControlWidget::setShowRegisters(bool showRegisters) {
-    if (showRegisters) {
-        ui->stackedWidget->setCurrentWidget(ui->registerPage);
-    } else {
-        ui->stackedWidget->setCurrentWidget(ui->pinmapPage);
-    }
+void ChipControlWidget::setDisplayMode(int mode) {
+    ui->stackedWidget->setCurrentIndex(mode);
     _forceRefresh = true;
 }
 

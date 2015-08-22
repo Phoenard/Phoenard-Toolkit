@@ -83,6 +83,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->openSerial();
 
+    // Set up control buttons
+    controlButtons_len = 3;
+    controlButtons = new MenuButton*[controlButtons_len];
+    controlButtons[0] = ui->control_pinsBtn;
+    controlButtons[1] = ui->control_registersBtn;
+    controlButtons[2] = ui->control_spiBtn;
+    for (int i = 0; i < controlButtons_len; i++) {
+        controlButtons[i]->setIsTab(true);
+    }
+    setControlMode(0);
+
     // Load an image for debugging
     //img_load("C:/Users/QT/Desktop/test24.bmp", LCD4);
     //ui->img_editor->saveImageTo("C:/Users/QT/Desktop/tmp.lcd");
@@ -620,7 +631,27 @@ void MainWindow::on_sketches_renameBtn_clicked()
     }
 }
 
-void MainWindow::on_control_registersBtn_toggled(bool checked)
+/* ================= Switching between chip control functions =================== */
+
+void MainWindow::setControlMode(int mode) {
+    for (int i = 0; i < controlButtons_len; i++) {
+        controlButtons[i]->setChecked(i == mode);
+    }
+    ui->chipControlWidget->setDisplayMode(mode);
+
+}
+
+void MainWindow::on_control_pinsBtn_clicked()
 {
-    ui->chipControlWidget->setShowRegisters(checked);
+    setControlMode(0);
+}
+
+void MainWindow::on_control_registersBtn_clicked()
+{
+    setControlMode(1);
+}
+
+void MainWindow::on_control_spiBtn_clicked()
+{
+    setControlMode(2);
 }

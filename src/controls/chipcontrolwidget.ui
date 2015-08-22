@@ -29,8 +29,27 @@
    <item>
     <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>2</number>
      </property>
+     <widget class="QWidget" name="pinmapPage">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QTableWidget" name="pinmapTable"/>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="registerPage">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="leftMargin">
@@ -50,22 +69,14 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="pinmapPage">
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
+     <widget class="QWidget" name="spiPage">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QTableWidget" name="pinmapTable"/>
+        <widget class="QLabel" name="spiLabel">
+         <property name="text">
+          <string>Work in progress</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

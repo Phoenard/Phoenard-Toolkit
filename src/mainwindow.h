@@ -25,6 +25,7 @@ public:
     void openSerial();
     void setSelectedTab(int index, bool forceUpdate = false);
     int selectedTab();
+    void setControlMode(int mode);
     void img_updateFormat();
     void img_load(QString fileName, ImageFormat format);
     void showSaveDialog(QWidget *at, ImageViewer *editorDialog);
@@ -79,13 +80,19 @@ private slots:
 
     void on_sketches_renameBtn_clicked();
 
-    void on_control_registersBtn_toggled(bool checked);
+    void on_control_pinsBtn_clicked();
+
+    void on_control_registersBtn_clicked();
+
+    void on_control_spiBtn_clicked();
 
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;
     MenuButton **allButtons;
+    MenuButton **controlButtons;
     int allButtons_len;
+    int controlButtons_len;
     QIcon fmt_icons[8];
 };
 

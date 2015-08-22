@@ -529,9 +529,43 @@
              <number>4</number>
             </property>
             <item>
+             <widget class="MenuButton" name="control_pinsBtn">
+              <property name="text">
+               <string>Pins</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="MenuButton" name="control_registersBtn">
               <property name="text">
                <string>Registers</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="MenuButton" name="control_spiBtn">
+              <property name="text">
+               <string>SPI</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">

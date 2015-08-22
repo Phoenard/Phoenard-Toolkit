@@ -6,6 +6,7 @@
 #include <QTableWidget>
 #include <QMessageBox>
 #include <QComboBox>
+#include <QStackedWidget>
 
 namespace Ui {
 class ChipControlWidget;
@@ -19,7 +20,7 @@ public:
     explicit ChipControlWidget(QWidget *parent = 0);
     ~ChipControlWidget();
     void setActive(bool active);
-    void setShowRegisters(bool showRegisters);
+    void setDisplayMode(int mode);
     bool showRegisters();
 
 private slots:
