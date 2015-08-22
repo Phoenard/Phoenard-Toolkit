@@ -535,7 +535,7 @@
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
-                <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+                <normaloff>:/icons/pins.png</normaloff>:/icons/pins.png</iconset>
               </property>
               <property name="checkable">
                <bool>true</bool>
@@ -569,7 +569,7 @@
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
-                <normaloff>:/icons/memories.png</normaloff>:/icons/memories.png</iconset>
+                <normaloff>:/icons/spi.png</normaloff>:/icons/spi.png</iconset>
               </property>
               <property name="checkable">
                <bool>true</bool>
