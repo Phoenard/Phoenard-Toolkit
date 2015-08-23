@@ -469,7 +469,7 @@ void stk500_ProcessThread::run() {
                     /* Process the current task */
                     try {
                         if (!protocol.isSignedOn()) {
-                            throw ProtocolException("Could not communicate with device");
+                            throw ProtocolException("Device failed to enter firmware mode: No communication");
                         }
 
                         // Before processing, force the Micro-SD to re-read information

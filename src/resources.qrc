@@ -33,6 +33,7 @@
         <file>icons/filelcd.png</file>
         <file>data/registers.csv</file>
         <file>data/pinmapping.csv</file>
+        <file>data/commands.csv</file>
         <file>icons/control.png</file>
         <file>icons/spi.png</file>
         <file>icons/pins.png</file>

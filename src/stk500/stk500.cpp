@@ -8,6 +8,24 @@ stk500::stk500(QSerialPort *port)
     this->sd_handler = new stk500sd(this);
     this->reg_handler = new stk500registers(this);
     this->signedOn = false;
+
+    // Initialize the command names table
+    QFile cmdFile(":/data/commands.csv");
+    if (cmdFile.open(QIODevice::ReadOnly)) {
+        QTextStream textStream(&cmdFile);
+        while (!textStream.atEnd()) {
+            // Read the next entry
+            QStringList fields = textStream.readLine().split(",");
+            if (fields.length() == 2) {
+                bool succ = false;
+                int command = fields[1].toInt(&succ, 16);
+                if (succ && (command >= 0) && (command < 256)) {
+                    commandNames[command] = fields[0];
+                }
+            }
+        }
+        cmdFile.close();
+    }
 }
 
 stk500::~stk500() {
@@ -246,7 +264,7 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             /* ============================== */
         }
     }
-    QString cmdCode = getHexText((uint) command);
+    QString cmdName = commandNames[command] + " (" + getHexText((uint) command) + ")";
     if (!processed) {
         // Log the error
         if (errorInfo.isEmpty()) {
@@ -255,15 +273,15 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
         QString errorMessage;
         if (totalRead) {
             errorMessage = QString("Invalid response for command %1: %2\nReceived: %3 bytes, at state %4 sequence %5")
-                    .arg(cmdCode).arg(errorInfo).arg(totalRead).arg(msgParseState).arg(sequenceNumber);
+                    .arg(cmdName).arg(errorInfo).arg(totalRead).arg(msgParseState).arg(sequenceNumber);
         } else {
-            errorMessage = QString("No response for command %1").arg(cmdCode);
+            errorMessage = QString("No response for command %1").arg(cmdName);
         }
 
         throw ProtocolException(errorMessage);
     } else if (status != STATUS_CMD_OK) {
         // An error occurred processing the command
-        QString errorMessage = QString("Command %1 was not recognized or an error occurred processing it").arg(cmdCode);
+        QString errorMessage = QString("Command %1 was not recognized or an error occurred processing it").arg(cmdName);
         throw ProtocolException(errorMessage);
     } else {
         // Success! Return the received response length.

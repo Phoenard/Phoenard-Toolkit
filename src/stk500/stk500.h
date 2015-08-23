@@ -16,7 +16,7 @@
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
 #define STK500_RESET_DELAY       200   // Delay between RESET and command sending
-#define STK500_CMD_MIN_INTERVAL  200   // Minimal interval of commands to stay in bootloader mode
+#define STK500_CMD_MIN_INTERVAL  100   // Minimal interval of commands to stay in bootloader mode
 
 // Pre-define components up front
 class stk500sd;
@@ -85,6 +85,7 @@ private:
     stk500sd *sd_handler;
     stk500registers *reg_handler;
     bool signedOn;
+    QString commandNames[256];
 };
 
 // Exception thrown by the stk500 protocol if it gets into an error state
