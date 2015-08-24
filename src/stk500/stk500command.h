@@ -98,6 +98,7 @@ enum STK_CMD : unsigned char {
     READ_SD_ISP                     = 0xE8,
     PROGRAM_SD_FAT_ISP              = 0xE9,
     READ_ANALOG_ISP                 = 0xEA,
+    TRANSFER_SPI_ISP                = 0xEB,
 };
 
 // *****************[ STK status constants ]***************************

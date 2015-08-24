@@ -399,6 +399,22 @@ void stk500_ProcessThread::run() {
                     if (trySignOn(&protocol)) {
                         qDebug() << "[STK500] Protocol: " << protocolName;
 
+                        /* SPI Communication test */
+                        /*
+                        try {
+                            char src[] = {1, 3, 7, 32, 65, 75, 23, 125};
+                            char dst[sizeof(src)];
+
+                            protocol.SPI_transfer(src, dst, sizeof(src));
+
+                            for (int i = 0; i < sizeof(src); i++) {
+                                qDebug() << (quint16) ((unsigned char) dst[i]);
+                            }
+                        } catch (ProtocolException &ex) {
+                            qDebug() << ex.what();
+                        }
+                        */
+
                         /* Speed test: execute command timed */
                         /*
                         try {

@@ -53,6 +53,7 @@ public:
     quint8 RAM_readByte(quint16 address);
     quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
     quint16 ANALOG_read(quint8 adc);
+    void SPI_transfer(const char *src, char* dest, int length);
 
     static QString trimFileExt(const QString &filePath);
     static QString getTempFile(const QString &filePath);

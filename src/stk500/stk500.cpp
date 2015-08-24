@@ -460,6 +460,10 @@ quint16 stk500::ANALOG_read(quint8 pin) {
     return (output[0] << 8) | (output[1] & 0xFF);
 }
 
+void stk500::SPI_transfer(const char *src, char* dest, int length) {
+    command(TRANSFER_SPI_ISP, src-1, length+1, dest, dest ? length : 0);
+}
+
 /* ============================= Directory info =============================== */
 
 QString DirectoryInfo::fileSizeTextLong() {
