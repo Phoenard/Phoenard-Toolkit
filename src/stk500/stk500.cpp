@@ -9,6 +9,7 @@ stk500::stk500(QSerialPort *port)
     this->reg_handler = new stk500registers(this);
     this->service_handler = new stk500service(this);
     this->signedOn = false;
+    this->serviceMode = false;
 
     // Initialize the command names table
     QFile cmdFile(":/data/commands.csv");
@@ -61,12 +62,24 @@ void stk500::reset() {
     /* Reset the device and clear the buffers */
     port->setDataTerminalReady(true);
     port->setDataTerminalReady(false);
-
-    /* Wait for the reset time */
-    QThread::msleep(STK500_RESET_DELAY);
-
-    /* Clear serial buffers */
+    QThread::msleep(STK500_SERVICE_DELAY);
     port->clear();
+    port->write("HELLO", 5);
+    port->flush();
+
+    /* Check if we get HELLO back, if so, service mode */
+    port->waitForReadyRead(STK500_RESET_DELAY - STK500_SERVICE_DELAY);
+    QByteArray data = port->readAll();
+    serviceMode = (data == "HELLO");
+    if (!data.isEmpty() && !serviceMode) {
+        QString dataText = data;
+        QString errorMessage = QString("Failed to reset firmware:\n"
+                                       "Invalid response received\n\n"
+                                       "Data: %1").arg(dataText);
+        throw ProtocolException(errorMessage);
+    }
+
+    if (serviceMode) qDebug() << "RESET: Service mode.";
 
     /* Reset timeout to prevent successive resetting */
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();
@@ -77,7 +90,57 @@ quint64 stk500::idleTime() {
 }
 
 bool stk500::isTimeout() {
-    return idleTime() > STK500_DEVICE_TIMEOUT;
+    return !serviceMode && (idleTime() > STK500_DEVICE_TIMEOUT);
+}
+
+bool stk500::isServiceMode() {
+    return serviceMode;
+}
+
+void stk500::setServiceMode() {
+    /* If not already in service mode, switch */
+    if (!serviceMode) {
+        /* Ensure in firmware mode */
+        if (isTimeout()) {
+            reset();
+        }
+
+        /* Send out the service mode command */
+        // Build up a message to send out
+        int message_length = 1;
+        int total_length = message_length + 6;
+        char* data = new char[total_length];
+        data[0] = MESSAGE_START;
+        data[1] = (char) (0x00 & 0xFF);
+        data[2] = (char) ((message_length >> 8) & 0xFF);
+        data[3] = (char) (message_length & 0xFF);
+        data[4] = TOKEN;
+        data[5] = (char) STK_CMD::SERVICE_MODE_ISP;
+
+        // Calculate and append CRC
+        char crc = 0x0;
+        for (int i = 0; i < (total_length - 1); i++) {
+            crc ^= data[i];
+        }
+        data[total_length - 1] = crc;
+
+        // Send out the data, then discard it once sent
+        port->write(data, total_length);
+        port->flush();
+        delete[] data;
+
+        // Verify shortly that no response is returned
+        // If there is one, it means the command was normally executed
+        port->waitForReadyRead(250);
+        if (!port->readAll().isEmpty()) {
+            throw ProtocolException("Failed to properly enter service routine\n"
+                                    "A response was returned from the SERVICE_MODE command\n"
+                                    "Perhaps outdated firmware is installed?");
+        }
+
+        // Done
+        serviceMode = true;
+    }
 }
 
 int stk500::command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
@@ -85,6 +148,11 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
     // If bootloader timed out, reset the device first
     if (isTimeout()) {
         reset();
+    }
+
+    // If in service mode, fail right away - this can not work.
+    if (this->serviceMode) {
+        throw ProtocolException("Device is in service mode");
     }
 
     // Read length to be written out and reset position to beginning
@@ -351,7 +419,7 @@ void stk500::signOut() {
 }
 
 bool stk500::isSignedOn() {
-    return signedOn && !isTimeout();
+    return !serviceMode && signedOn && !isTimeout();
 }
 
 CardVolume stk500::SD_init() {

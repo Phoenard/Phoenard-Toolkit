@@ -662,11 +662,11 @@ void MainWindow::on_control_firmwareBtn_clicked()
     data.loadFile("C:/Atmel Projects/phoenboot/phoenboot/Debug/phoenboot.hex");
 
     QList<stk500Task*> tasks;
-    if (data.hasSketchData()) {
-        tasks.append(new stk500Upload(data.sketchData()));
-    }
     if (data.hasFirmwareData()) {
         tasks.append(new stk500UpdateFirmware(data.firmwareData()));
+    }
+    if (data.hasSketchData()) {
+        tasks.append(new stk500Upload(data.sketchData()));
     }
     serial->executeAll(tasks);
     for (stk500Task* task : tasks) {

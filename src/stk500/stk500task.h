@@ -10,15 +10,20 @@
 class stk500Task
 {
 public:
-    stk500Task(QString title = "") : _hasError(false), _isCancelled(false), _progress(-1.0),
-        _status(title + "..."), _title(title), _cancelSuppress(false), _isFinished(false) {}
+    stk500Task(QString title = "")
+        : _hasError(false), _isCancelled(false), _progress(-1.0),
+          _status(title + "..."), _title(title), _cancelSuppress(false),
+          _isFinished(false), _usesFirmware(true) {}
 
     virtual void run() = 0;
+    virtual void init() {}
     void setProtocol(stk500 *protocol) { this->protocol = protocol; }
     const bool hasError() { return _hasError; }
     const bool isCancelled() { return (_isCancelled && !_cancelSuppress); }
     const bool isFinished() { return _isFinished; }
     const bool isSuccessful() { return !isCancelled() && !hasError(); }
+    const bool usesFirmware() { return _usesFirmware; }
+    void setUsesFirmware(bool usesFirmware) { _usesFirmware = usesFirmware; }
     void suppressCancel(bool suppress) { _cancelSuppress = suppress; }
     const bool isCancelSuppressed() { return _cancelSuppress; }
     const ProtocolException getError() { return _exception; }
@@ -52,6 +57,7 @@ private:
     bool _isCancelled;
     bool _isFinished;
     bool _cancelSuppress;
+    bool _usesFirmware;
     double _progress;
     QString _title;
     QString _status;
@@ -170,8 +176,10 @@ public:
 
 class stk500UpdateFirmware : public stk500Task {
 public:
-    stk500UpdateFirmware(const QByteArray &firmwareData) : stk500Task("Updating firmware"), firmwareData(firmwareData) {}
+    stk500UpdateFirmware::stk500UpdateFirmware(const QByteArray &firmwareData)
+        : stk500Task("Updating firmware"), firmwareData(firmwareData) {}
     virtual void run();
+    virtual void init();
 
     QByteArray firmwareData;
 };

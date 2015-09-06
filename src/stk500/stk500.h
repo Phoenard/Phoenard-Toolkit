@@ -16,6 +16,7 @@
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
 #define STK500_RESET_DELAY       200   // Delay between RESET and command sending
+#define STK500_SERVICE_DELAY      80   // Delay between RESET and service command handling
 #define STK500_CMD_MIN_INTERVAL  100   // Minimal interval of commands to stay in bootloader mode
 
 // Pre-define components up front
@@ -42,6 +43,8 @@ public:
     QString signOn();
     void signOut();
     bool isSignedOn();
+    bool isServiceMode();
+    void setServiceMode();
     CardVolume SD_init();
     PHN_Settings readSettings();
     void writeSettings(PHN_Settings settings);
@@ -90,6 +93,7 @@ private:
     stk500registers *reg_handler;
     stk500service *service_handler;
     bool signedOn;
+    bool serviceMode;
     QString commandNames[256];
 };
 

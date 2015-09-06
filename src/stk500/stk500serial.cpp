@@ -110,7 +110,8 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
-    while (process->isProcessing) {
+    int nrProcessed = 0;
+    while (process->isProcessing && (nrProcessed < totalTaskCount)) {
         // Obtain next task
         stk500Task *task = process->currentTask();
         int processedCount = totalTaskCount - process->tasks.count();
@@ -175,6 +176,9 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
         if (task->hasError()) {
             task->showError();
         }
+
+        // Increment processed count
+        nrProcessed++;
     }
     if (isWaitCursor) {
         QApplication::restoreOverrideCursor();
@@ -387,12 +391,12 @@ void stk500_ProcessThread::run() {
                 stk500Task *task = currentTask();
 
                 /* If not signed on and a task is to be handled, sign on first */
-                if (task != NULL && !protocol.isSignedOn()) {
+                if (task != NULL && task->usesFirmware() && !protocol.isSignedOn()) {
                     needSignOn = true;
                 }
 
                 /* Sign on with the bootloader */
-                if (needSignOn) {
+                if (needSignOn && !protocol.isServiceMode()) {
                     needSignOn = false;
                     wasIdling = true;
                     updateStatus("[STK500] Signing on");
@@ -480,12 +484,24 @@ void stk500_ProcessThread::run() {
 
                 if (task != NULL) {
                     /* Update status */
-                    updateStatus("[STK500] Busy");
+                    if (protocol.isServiceMode()) {
+                        updateStatus("[Service] Busy");
+                    } else {
+                        updateStatus("[STK500] Busy");
+                    }
 
                     /* Process the current task */
                     try {
-                        if (!protocol.isSignedOn()) {
-                            throw ProtocolException("Device failed to enter firmware mode: No communication");
+                        task->init();
+                        if (task->usesFirmware() && !protocol.isSignedOn()) {
+                            if (protocol.isServiceMode()) {
+                                throw ProtocolException("Device is in service mode and can not "
+                                                        "handle standard STK commands.\nPlease "
+                                                        "install the latest firmware by uploading "
+                                                        "the bootloader hex file in the control tab.");
+                            } else {
+                                throw ProtocolException("Device failed to enter firmware mode: No communication");
+                            }
                         }
 
                         // Before processing, force the Micro-SD to re-read information
@@ -534,13 +550,13 @@ void stk500_ProcessThread::run() {
 
                     // Waited for the full interval time, ping with a signOn command
                     // Still alive?
-                    if (protocol.isSignedOn()) {
+                    wasIdling = true;
+                    if (protocol.isServiceMode()) {
+                        updateStatus("[Service] Idle");
+                    } else if (trySignOn(&protocol)) {
                         updateStatus("[STK500] Idle");
-                        wasIdling = true;
-
-                        if (!trySignOn(&protocol)) {
-                            updateStatus("[STK500] Session lost");
-                        }
+                    } else {
+                        updateStatus("[STK500] Session lost");
                     }
 
                     /* Wait for a short time to keep the bootloader in the right mode */

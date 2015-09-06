@@ -130,7 +130,7 @@ void ProgramData::load(const QByteArray &data) {
     quint32 sketch_end = 0;
     quint32 firmware_end = boot_start;
     for (quint32 i = 0; i < firmware_end; i += 2) {
-        if ((fullData[i] != 0xFF) || (fullData[i+1] != 0xFF)) {
+        if ((fullData[i] != (char) 0xFF) || (fullData[i+1] != (char) 0xFF)) {
             sketch_end = i+2;
         }
     }

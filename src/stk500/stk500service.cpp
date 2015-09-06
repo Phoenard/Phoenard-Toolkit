@@ -1,43 +1,8 @@
 #include "stk500service.h"
 
 void stk500service::begin() {
-    /* Ensure in firmware mode */
-    if (_handler->isTimeout()) {
-        _handler->reset();
-    }
-
-    /* Send out the service mode command */
-    // Build up a message to send out
-    int message_length = 1;
-    int total_length = message_length + 6;
-    char respBuff[512];
-    char* data = new char[total_length];
-    data[0] = MESSAGE_START;
-    data[1] = (char) (0x00 & 0xFF);
-    data[2] = (char) ((message_length >> 8) & 0xFF);
-    data[3] = (char) (message_length & 0xFF);
-    data[4] = TOKEN;
-    data[5] = (char) STK_CMD::SERVICE_MODE_ISP;
-
-    // Calculate and append CRC
-    char crc = 0x0;
-    for (int i = 0; i < (total_length - 1); i++) {
-        crc ^= data[i];
-    }
-    data[total_length - 1] = crc;
-
-    // Send out the data, then discard it once sent
-    _handler->getPort()->write(data, total_length);
-    _handler->getPort()->flush();
-    delete[] data;
-
-    // Verify shortly that no response is returned
-    // If there is one, it means the command was normally executed
-    if (readSerial(respBuff, 1)) {
-        throw ProtocolException("Failed to properly enter service routine\n"
-                                "A response was returned from the SERVICE_MODE command\n"
-                                "Perhaps outdated firmware is installed?");
-    }
+    // Switch mode if needed
+    _handler->setServiceMode();
 
     // Send a test token and try to get it to work...
     if (!writeVerifyRetry("HELLO", 5)) {

@@ -1367,6 +1367,10 @@ void stk500UpdateRegisters::run() {
     }
 }
 
+void stk500UpdateFirmware::init() {
+    setUsesFirmware(false);
+}
+
 void stk500UpdateFirmware::run() {
     /* Initialize service routine */
     protocol->service().begin();
