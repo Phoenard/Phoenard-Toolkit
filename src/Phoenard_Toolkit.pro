@@ -42,7 +42,8 @@ SOURCES += main.cpp\
     stk500/stk500registers.cpp \
     controls/chipcontrolwidget.cpp \
     stk500/stk500service.cpp \
-    stk500/programdata.cpp
+    stk500/programdata.cpp \
+    controls/portselectbox.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -74,7 +75,8 @@ HEADERS  += mainwindow.h \
     stk500/stk500registers.h \
     controls/chipcontrolwidget.h \
     stk500/stk500service.h \
-    stk500/programdata.h
+    stk500/programdata.h \
+    controls/portselectbox.h
 
 FORMS    += mainwindow.ui \
     dialogs/progressdialog.ui \

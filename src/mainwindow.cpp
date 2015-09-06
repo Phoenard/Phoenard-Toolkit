@@ -61,9 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     allButtons[3] = ui->chipControlButton;
     allButtons[4] = ui->imageEditorButton;
 
-    for (QSerialPortInfo info : QSerialPortInfo::availablePorts()) {
-        ui->port_nameBox->addItem(info.portName());
-    }
+    ui->port_nameBox->refreshPorts();
     ui->microSDWidget->setAcceptDrops(true);
 
     QString settingStyle = " QMainWindow {\
@@ -124,6 +122,7 @@ void MainWindow::openSerial()
 
 void MainWindow::on_port_nameBox_activated(int)
 {
+    qDebug() << "ACTIVATED";
     openSerial();
 }
 

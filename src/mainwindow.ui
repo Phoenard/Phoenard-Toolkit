@@ -71,7 +71,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QComboBox" name="port_nameBox">
+           <widget class="PortSelectBox" name="port_nameBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -884,6 +884,11 @@
    <extends>QWidget</extends>
    <header>controls/chipcontrolwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PortSelectBox</class>
+   <extends>QComboBox</extends>
+   <header>controls/portselectbox.h</header>
   </customwidget>
  </customwidgets>
  <resources>
