@@ -40,7 +40,8 @@ SOURCES += main.cpp\
     imaging/phniconprovider.cpp \
     stk500/stk500sd.cpp \
     stk500/stk500registers.cpp \
-    controls/chipcontrolwidget.cpp
+    controls/chipcontrolwidget.cpp \
+    stk500/stk500service.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -70,7 +71,8 @@ HEADERS  += mainwindow.h \
     imaging/phniconprovider.h \
     stk500/stk500sd.h \
     stk500/stk500registers.h \
-    controls/chipcontrolwidget.h
+    controls/chipcontrolwidget.h \
+    stk500/stk500service.h
 
 FORMS    += mainwindow.ui \
     dialogs/progressdialog.ui \

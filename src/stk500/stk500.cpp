@@ -7,6 +7,7 @@ stk500::stk500(QSerialPort *port)
     this->lastCmdTime = 0;
     this->sd_handler = new stk500sd(this);
     this->reg_handler = new stk500registers(this);
+    this->service_handler = new stk500service(this);
     this->signedOn = false;
 
     // Initialize the command names table
@@ -31,6 +32,7 @@ stk500::stk500(QSerialPort *port)
 stk500::~stk500() {
     delete this->sd_handler;
     delete this->reg_handler;
+    delete this->service_handler;
 }
 
 void stk500::printData(char* title, char* data, int len) {
@@ -83,12 +85,6 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
     // If bootloader timed out, reset the device first
     if (isTimeout()) {
         reset();
-    }
-
-    // Increment sequence number
-    sequenceNumber++;
-    if (sequenceNumber > 0xFF) {
-        sequenceNumber = 0;
     }
 
     // Read length to be written out and reset position to beginning
@@ -264,6 +260,14 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
             /* ============================== */
         }
     }
+
+    // Increment sequence number
+    sequenceNumber++;
+    if (sequenceNumber > 0xFF) {
+        sequenceNumber = 0;
+    }
+
+    // Handle (the lack of) the response
     QString cmdName = commandNames[command] + " (" + getHexText((uint) command) + ")";
     if (!processed) {
         // Log the error

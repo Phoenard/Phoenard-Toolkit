@@ -167,4 +167,12 @@ public:
     bool readADC;
 };
 
+class stk500UpdateFirmware : public stk500Task {
+public:
+    stk500UpdateFirmware(const QByteArray &firmware) : stk500Task("Updating firmware"), firmware(firmware) {}
+    virtual void run();
+
+    QByteArray firmware;
+};
+
 #endif // STK500TASK_H

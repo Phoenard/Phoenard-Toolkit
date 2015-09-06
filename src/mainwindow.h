@@ -86,6 +86,8 @@ private slots:
 
     void on_control_spiBtn_clicked();
 
+    void on_control_firmwareBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;

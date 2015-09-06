@@ -655,3 +655,10 @@ void MainWindow::on_control_spiBtn_clicked()
 {
     setControlMode(2);
 }
+
+void MainWindow::on_control_firmwareBtn_clicked()
+{
+    QByteArray firmwareData;
+    stk500UpdateFirmware task(firmwareData);
+    serial->execute(task);
+}

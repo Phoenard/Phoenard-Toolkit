@@ -1366,3 +1366,20 @@ void stk500UpdateRegisters::run() {
         protocol->reg().readADC(this->reg);
     }
 }
+
+void stk500UpdateFirmware::run() {
+    protocol->service().begin();
+
+    /* Test: Read the firmware and write it again, page by page */
+    char tmp[256];
+    quint32 len = 262144 - BOOT_START_ADDR;
+    quint32 addr = 0;
+    do {
+        protocol->service().readPage(BOOT_START_ADDR + addr, tmp);
+        protocol->service().writePage(BOOT_START_ADDR + addr, tmp);
+        addr += 256;
+        setProgress((double) addr / (double) len);
+    } while (addr < len);
+
+    protocol->service().end();
+}
