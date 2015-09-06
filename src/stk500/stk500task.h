@@ -3,6 +3,7 @@
 
 #include "stk500.h"
 #include "sketchinfo.h"
+#include "programdata.h"
 #include <QStringList>
 #include <QList>
 
@@ -169,10 +170,18 @@ public:
 
 class stk500UpdateFirmware : public stk500Task {
 public:
-    stk500UpdateFirmware(const QByteArray &firmware) : stk500Task("Updating firmware"), firmware(firmware) {}
+    stk500UpdateFirmware(const QByteArray &firmwareData) : stk500Task("Updating firmware"), firmwareData(firmwareData) {}
     virtual void run();
 
-    QByteArray firmware;
+    QByteArray firmwareData;
+};
+
+class stk500Upload : public stk500Task {
+public:
+    stk500Upload(const QByteArray &programData) : stk500Task("Uploading"), programData(programData) {}
+    virtual void run();
+
+    QByteArray programData;
 };
 
 #endif // STK500TASK_H

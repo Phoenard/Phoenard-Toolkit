@@ -658,7 +658,18 @@ void MainWindow::on_control_spiBtn_clicked()
 
 void MainWindow::on_control_firmwareBtn_clicked()
 {
-    QByteArray firmwareData;
-    stk500UpdateFirmware task(firmwareData);
-    serial->execute(task);
+    ProgramData data;
+    data.loadFile("C:/Atmel Projects/phoenboot/phoenboot/Debug/phoenboot.hex");
+
+    QList<stk500Task*> tasks;
+    if (data.hasSketchData()) {
+        tasks.append(new stk500Upload(data.sketchData()));
+    }
+    if (data.hasFirmwareData()) {
+        tasks.append(new stk500UpdateFirmware(data.firmwareData()));
+    }
+    serial->executeAll(tasks);
+    for (stk500Task* task : tasks) {
+        delete task;
+    }
 }

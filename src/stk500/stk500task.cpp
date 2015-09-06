@@ -1368,9 +1368,42 @@ void stk500UpdateRegisters::run() {
 }
 
 void stk500UpdateFirmware::run() {
+    /* Initialize service routine */
     protocol->service().begin();
 
+    /*
+     * Set second page to jump to service routine for recovery
+     * The recovery page solely consists of a watchdog reset
+     * and UART initialization, ending in a jump to the service
+     * routine. The following code is executed (bootloader):
+     *
+     * asm volatile ( ".set __stack, %0" :: "i" (RAMEND) );
+     * asm volatile ( "clr __zero_reg__" );  // r1 set to 0
+     * asm volatile ("cli");
+     * asm volatile ("wdr");
+     * MCUSR   =  0;
+     * WDTCSR |=  _BV(WDCE) | _BV(WDE);
+     * WDTCSR  =  0;
+     * UART_STATUS_REG    |=  (1 <<UART_DOUBLE_SPEED);
+     * UART_BAUD_RATE_LOW  =  UART_BAUD_SELECT;
+     * UART_CONTROL_REG    =  (1 << UART_ENABLE_RECEIVER) | (1 << UART_ENABLE_TRANSMITTER);
+     * asm volatile ("jmp %0" :: "i" (APP_END+2));
+     */
+    unsigned char recoveryData[] = {
+        0x11, 0x24, 0xf8, 0x94, 0xa8, 0x95, 0x14, 0xbe,
+        0xe0, 0xe6, 0xf0, 0xe0, 0x80, 0x81, 0x88, 0x61,
+        0x80, 0x83, 0x10, 0x82, 0xe0, 0xec, 0xf0, 0xe0,
+        0x80, 0x81, 0x82, 0x60, 0x80, 0x83, 0x80, 0xe1,
+        0x80, 0x93, 0xc4, 0x00, 0x88, 0xe1, 0x80, 0x93,
+        0xc1, 0x00, 0x0d, 0x94, 0x01, 0xf0,
+    };
+    char recoveryPage[256];
+    memset(recoveryPage, 0xFF, sizeof(recoveryPage));
+    memcpy(recoveryPage, recoveryData, sizeof(recoveryData));
+    protocol->service().writePage(BOOT_START_ADDR+256, recoveryPage);
+
     /* Test: Read the firmware and write it again, page by page */
+    /*
     char tmp[256];
     quint32 len = 262144 - BOOT_START_ADDR;
     quint32 addr = 0;
@@ -1380,6 +1413,11 @@ void stk500UpdateFirmware::run() {
         addr += 256;
         setProgress((double) addr / (double) len);
     } while (addr < len);
+    */
 
     protocol->service().end();
+}
+
+void stk500Upload::run() {
+
 }
