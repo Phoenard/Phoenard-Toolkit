@@ -341,11 +341,16 @@ void stk500_ProcessThread::run() {
                     start_time = QDateTime::currentMSecsSinceEpoch();
 
                     // If currently signed on the reset can be skipped
-                    if (protocol.isSignedOn()) {
-                        protocol.signOut();
-                    } else {
-                        protocol.reset();
-                    }
+                    try {
+                        if (protocol.isSignedOn()) {
+                            protocol.signOut();
+                        } else {
+                            /* Simple hardware reset */
+                            port.setDataTerminalReady(true);
+                            port.setDataTerminalReady(false);
+                            port.clear();
+                        }
+                    } catch (ProtocolException &) {}
 
                     this->owner->notifySerialOpened(this);
                     port.setBaudRate(currSerialBaud);
