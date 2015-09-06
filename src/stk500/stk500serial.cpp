@@ -69,13 +69,13 @@ void stk500Serial::notifyTaskFinished(stk500_ProcessThread *, stk500Task *task) 
     emit taskFinished(task);
 }
 
-void stk500Serial::execute(stk500Task &task, bool asynchronous) {
+void stk500Serial::execute(stk500Task &task, bool asynchronous, bool dialogDelay) {
     QList<stk500Task*> tasks;
     tasks.append(&task);
-    executeAll(tasks, asynchronous);
+    executeAll(tasks, asynchronous, dialogDelay);
 }
 
-void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
+void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool dialogDelay) {
     /* No tasks - don't do anything */
     if (tasks.isEmpty()) return;
 
@@ -106,16 +106,31 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
     qint64 currentTime;
     qint64 startTime = QDateTime::currentMSecsSinceEpoch();
     bool isWaitCursor = true;
-    qint64 waitTimeout = 1200;
+    qint64 waitTimeout = dialogDelay ? 1200 : 0;
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     int nrProcessed = 0;
-    while (process->isProcessing && (nrProcessed < totalTaskCount)) {
+    while (process->isProcessing) {
         // Obtain next task
         stk500Task *task = process->currentTask();
-        int processedCount = totalTaskCount - process->tasks.count();
-        if (task == NULL) break;
+
+        // Find the index of this task in the tasks we specified
+        int processedCount = 0;
+        bool allTasksFinished = true;
+        for (int i = 0; i < tasks.count(); i++) {
+            if (tasks[i] == task) {
+                processedCount = i;
+                allTasksFinished = false;
+                break;
+            } else if (!tasks[i]->isFinished()) {
+                allTasksFinished = false;
+            }
+        }
+
+        if (allTasksFinished || (task == NULL)) {
+            break;
+        }
 
         if (dialog != NULL) {
             dialog->setWindowTitle(task->title());
@@ -144,8 +159,8 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous) {
             if (progress < 0.0 && processedCount) {
                 progress = 0.0;
             }
-            progress /= totalTaskCount;
-            progress += ((double) processedCount / (double) totalTaskCount);
+            progress /= tasks.count();
+            progress += ((double) processedCount / (double) tasks.count());
 
             // Update progress
             dialog->updateProgress(progress, task->status());

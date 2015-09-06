@@ -1373,7 +1373,19 @@ void stk500UpdateFirmware::init() {
 
 void stk500UpdateFirmware::run() {
     /* Initialize service routine */
+    setStatus("Entering service mode");
     protocol->service().begin();
+
+    /* Verify the first page is compatible with the firmware */
+    char firstPageData[256];
+    setStatus("Verifying firmware");
+    protocol->service().readPage(BOOT_START_ADDR, firstPageData);
+    if (memcmp(firstPageData, firmwareData.data(), sizeof(firstPageData))) {
+        throw ProtocolException("This firmware is incompatible with the firmware that "
+                                "is currently installed. Only Phoenard firmware built "
+                                "after August 6, 2015, is compatible with service mode programming.\n\n"
+                                "You will need to use an ISP programmer to use this firmware");
+    }
 
     /*
      * Set second page to jump to service routine for recovery
@@ -1404,24 +1416,55 @@ void stk500UpdateFirmware::run() {
     char recoveryPage[256];
     memset(recoveryPage, 0xFF, sizeof(recoveryPage));
     memcpy(recoveryPage, recoveryData, sizeof(recoveryData));
+    setStatus("Writing recovery page");
     protocol->service().writePage(BOOT_START_ADDR+256, recoveryPage);
 
-    /* Test: Read the firmware and write it again, page by page */
-    /*
-    char tmp[256];
-    quint32 len = 262144 - BOOT_START_ADDR;
-    quint32 addr = 0;
+    /* Proceed to write out all the data, starting at the last page, ending at the second */
+    quint32 pageAddress = BOOT_TOTAL_MEM - 256;
+    char pageData[256];
     do {
-        protocol->service().readPage(BOOT_START_ADDR + addr, tmp);
-        protocol->service().writePage(BOOT_START_ADDR + addr, tmp);
-        addr += 256;
-        setProgress((double) addr / (double) len);
-    } while (addr < len);
-    */
+        int dataAddr = (pageAddress - BOOT_START_ADDR);
+        QString status("Writing firmware data: ");
+        status += QString::number(BOOT_SIZE - dataAddr);
+        status += " / ";
+        status += QString::number(BOOT_SIZE);
+        status += " bytes";
+        setStatus(status);
+        setProgress((double) (BOOT_SIZE - dataAddr) / BOOT_SIZE);
 
+        /* Compose the data for this page, padded with 0xFFFF */
+        int len = std::max(0, std::min(256, firmwareData.length() - dataAddr));
+        memset(pageData+len, 0xFF, 256-len);
+        memcpy(pageData, firmwareData.data() + dataAddr, len);
+        protocol->service().writePage(pageAddress, pageData);
+
+        pageAddress -= 256;
+    } while (pageAddress >= BOOT_START_ADDR);
+
+    /* All done! Switch back to STK500 mode */
     protocol->service().end();
 }
 
 void stk500Upload::run() {
+    quint32 pageAddress = 0;
+    char pageData[256];
+    do {
+        /* Update status */
+        QString status("Writing program data: ");
+        status += QString::number(pageAddress);
+        status += " / ";
+        status += QString::number(programData.length());
+        setStatus(status);
+        setProgress((double) pageAddress / (double) programData.length());
 
+        /* Prepare and write the page of data */
+        int len = std::min(256, (int) (programData.length() - pageAddress));
+        memset(pageData+len, 0xFF, 256-len);
+        memcpy(pageData, programData.data() + pageAddress, len);
+        protocol->FLASH_writePage(pageAddress, pageData, 256);
+
+        /* Next page */
+        pageAddress += 256;
+
+    } while ((pageAddress < programData.length()) && !isCancelled());
 }

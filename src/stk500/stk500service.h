@@ -4,7 +4,9 @@
 #include "stk500.h"
 #include <QDebug>
 
-#define BOOT_START_ADDR 0x3E000
+#define BOOT_TOTAL_MEM   262144
+#define BOOT_START_ADDR  0x3E000
+#define BOOT_SIZE        8192
 
 class stk500service
 {

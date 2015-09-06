@@ -658,17 +658,38 @@ void MainWindow::on_control_spiBtn_clicked()
 
 void MainWindow::on_control_firmwareBtn_clicked()
 {
+    /* Select the file to open */
+    QFileDialog dialog(this);
+    dialog.setWindowTitle("Select the hex file to upload");
+    if (!dialog.exec()) {
+        return;
+    }
+    QString filePath = dialog.selectedFiles().at(0);
+
+    /* Load the firmware */
     ProgramData data;
-    data.loadFile("C:/Atmel Projects/phoenboot/phoenboot/Debug/phoenboot.hex");
+    data.loadFile(filePath);
 
     QList<stk500Task*> tasks;
     if (data.hasFirmwareData()) {
-        tasks.append(new stk500UpdateFirmware(data.firmwareData()));
+        int result = QMessageBox::warning(this, "Uploading new firmware",
+                                          "The hex file you selected contains device firmware.\n\n"
+                                          "If the firmware you selected is not working right, "
+                                          "you risk bricking the device, requiring an ISP programmer "
+                                          "to put the device back in working conditions.\n\n"
+                                          "Are you sure you want update the firmware?",
+                                          QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                          QMessageBox::No);
+
+        if (result == QMessageBox::Cancel) return;
+        if (result == QMessageBox::Yes) {
+            tasks.append(new stk500UpdateFirmware(data.firmwareData()));
+        }
     }
     if (data.hasSketchData()) {
         tasks.append(new stk500Upload(data.sketchData()));
     }
-    serial->executeAll(tasks);
+    serial->executeAll(tasks, false, false);
     for (stk500Task* task : tasks) {
         delete task;
     }
