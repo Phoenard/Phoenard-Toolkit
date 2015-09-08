@@ -37,5 +37,6 @@
         <file>icons/control.png</file>
         <file>icons/spi.png</file>
         <file>icons/pins.png</file>
+        <file>icons/uploadhex.png</file>
     </qresource>
 </RCC>
