@@ -56,18 +56,19 @@ public:
     stk500_ProcessThread(stk500Serial *owner, QString portName);
     void cancelTasks();
     void wake();
-    stk500Task *currentTask();
 
 protected:
     virtual void run();
     bool trySignOn(stk500 *protocol);
     void updateStatus(QString status);
+    void runTests(stk500 &protocol);
 
 public:
     stk500Serial *owner;
     QMutex sync;
     QWaitCondition cond;
-    QQueue<stk500Task*> tasks;
+    QQueue<stk500Task*> asyncTasks;
+    QQueue<stk500Task*> syncTasks;
     QMutex tasksLock;
     QMutex readBuffLock;
     QMutex writeBuffLock;

@@ -66,6 +66,7 @@ void stk500Serial::notifySerialOpened(stk500_ProcessThread *) {
 }
 
 void stk500Serial::notifyTaskFinished(stk500_ProcessThread *, stk500Task *task) {
+    task->finish();
     emit taskFinished(task);
 }
 
@@ -89,10 +90,15 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
 
     /* Enqueue the other tasks */
     process->tasksLock.lock();
+    int totalSyncTasks = 0;
     for (int i = 0; i < tasks.length(); i++) {
-        process->tasks.enqueue(tasks[i]);
+        if (asynchronous) {
+            process->asyncTasks.enqueue(tasks[i]);
+        } else {
+            process->syncTasks.enqueue(tasks[i]);
+            totalSyncTasks = process->syncTasks.count();
+        }
     }
-    int totalTaskCount = process->tasks.length();
     process->isProcessing = true;
     process->tasksLock.unlock();
     process->wake();
@@ -102,6 +108,7 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
         return;
     }
 
+    /* Show a dialog while processing all synchronized tasks */
     ProgressDialog *dialog = NULL;
     qint64 currentTime;
     qint64 startTime = QDateTime::currentMSecsSinceEpoch();
@@ -110,28 +117,25 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
-    int nrProcessed = 0;
+    stk500Task *task;
+    int processedCount;
     while (process->isProcessing) {
-        // Obtain next task
-        stk500Task *task = process->currentTask();
-
-        // Find the index of this task in the tasks we specified
-        int processedCount = 0;
-        bool allTasksFinished = true;
-        for (int i = 0; i < tasks.count(); i++) {
-            if (tasks[i] == task) {
-                processedCount = i;
-                allTasksFinished = false;
-                break;
-            } else if (!tasks[i]->isFinished()) {
-                allTasksFinished = false;
-            }
+        // Obtain currently executing synchronized task
+        process->tasksLock.lock();
+        if (process->syncTasks.empty()) {
+            task = NULL;
+        } else {
+            task = process->syncTasks.head();
         }
+        processedCount = totalSyncTasks - process->syncTasks.count();
+        process->tasksLock.unlock();
 
-        if (allTasksFinished || (task == NULL)) {
+        // Break out when completed
+        if (task == NULL) {
             break;
         }
 
+        /* Update dialog task title */
         if (dialog != NULL) {
             dialog->setWindowTitle(task->title());
         }
@@ -159,8 +163,8 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
             if (progress < 0.0 && processedCount) {
                 progress = 0.0;
             }
-            progress /= tasks.count();
-            progress += ((double) processedCount / (double) tasks.count());
+            progress /= totalSyncTasks;
+            progress += ((double) processedCount / (double) totalSyncTasks);
 
             // Update progress
             dialog->updateProgress(progress, task->status());
@@ -169,9 +173,6 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
             QCoreApplication::processEvents();
             if (dialog->isCancelClicked() && !task->isCancelled()) {
                 task->cancel();
-                for (stk500Task *task : tasks) {
-                    task->cancel();
-                }
             }
 
             if (!process->isRunning) {
@@ -179,21 +180,10 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
             }
         }
 
-        // If task has an error, stop other tasks too (errors are dangerous)
-        bool taskHasError = false;
-        for (stk500Task* currentTask : tasks) {
-            if (currentTask->hasError()) {
-                taskHasError = true;
-            } else if (taskHasError) {
-                currentTask->setError(ProtocolException("Cancelled because of previous error"));
-            }
-        }
+        // Show task errors in a dialog box
         if (task->hasError()) {
             task->showError();
         }
-
-        // Increment processed count
-        nrProcessed++;
     }
     if (isWaitCursor) {
         QApplication::restoreOverrideCursor();
@@ -205,7 +195,9 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
 }
 
 bool stk500Serial::isExecuting() {
-    return process->isProcessing || !process->tasks.isEmpty();
+    return process->isProcessing ||
+            !process->asyncTasks.isEmpty() ||
+            !process->syncTasks.isEmpty();
 }
 
 void stk500Serial::cancelTasks() {
@@ -408,7 +400,22 @@ void stk500_ProcessThread::run() {
                 }
             } else {
                 /* Command mode: process bootloader I/O */
-                stk500Task *task = currentTask();
+
+                /* Poll the next task to execute */
+                stk500Task *task;
+                bool taskIsSync = false;
+                tasksLock.lock();
+                if (syncTasks.empty()) {
+                    if (asyncTasks.empty()) {
+                        task = NULL;
+                    } else {
+                        task = asyncTasks.head();
+                    }
+                } else {
+                    task = syncTasks.head();
+                    taskIsSync = true;
+                }
+                tasksLock.unlock();
 
                 /* If not signed on and a task is to be handled, sign on first */
                 if (task != NULL && task->usesFirmware() && !protocol.isSignedOn()) {
@@ -421,82 +428,7 @@ void stk500_ProcessThread::run() {
                     wasIdling = true;
                     updateStatus("[STK500] Signing on");
                     if (trySignOn(&protocol)) {
-                        qDebug() << "[STK500] Protocol: " << protocolName;
-
-                        /* SPI Communication test */
-                        /*
-                        try {
-                            char src[] = {1, 3, 7, 32, 65, 75, 23, 125};
-                            char dst[sizeof(src)];
-
-                            protocol.SPI_transfer(src, dst, sizeof(src));
-
-                            for (int i = 0; i < sizeof(src); i++) {
-                                qDebug() << (quint16) ((unsigned char) dst[i]);
-                            }
-                        } catch (ProtocolException &ex) {
-                            qDebug() << ex.what();
-                        }
-                        */
-
-                        /* Speed test: execute command timed */
-                        /*
-                        try {
-                            char d[512];
-                            while (true) {
-                                // Time: 67 ms
-                                qint64 timestart = QDateTime::currentMSecsSinceEpoch();
-                                protocol.RAM_read(0, d, sizeof(d));
-                                qint64 spent = QDateTime::currentMSecsSinceEpoch() - timestart;
-                                qDebug() << "Time: " << spent;
-                                msleep(200);
-                            }
-                        } catch (ProtocolException &ex) {
-                            qDebug() << ex.what();
-                        }
-                        */
-
-                        /* EEPROM Settings reading test */
-                        /*
-                        try {
-                            PHN_Settings settings = protocol.readSettings();
-                            qDebug() << "Current: " << settings.getCurrent();
-                            qDebug() << "Sketch size: " << settings.sketch_size;
-                        } catch (ProtocolException &ex) {
-                            qDebug() << ex.what();
-                        }
-                        */
-
-                        /* Analog read test */
-                        /*
-                        try {
-                            for (int i = 0; i < 5; i++) {
-                                qDebug() << "ADC: " << protocol.ANALOG_read(0);
-                                QThread::msleep(30);
-                            }
-                        } catch (ProtocolException &ex) {
-                            qDebug() << ex.what();
-                        }
-                        */
-
-
-                        /* RAM Debug test: blink pin 13 a few times */
-                        /*
-                        try {
-                            // Set DDRB7 to OUTPUT
-                            protocol.RAM_writeByte(0x24, 0xFF, 1 << 7);
-
-                            // Set PORTB7 alternating
-                            for (int i = 0; i < 5; i++) {
-                                QThread::msleep(50);
-                                protocol.RAM_writeByte(0x25, 0x00, 1 << 7);
-                                QThread::msleep(50);
-                                protocol.RAM_writeByte(0x25, 0xFF, 1 << 7);
-                            }
-                        } catch (ProtocolException &ex) {
-                            qDebug() << ex.what();
-                        }
-                        */
+                        runTests(protocol);
                     } else {
                         updateStatus("[STK500] Sign-on error");
                     }
@@ -531,7 +463,6 @@ void stk500_ProcessThread::run() {
                         }
 
                         // Process the task after setting the protocol
-                        task->setProtocol(&protocol);
                         if (!task->isCancelled()) {
                             task->setProtocol(&protocol);
                             task->run();
@@ -549,19 +480,45 @@ void stk500_ProcessThread::run() {
                         }
                     }
 
-                    // Clear the currently executed task
-                    this->tasksLock.lock();
-                    if (!this->tasks.empty() && (this->tasks.head() == task)) {
-                        this->tasks.dequeue();
+                    // If an error occurred, cancel all synchronized tasks
+                    if (taskIsSync && task->hasError()) {
+
+                        // Take all old tasks and clear them
+                        this->tasksLock.lock();
+                        QList<stk500Task*> tasks;
+                        tasks.append(syncTasks);
+                        syncTasks.clear();
+                        this->tasksLock.unlock();
+
+                        // Cancel all tasks following
+                        for (int i = 1; i < tasks.count(); i++) {
+                            tasks[i]->cancel();
+                        }
+
+                        // Finish the tasks
+                        for (stk500Task *syncTask : tasks) {
+                            owner->notifyTaskFinished(this, syncTask);
+                        }
+                    } else {
+
+                        // Remove task from queue
+                        this->tasksLock.lock();
+                        QQueue<stk500Task*> &tasks = taskIsSync ? syncTasks : asyncTasks;
+                        if (!tasks.empty() && (tasks.head() == task)) {
+                            tasks.dequeue();
+                        }
+                        this->tasksLock.unlock();
+
+                        // Notify we finished (or failed, or cancelled...)
+                        owner->notifyTaskFinished(this, task);
                     }
-                    if (this->tasks.empty()) {
+
+                    // Check if still processing or not
+                    this->tasksLock.lock();
+                    if (syncTasks.empty() && asyncTasks.empty()) {
                         isProcessing = false;
                     }
                     this->tasksLock.unlock();
-
-                    // Notify we finished (or failed, or cancelled...)
-                    task->finish();
-                    owner->notifyTaskFinished(this, task);
 
                     wasIdling = false;
 
@@ -629,10 +586,8 @@ void stk500_ProcessThread::updateStatus(QString status) {
 
 void stk500_ProcessThread::cancelTasks() {
     tasksLock.lock();
-    for (int i = 0; i < tasks.length(); i++) {
-        tasks[i]->cancel();
-    }
-    tasks.clear();
+    for (stk500Task *task : syncTasks) task->cancel();
+    for (stk500Task *task : asyncTasks) task->cancel();
     tasksLock.unlock();
 }
 
@@ -640,9 +595,81 @@ void stk500_ProcessThread::wake() {
     cond.wakeAll();
 }
 
-stk500Task *stk500_ProcessThread::currentTask() {
-    tasksLock.lock();
-    stk500Task *task = tasks.empty() ? NULL : tasks.head();
-    tasksLock.unlock();
-    return task;
+void stk500_ProcessThread::runTests(stk500 &protocol) {
+    qDebug() << "[STK500]" << protocol.getPort()->portName() << "Protocol:" << protocolName;
+
+    /* SPI Communication test */
+    /*
+    try {
+        char src[] = {1, 3, 7, 32, 65, 75, 23, 125};
+        char dst[sizeof(src)];
+
+        protocol.SPI_transfer(src, dst, sizeof(src));
+
+        for (int i = 0; i < sizeof(src); i++) {
+            qDebug() << (quint16) ((unsigned char) dst[i]);
+        }
+    } catch (ProtocolException &ex) {
+        qDebug() << ex.what();
+    }
+    */
+
+    /* Speed test: execute command timed */
+    /*
+    try {
+        char d[512];
+        while (true) {
+            // Time: 67 ms
+            qint64 timestart = QDateTime::currentMSecsSinceEpoch();
+            protocol.RAM_read(0, d, sizeof(d));
+            qint64 spent = QDateTime::currentMSecsSinceEpoch() - timestart;
+            qDebug() << "Time: " << spent;
+            msleep(200);
+        }
+    } catch (ProtocolException &ex) {
+        qDebug() << ex.what();
+    }
+    */
+
+    /* EEPROM Settings reading test */
+    /*
+    try {
+        PHN_Settings settings = protocol.readSettings();
+        qDebug() << "Current: " << settings.getCurrent();
+        qDebug() << "Sketch size: " << settings.sketch_size;
+    } catch (ProtocolException &ex) {
+        qDebug() << ex.what();
+    }
+    */
+
+    /* Analog read test */
+    /*
+    try {
+        for (int i = 0; i < 5; i++) {
+            qDebug() << "ADC: " << protocol.ANALOG_read(0);
+            QThread::msleep(30);
+        }
+    } catch (ProtocolException &ex) {
+        qDebug() << ex.what();
+    }
+    */
+
+
+    /* RAM Debug test: blink pin 13 a few times */
+    /*
+    try {
+        // Set DDRB7 to OUTPUT
+        protocol.RAM_writeByte(0x24, 0xFF, 1 << 7);
+
+        // Set PORTB7 alternating
+        for (int i = 0; i < 5; i++) {
+            QThread::msleep(50);
+            protocol.RAM_writeByte(0x25, 0x00, 1 << 7);
+            QThread::msleep(50);
+            protocol.RAM_writeByte(0x25, 0xFF, 1 << 7);
+        }
+    } catch (ProtocolException &ex) {
+        qDebug() << ex.what();
+    }
+    */
 }
