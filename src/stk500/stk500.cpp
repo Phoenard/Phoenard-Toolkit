@@ -133,9 +133,27 @@ void stk500::setServiceMode() {
         // If there is one, it means the command was normally executed
         port->waitForReadyRead(250);
         if (!port->readAll().isEmpty()) {
-            throw ProtocolException("Failed to properly enter service routine\n"
-                                    "A response was returned from the SERVICE_MODE command\n"
+            throw ProtocolException("Service mode is not supported by the firmware on the device."
+                                    "The SERVICE_MODE command gave an unexpected response.\n\n"
                                     "Perhaps outdated firmware is installed?");
+        }
+
+        // Verify that a connection is established by echo
+        port->write("HELLO");
+        port->flush();
+        port->waitForReadyRead(50);
+        QString response = port->readAll();
+        if (response.isEmpty()) {
+            throw ProtocolException("Failed to establish a connection with the service routine."
+                                    "No response was returned from the device.\n\n"
+                                    "Perhaps outdated firmware is installed?");
+
+        } else if (response != "HELLO") {
+            QString errorMessage = QString("Failed to establish a connection with the service routine."
+                                           "An invalid response was returned from the device.\n\n"
+                                           "%1\n\n"
+                                           "Perhaps outdated firmware is installed?").arg(response);
+            throw ProtocolException(errorMessage);
         }
 
         // Done
@@ -459,12 +477,12 @@ void stk500::SD_writeBlock(quint32 block, const char* src, int srcLen, bool isFA
 }
 
 void stk500::FLASH_readPage(quint32 address, char* dest, int destLen) {
-    readData(READ_FLASH_ISP, address, dest, destLen);
+    readData(READ_FLASH_ISP, address >> 1, dest, destLen);
     currentAddress += destLen / 2;
 }
 
 void stk500::FLASH_writePage(quint32 address, const char* src, int srcLen) {
-    writeData(PROGRAM_FLASH_ISP, address, src, srcLen);
+    writeData(PROGRAM_FLASH_ISP, address >> 1, src, srcLen);
     currentAddress += srcLen / 2;
 }
 

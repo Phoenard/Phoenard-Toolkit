@@ -1,14 +1,7 @@
 #include "stk500service.h"
 
 void stk500service::begin() {
-    // Switch mode if needed
     _handler->setServiceMode();
-
-    // Send a test token and try to get it to work...
-    if (!writeVerifyRetry("HELLO", 5)) {
-        throw ProtocolException("Failed to establish connection with service routine\n"
-                                "Perhaps outdated firmware is installed?");
-    }
 }
 
 void stk500service::end() {

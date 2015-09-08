@@ -660,6 +660,8 @@ void MainWindow::on_control_firmwareBtn_clicked()
     /* Select the file to open */
     QFileDialog dialog(this);
     dialog.setWindowTitle("Select the hex file to upload");
+    dialog.setNameFilter (tr ("Intel Hex Files (*.hex)"));
+    dialog.setViewMode (QFileDialog :: Detail);
     if (!dialog.exec()) {
         return;
     }

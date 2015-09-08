@@ -1372,15 +1372,17 @@ void stk500UpdateFirmware::init() {
 }
 
 void stk500UpdateFirmware::run() {
+    /* Page buffer used while reading / writing */
+    char pageData[256];
+
     /* Initialize service routine */
     setStatus("Entering service mode");
     protocol->service().begin();
 
     /* Verify the first page is compatible with the firmware */
-    char firstPageData[256];
     setStatus("Verifying firmware");
-    protocol->service().readPage(BOOT_START_ADDR, firstPageData);
-    if (memcmp(firstPageData, firmwareData.data(), sizeof(firstPageData))) {
+    protocol->service().readPage(BOOT_START_ADDR, pageData);
+    if (memcmp(pageData, firmwareData.data(), sizeof(pageData))) {
         throw ProtocolException("This firmware is incompatible with the firmware that "
                                 "is currently installed. Only Phoenard firmware built "
                                 "after August 6, 2015, is compatible with service mode programming.\n\n"
@@ -1413,15 +1415,13 @@ void stk500UpdateFirmware::run() {
         0x80, 0x93, 0xc4, 0x00, 0x88, 0xe1, 0x80, 0x93,
         0xc1, 0x00, 0x0d, 0x94, 0x01, 0xf0,
     };
-    char recoveryPage[256];
-    memset(recoveryPage, 0xFF, sizeof(recoveryPage));
-    memcpy(recoveryPage, recoveryData, sizeof(recoveryData));
+    memset(pageData, 0xFF, sizeof(pageData));
+    memcpy(pageData, recoveryData, sizeof(recoveryData));
     setStatus("Writing recovery page");
-    protocol->service().writePage(BOOT_START_ADDR+256, recoveryPage);
+    protocol->service().writePage(BOOT_START_ADDR+256, pageData);
 
     /* Proceed to write out all the data, starting at the last page, ending at the second */
     quint32 pageAddress = BOOT_TOTAL_MEM - 256;
-    char pageData[256];
     do {
         int dataAddr = (pageAddress - BOOT_START_ADDR);
         QString status("Writing firmware data: ");
@@ -1459,8 +1459,8 @@ void stk500Upload::run() {
 
         /* Prepare and write the page of data */
         int len = std::min(256, (int) (programData.length() - pageAddress));
-        memset(pageData+len, 0xFF, 256-len);
         memcpy(pageData, programData.data() + pageAddress, len);
+        memset(pageData+len, 0xFF, 256-len);
         protocol->FLASH_writePage(pageAddress, pageData, 256);
 
         /* Next page */
