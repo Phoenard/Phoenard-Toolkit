@@ -673,12 +673,14 @@ void MainWindow::on_control_firmwareBtn_clicked()
 
     QList<stk500Task*> tasks;
     if (data.hasFirmwareData()) {
-        int result = QMessageBox::warning(this, "Uploading new firmware",
-                                          "The hex file you selected contains device firmware.\n\n"
-                                          "If the firmware you selected is not working right, "
-                                          "you risk bricking the device, requiring an ISP programmer "
-                                          "to put the device back in working conditions.\n\n"
-                                          "Are you sure you want update the firmware?",
+        QString message = QString("The hex file you selected contains device firmware\n"
+                                  "Firmware version: %1\n\n"
+                                  "If the firmware you selected is not working right, "
+                                  "you risk bricking the device, requiring an ISP programmer "
+                                  "to put the device back in working conditions.\n\n"
+                                  "Are you sure you want update the firmware?").arg(data.firmwareVersion());
+
+        int result = QMessageBox::warning(this, "Uploading new firmware", message,
                                           QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                           QMessageBox::No);
 

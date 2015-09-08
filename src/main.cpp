@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QTextStream>
 
 int main(int argc, char *argv[])
 {
@@ -18,6 +17,10 @@ int main(int argc, char *argv[])
     // Option to perform image conversion (-i)
     QCommandLineOption imageConvertOption("i", "Convert one image format into another");
     parser.addOption(imageConvertOption);
+
+    // Option to read the firmware version of a hex file (--fv)
+    QCommandLineOption firmwareVersionOption("fv", "Get firmware version token");
+    parser.addOption(firmwareVersionOption);
 
     // A boolean option with multiple names (--ski)
     QCommandLineOption skiFormat("ski", "Convert image into SKI (headerless 1-bit LCD) format");
@@ -44,7 +47,16 @@ int main(int argc, char *argv[])
             image.setHeader(false);
             image.saveFile(dest);
         }
-        exit(0);
+        return 0;
+    }
+
+    // Read program data, print out firmware version and quit
+    if (parser.isSet(firmwareVersionOption)) {
+        QString source = args.at(0);
+        ProgramData program;
+        program.loadFile(source);
+        printf(program.firmwareVersion().toStdString().c_str());
+        return 0;
     }
 
     // Run main application

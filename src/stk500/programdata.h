@@ -15,6 +15,7 @@ public:
     bool hasFirmwareData() { return !_firmwareData.isEmpty(); }
     const QByteArray &sketchData() { return _sketchData; }
     const QByteArray &firmwareData() { return _firmwareData; }
+    QString firmwareVersion();
 
 private:
     QByteArray _firmwareData;

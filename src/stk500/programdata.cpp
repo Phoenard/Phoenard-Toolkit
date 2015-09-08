@@ -5,7 +5,6 @@ ProgramData::ProgramData()
 }
 
 void ProgramData::loadFile(const QString &fileName) {
-    qDebug() << "LOADING FILE " << fileName;
 
     /* Load the contents of the file */
     QFile file(fileName);
@@ -16,7 +15,6 @@ void ProgramData::loadFile(const QString &fileName) {
 }
 
 void ProgramData::load(const QByteArray &data) {
-    qDebug() << "LOADING " << data.length() << " BYTES";
 
     /* Evaluate whether this is Intel HEX Data or not */
     bool isBinary = data.length() < 12;
@@ -143,4 +141,25 @@ void ProgramData::load(const QByteArray &data) {
     /* Fill the sketch/firmware data buffers */
     _sketchData = QByteArray(fullData, sketch_end);
     _firmwareData = QByteArray(fullData+boot_start, firmware_end-boot_start);
+}
+
+QString ProgramData::firmwareVersion() {
+    // Generate CRC
+    quint32 crc = ~0;
+    quint32 service_crc = ~0;
+    for (int i = 0; i < _firmwareData.length(); i++) {
+        crc ^= (quint8) _firmwareData[i];
+        for (unsigned char k = 8; k; k--) {
+          unsigned char m = (crc & 0x1);
+          crc >>= 1;
+          if (m) crc ^= 0xEDB88320;
+        }
+        if (i == 255) service_crc = ~crc;
+    }
+    crc = ~crc;
+
+    // Compile version token
+    QString version = QString::number(crc, 16).toUpper();
+    version += (service_crc == 0xBBC8FBD5) ? "-Y" : "-N";
+    return version;
 }
