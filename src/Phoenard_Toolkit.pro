@@ -19,7 +19,25 @@ SOURCES += main.cpp\
     stk500/stk500.cpp \
     stk500/stk500task.cpp \
     stk500/stk500serial.cpp \
+    stk500/stk500settings.cpp \
     stk500/longfilenamegen.cpp \
+    stk500/sketchinfo.cpp \
+    stk500/programdata.cpp \
+    stk500/stk500sd.cpp \
+    stk500/stk500registers.cpp \
+    stk500/stk500service.cpp \
+    stk500/tasks/stk500deletefiles.cpp \
+    stk500/tasks/stk500importfiles.cpp \
+    stk500/tasks/stk500launchsketch.cpp \
+    stk500/tasks/stk500listsketches.cpp \
+    stk500/tasks/stk500listsubdirs.cpp \
+    stk500/tasks/stk500loadicon.cpp \
+    stk500/tasks/stk500renamefiles.cpp \
+    stk500/tasks/stk500renamevolume.cpp \
+    stk500/tasks/stk500savefiles.cpp \
+    stk500/tasks/stk500updateregisters.cpp \
+    stk500/tasks/stk500updatefirmware.cpp \
+    stk500/tasks/stk500upload.cpp \
     imaging/quantize.cpp \
     controls/colorselect.cpp \
     controls/menubutton.cpp \
@@ -32,17 +50,11 @@ SOURCES += main.cpp\
     dialogs/formatselectdialog.cpp \
     dialogs/codeselectdialog.cpp \
     dialogs/iconeditdialog.cpp \
-    stk500/stk500settings.cpp \
     imaging/phnimage.cpp \
     imaging/imageformat.cpp \
     dialogs/asknamedialog.cpp \
-    stk500/sketchinfo.cpp \
     imaging/phniconprovider.cpp \
-    stk500/stk500sd.cpp \
-    stk500/stk500registers.cpp \
     controls/chipcontrolwidget.cpp \
-    stk500/stk500service.cpp \
-    stk500/programdata.cpp \
     controls/portselectbox.cpp
 
 HEADERS  += mainwindow.h \

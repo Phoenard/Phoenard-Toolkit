@@ -6,6 +6,14 @@
 #include "programdata.h"
 #include <QStringList>
 #include <QList>
+#include "longfilenamegen.h"
+#include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QMessageBox>
+#include <qmath.h>
+
+#define SHOW_DOTNAMES 0
 
 class stk500Task
 {
@@ -131,12 +139,6 @@ public:
     virtual void run();
 
     QString volumeName;
-};
-
-class stk500Test : public stk500Task {
-public:
-    stk500Test() : stk500Task("Testing") {}
-    virtual void run();
 };
 
 class stk500ListSketches : public stk500Task {
