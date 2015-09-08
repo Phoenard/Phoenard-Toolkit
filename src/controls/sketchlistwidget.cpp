@@ -63,9 +63,11 @@ void SketchListWidget::refreshSketches() {
             ui->list->insertItem(i, itemFound);
 
         } else if (itemFound != ui->list->item(i)) {
-            // Move the item position
-            ui->list->removeItemWidget(itemFound);
-            ui->list->addItem(itemFound);
+            // Move the item position; make a clone
+            QListWidgetItem *itemFoundClone = itemFound->clone();
+            delete itemFound;
+            itemFound = itemFoundClone;
+            ui->list->insertItem(i, itemFound);
         }
 
         // Reset the item icon loading state
