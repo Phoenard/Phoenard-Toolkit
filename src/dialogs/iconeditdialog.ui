@@ -212,13 +212,13 @@
   <customwidget>
    <class>ImageViewer</class>
    <extends>QWidget</extends>
-   <header>../controls/imageviewer.h</header>
+   <header>controls/imageviewer.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>MenuButton</class>
    <extends>QToolButton</extends>
-   <header>../controls/menubutton.h</header>
+   <header>controls/menubutton.h</header>
   </customwidget>
  </customwidgets>
  <resources>

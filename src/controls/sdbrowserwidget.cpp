@@ -55,8 +55,8 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
     QChar illegalChars[9] = {'?', '<', '>', '\\', ':', '*', '|', '"', '^'};
     bool isVolume = (item->parent() == NULL);
     bool success = false;
-    for (QChar illegalChar : illegalChars) {
-        newText.remove(illegalChar);
+    for (int i = 0; i < 9; i++) {
+        newText.remove(illegalChars[i]);
     }
     if (isVolume) {
         // First limit length to 11 characters
@@ -67,7 +67,7 @@ void SDBrowserWidget::on_itemChanged(QTreeWidgetItem *item, int column) {
         char extended[6] = {'+', ',', ';', '=', '[', ']'};
         for (int i = 0; i < newText.length(); i++) {
             char c = newText.at(i).toUpper().toLatin1();
-            for (int exIdx = 0; exIdx < sizeof(extended); exIdx++) {
+            for (int exIdx = 0; exIdx < (int) sizeof(extended); exIdx++) {
                 if (c == extended[exIdx]) {
                     c = '_';
                     break;
@@ -215,7 +215,8 @@ void SDBrowserWidget::importFiles(QStringList filePaths) {
 void SDBrowserWidget::importFiles(QStringList filePaths, QString destFolder) {
     // Generate a list of tasks to execute
     QList<stk500Task*> tasks;
-    for (QString sourceFile : filePaths) {
+    for (int i = 0; i < filePaths.count(); i++) {
+        QString &sourceFile = filePaths[i];
         QString destFile = destFolder;
         if (!destFile.isEmpty()) {
             destFile.append('/');
@@ -226,8 +227,8 @@ void SDBrowserWidget::importFiles(QStringList filePaths, QString destFolder) {
     // Execute them all
     serial->executeAll(tasks);
     // Delete them
-    for (stk500Task *task : tasks) {
-        delete task;
+    for (int i = 0; i < tasks.count() ;i++) {
+        delete tasks[i];
     }
     // Refresh
     refreshFiles();
@@ -260,7 +261,9 @@ void SDBrowserWidget::createNew(QString fileName, bool isDirectory) {
 
 QTreeWidgetItem* SDBrowserWidget::getSelectedFolder() {
     QTreeWidgetItem* foundFolder = NULL;
-    for (QTreeWidgetItem *item : this->selectedItems()) {
+    QList<QTreeWidgetItem*> selItems = this->selectedItems();
+    for (int k = 0; k < selItems.count(); k++) {
+        QTreeWidgetItem *item = selItems[k];
         if (itemHasSelectedParent(item)) {
             continue;
         }
@@ -409,7 +412,8 @@ void SDBrowserWidget::refreshItem(QTreeWidgetItem *item, QList<DirectoryInfo> su
     item->setExpanded(true);
 
     // Fill with new contents
-    for (DirectoryInfo directory : subFiles) {
+    for (int k = 0; k < subFiles.count(); k++) {
+        DirectoryInfo &directory = subFiles[k];
         if (directory.isVolume()) {
             setupItemName(item, directory.name());
             continue;
@@ -480,8 +484,8 @@ void SDBrowserWidget::refreshItem(QTreeWidgetItem *item, QList<DirectoryInfo> su
     }
 
     // Any items remaining in the list: delete them!
-    for (QTreeWidgetItem *removed : oldItems) {
-        item->removeChild(removed);
+    for (int i = 0; i < oldItems.count(); i++) {
+        item->removeChild(oldItems[i]);
     }
 
     // All done!
@@ -528,7 +532,9 @@ void SDBrowserWidget::saveFilesTo() {
     QString rootPath = "";
     QString folderName = "";
     bool isCopyingRoot = false;
-    for (QTreeWidgetItem* item : this->selectedItems()) {
+    QList<QTreeWidgetItem*> selItems = this->selectedItems();
+    for (int k = 0; k < selItems.count(); k++) {
+        QTreeWidgetItem *item = selItems[k];
         // Ignore items with selected parent nodes
         if (itemHasSelectedParent(item)) {
             continue;
@@ -651,7 +657,8 @@ void SDBrowserWidget::saveFilesTo() {
                 tasks.append(new stk500SaveFiles(sourceFilePath, destFilePath));
             } else {
                 // Copy all files/directories specified to the destination directory
-                for (QString filePath : sourceFiles) {
+                for (int i = 0; i < sourceFiles.count(); i++) {
+                    QString filePath = sourceFiles[i];
                     QString destFile = filePath;
                     if (rootPath != "/") {
                         // In a sub-folder, cut root path from the filePath
@@ -685,8 +692,8 @@ void SDBrowserWidget::saveFilesTo() {
     serial->executeAll(tasks);
 
     // Delete the tasks again
-    for (stk500Task* task : tasks) {
-        delete task;
+    for (int i = 0; i < tasks.count() ;i++) {
+        delete tasks[i];
     }
 }
 
@@ -701,8 +708,8 @@ void SDBrowserWidget::deleteFiles() {
     QString lastFilename;
     while (true) {
         QList<QTreeWidgetItem*> selectedItems = this->selectedItems();
-        for (QTreeWidgetItem* toProcess : itemsToProcess) {
-            selectedItems.removeAll(toProcess);
+        for (int i = 0; i < itemsToProcess.count(); i++) {
+            selectedItems.removeAll(itemsToProcess[i]);
         }
         if (selectedItems.isEmpty()) {
             break;

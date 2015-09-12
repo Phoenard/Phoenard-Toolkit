@@ -96,19 +96,19 @@ void stk500service::setAddress(quint32 address) {
 void stk500service::flushData() {
     char tmp[512];
     memset(tmp, 0, sizeof(tmp));
-    _handler->getPort()->write(tmp);
-    _handler->getPort()->flush();
+    _handler->getPort()->write(tmp, sizeof(tmp));
     readSerial(tmp, sizeof(tmp));
 }
 
 int stk500service::readSerial(char* output, int limit) {
     int readLength = 0;
-    QSerialPort *port = _handler->getPort();
+    stk500Port *port = _handler->getPort();
     while (readLength < limit) {
-        port->waitForReadyRead(250);
+        QByteArray data = port->readAll(250);
         int remaining = limit - readLength;
-        int len = port->read(output + readLength, remaining);
+        int len = (data.length() > remaining) ? remaining : data.length();
         if (!len) break;
+        memcpy(output + readLength, data.data(), len);
         readLength += len;
     }
     return readLength;
@@ -127,9 +127,7 @@ bool stk500service::writeVerifyRetry(const char* data, int dataLen) {
 
 bool stk500service::writeVerify(const char* data, int dataLen) {
     // Write
-    QSerialPort *port = _handler->getPort();
-    port->write(data, dataLen);
-    port->flush();
+    _handler->getPort()->write(data, dataLen);
 
     // Verify
     char* tmp = new char[dataLen];

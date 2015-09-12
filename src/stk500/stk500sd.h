@@ -70,20 +70,20 @@ private:
 class DirectoryInfo {
 public:
     DirectoryInfo(DirectoryEntryPtr entryPtr, DirectoryEntryPtr firstPtr, int entryCnt, DirectoryEntry entry, QString longFileName)
-        : _entryPtr(entryPtr),_entry(entry), _fileName_long(longFileName), _firstPtr(firstPtr), _entryCnt(entryCnt) {}
+        : _firstPtr(firstPtr), _entryPtr(entryPtr), _entry(entry), _fileName_long(longFileName), _entryCnt(entryCnt) {}
 
     const DirectoryEntry entry() { return _entry; }
     const DirectoryEntryPtr entryPtr() { return _entryPtr; }
     const QString name() { return _fileName_long; }
     const QString shortName() { return _entry.name(); }
-    const bool hasLongName() { return _entry.name() != _fileName_long; }
-    const bool isReadOnly() { return _entry.isReadOnly(); }
-    const bool isDirectory() { return _entry.isDirectory(); }
-    const bool isVolume() { return _entry.isVolume(); }
-    const quint32 firstCluster() { return _entry.firstCluster(); }
-    const quint32 fileSize() { return _entry.fileSize; }
+    bool hasLongName() { return _entry.name() != _fileName_long; }
+    bool isReadOnly() { return _entry.isReadOnly(); }
+    bool isDirectory() { return _entry.isDirectory(); }
+    bool isVolume() { return _entry.isVolume(); }
+    quint32 firstCluster() { return _entry.firstCluster(); }
+    quint32 fileSize() { return _entry.fileSize; }
     const DirectoryEntryPtr firstPtr() { return _firstPtr; }
-    const int entryCount() { return _entryCnt; }
+    int entryCount() { return _entryCnt; }
     QString fileSizeText();
     QString fileSizeTextLong();
 

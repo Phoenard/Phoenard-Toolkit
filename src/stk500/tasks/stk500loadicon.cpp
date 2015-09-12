@@ -2,7 +2,7 @@
 
 void stk500LoadIcon::run() {
     if (sketch.iconBlock == 0) {
-        sketch.setIcon(SKETCH_DEFAULT_ICON);
+        sketch.setIcon((const char*) SKETCH_DEFAULT_ICON);
     } else {
         sketch.setIcon(protocol->sd().cacheBlock(sketch.iconBlock, true, false, false));
     }

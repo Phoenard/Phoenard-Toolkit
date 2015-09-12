@@ -113,7 +113,8 @@ void MainWindow::openSerial()
     if (index == -1) {
         serial->close();
     } else {
-        serial->open(ui->port_nameBox->itemText(index));
+        QString serialName = ui->port_nameBox->itemText(index);
+        serial->open(serialName);
         ui->port_toggleBtn->setText("Close");
     }
     /* Notify current tab */
@@ -307,7 +308,8 @@ void MainWindow::img_updateFormat() {
 
         if (!image.isFullColor()) {
             for (int i = 0; i < image.getColorCount(); i++) {
-                ui->img_colorSelect->setColor(i, image.getColor(i));
+                QColor color = image.getColor(i);
+                ui->img_colorSelect->setColor(i, color);
             }
         }
     }
@@ -463,7 +465,8 @@ void MainWindow::on_sketches_runBtn_clicked()
     }
     ui->sketchesWidget->stopLoadingIcons();
     QString name = ui->sketchesWidget->getSelectedName();
-    serial->execute(stk500LaunchSketch(name));
+    stk500LaunchSketch task(name);
+    serial->execute(task);
     setSelectedTab(0);
 }
 
@@ -693,7 +696,7 @@ void MainWindow::on_control_firmwareBtn_clicked()
         tasks.append(new stk500Upload(data.sketchData()));
     }
     serial->executeAll(tasks, false, false);
-    for (stk500Task* task : tasks) {
-        delete task;
+    for (int i = 0; i < tasks.count(); i++) {
+        delete tasks[i];
     }
 }

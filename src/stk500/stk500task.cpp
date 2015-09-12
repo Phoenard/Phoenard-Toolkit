@@ -189,7 +189,8 @@ bool stk500Task::sd_remove(QString filePath, bool fileIsDir) {
     }
 
     // See if the file was found, and if so, free that area by shifting entries around
-    for (DirectoryInfo info : allFiles) {
+    for (int i = 0; i < allFiles.count(); i++) {
+        DirectoryInfo &info = allFiles[i];
         if (isCancelled()) {
             return true;
         }
@@ -256,7 +257,8 @@ DirectoryEntryPtr stk500Task::sd_findEntry(DirectoryEntryPtr dirStartPtr, QStrin
 
     // Try to find the requested file among the results
     QStringList foundShortNames;
-    for (DirectoryInfo dir : allDirectories) {
+    for (int i = 0; i < allDirectories.count(); i++) {
+        DirectoryInfo &dir = allDirectories[i];
         if ((dir.name() == name) && (dir.isDirectory() == isDirectory)) {
             return dir.entryPtr();
         }
@@ -353,7 +355,7 @@ DirectoryEntryPtr stk500Task::sd_createEntry(DirectoryEntryPtr dirPtr, QString n
         }
 
         // Turn extended characters into an underscore ( _ )
-        for (int ex_idx = 0; ex_idx < sizeof(extended); ex_idx++) {
+        for (int ex_idx = 0; ex_idx < (int) sizeof(extended); ex_idx++) {
             if (extended[ex_idx] == c) {
                 c = '_';
                 break;

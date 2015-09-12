@@ -15,7 +15,7 @@ class ProgressDialog : public QDialog
 public:
     explicit ProgressDialog(QWidget *parent = 0);
     ~ProgressDialog();
-    const bool isCancelClicked() { return cancelClicked; }
+    bool isCancelClicked() { return cancelClicked; }
     void updateProgress(double progress, QString status);
 
 protected:

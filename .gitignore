@@ -13,8 +13,9 @@
 /.qmake.cache
 /.qmake.stash
 *.moc
-*.pro.user
-*.pro.user.*
+src/*.pro.user
+src/*.pro.user.*
+build-*
 moc_*.cpp
 qrc_*.cpp
 ui_*.h

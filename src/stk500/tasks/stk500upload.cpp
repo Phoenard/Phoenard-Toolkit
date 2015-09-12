@@ -1,4 +1,4 @@
-#include "../stk500Task.h"
+#include "../stk500task.h"
 
 void stk500Upload::run() {
     quint32 pageAddress = 0;

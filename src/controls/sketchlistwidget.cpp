@@ -75,7 +75,7 @@ void SketchListWidget::refreshSketches() {
             // No icon available; use default
             sketch.hasIcon = true;
             sketch.iconDirty = false;
-            sketch.setIcon(SKETCH_DEFAULT_ICON);
+            sketch.setIcon((const char*) SKETCH_DEFAULT_ICON);
         } else {
             // Schedule for loading
             sketch.iconDirty = true;

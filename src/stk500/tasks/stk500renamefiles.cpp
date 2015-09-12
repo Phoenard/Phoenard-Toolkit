@@ -37,7 +37,8 @@ void stk500Rename::run() {
     if (isCancelled()) {
         return;
     }
-    for (DirectoryInfo info : subFiles) {
+    for (int i = 0; i < subFiles.count(); i++) {
+        DirectoryInfo &info = subFiles[i];
         if (fileIsDir == info.isDirectory()) {
             if (info.name() == oldFileName) {
                 oldFileFirstPtr = info.firstPtr();

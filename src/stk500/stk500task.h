@@ -23,24 +23,25 @@ public:
           _status(title + "..."), _title(title), _cancelSuppress(false),
           _isFinished(false), _usesFirmware(true) {}
 
+    virtual ~stk500Task() {}
     virtual void run() = 0;
     virtual void init() {}
     void setProtocol(stk500 *protocol) { this->protocol = protocol; }
-    const bool hasError() { return _hasError; }
-    const bool isCancelled() { return (_isCancelled && !_cancelSuppress); }
-    const bool isFinished() { return _isFinished; }
-    const bool isSuccessful() { return !isCancelled() && !hasError(); }
-    const bool usesFirmware() { return _usesFirmware; }
+    bool hasError() { return _hasError; }
+    bool isCancelled() { return (_isCancelled && !_cancelSuppress); }
+    bool isFinished() { return _isFinished; }
+    bool isSuccessful() { return !isCancelled() && !hasError(); }
+    bool usesFirmware() { return _usesFirmware; }
     void setUsesFirmware(bool usesFirmware) { _usesFirmware = usesFirmware; }
     void suppressCancel(bool suppress) { _cancelSuppress = suppress; }
-    const bool isCancelSuppressed() { return _cancelSuppress; }
+    bool isCancelSuppressed() { return _cancelSuppress; }
     const ProtocolException getError() { return _exception; }
     QString getErrorMessage() { return QString(_exception.what()); }
     void setError(ProtocolException exception);
     void cancel() { _isCancelled = true; }
     void finish() { _isFinished = true; }
     void setProgress(double progress) { _progress = progress; }
-    const double progress() { return _progress; }
+    double progress() { return _progress; }
     void setStatus(QString status);
     void showError();
     QString status();
@@ -63,12 +64,12 @@ private:
     ProtocolException _exception;
     bool _hasError;
     bool _isCancelled;
-    bool _isFinished;
-    bool _cancelSuppress;
-    bool _usesFirmware;
     double _progress;
-    QString _title;
     QString _status;
+    QString _title;
+    bool _cancelSuppress;
+    bool _isFinished;
+    bool _usesFirmware;
     QMutex _sync;
 };
 
@@ -178,7 +179,7 @@ public:
 
 class stk500UpdateFirmware : public stk500Task {
 public:
-    stk500UpdateFirmware::stk500UpdateFirmware(const QByteArray &firmwareData)
+    stk500UpdateFirmware(const QByteArray &firmwareData)
         : stk500Task("Updating firmware"), firmwareData(firmwareData) {}
     virtual void run();
     virtual void init();

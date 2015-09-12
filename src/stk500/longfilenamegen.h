@@ -3,6 +3,7 @@
 
 #include "stk500_fat.h"
 #include <QString>
+#include <QDebug>
 
 #define LFN_BUFFER_LENGTH 300
 
@@ -15,7 +16,7 @@ public:
     const QString longName() { return _longName; }
     const QString shortName() { return _shortName; }
     const DirectoryEntryPtr firstPtr() { return _firstPtr; }
-    const int entryCount() { return _entryCount; }
+    int entryCount() { return _entryCount; }
 private:
     ushort longFileName[LFN_BUFFER_LENGTH];
     uchar longFileName_crc;

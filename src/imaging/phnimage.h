@@ -38,11 +38,11 @@ public:
     QByteArray saveData();
     void saveFile(QString destFilePath);
 
-    const ImageFormat imageFormat() { return sourceImageFormat; }
-    const ImageFormat outputImageFormat() { return destImageFormat; }
-    const bool imageValid() { return sourceImageValid; }
+    ImageFormat imageFormat() { return sourceImageFormat; }
+    ImageFormat outputImageFormat() { return destImageFormat; }
+    bool imageValid() { return sourceImageValid; }
     const QSize imageSize() { return sourceImage.size(); }
-    const bool isFullColor() { return quant.trueColor; }
+    bool isFullColor() { return quant.trueColor; }
     void setFormat(ImageFormat format, int colorCount = -1);
     void resize(int newWidth, int newHeight);
     void setColors(QList<QColor> &colors);
@@ -51,7 +51,7 @@ public:
     bool isModified() { return this->modified; }
     void resetModified() { this->modified = false; }
     QColor getColor(int index);
-    const int getColorCount() { return quant.colors; }
+    int getColorCount() { return quant.colors; }
     void setColor(int index, QColor color);
     void setPixel(int x, int y, QColor color);
     QColor pixel(int x, int y);

@@ -9,18 +9,7 @@
 //*
 //**************************************************************************
 
-// *****************[ ST State message constants ]***********************
-
-const unsigned char ST_START        = 0;
-const unsigned char ST_GET_SEQ_NUM  = 1;
-const unsigned char ST_MSG_SIZE_1   = 2;
-const unsigned char ST_MSG_SIZE_2   = 3;
-const unsigned char ST_GET_TOKEN    = 4;
-const unsigned char ST_GET_CMD      = 5;
-const unsigned char ST_GET_STATUS   = 6;
-const unsigned char ST_GET_DATA     = 7;
-const unsigned char ST_GET_CHECK    = 8;
-const unsigned char ST_PROCESS      = 9;
+namespace STK500 {
 
 // *****************[ STK message constants ]***************************
 
@@ -29,7 +18,7 @@ const unsigned char  TOKEN                               = 0x0E;
 
 // *****************[ STK Commands enumeration ]************************
 
-enum STK_CMD : unsigned char {
+enum CMD {
 
     // *****************[ STK general commands ]*****************
     SIGN_ON                         = 0x01,
@@ -137,3 +126,5 @@ const unsigned char  PARAM_CONTROLLER_INIT               = 0x9F;
 // *****************[ STK answer constants ]***************************
 
 const unsigned char  ANSWER_CKSUM_ERROR                  = 0xB0;
+
+}

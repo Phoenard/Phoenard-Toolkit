@@ -131,18 +131,18 @@ typedef struct {
   quint32 fileSize;
 
   /* Helper functions */
-  const bool isFile() { return (attributes & DIR_ATT_FILE_TYPE_MASK) == 0; }
-  const bool isDirectory() { return (attributes & DIR_ATT_DIRECTORY) == DIR_ATT_DIRECTORY; }
-  const bool isVolume() { return (attributes & DIR_ATT_VOLUME_ID) == DIR_ATT_VOLUME_ID; }
-  const bool isReadOnly() { return (attributes & DIR_ATT_READ_ONLY) == DIR_ATT_READ_ONLY; }
-  const bool isLFN() { return (attributes & DIR_ATT_LFN) == DIR_ATT_LFN; }
-  const bool isFree() { return name_raw[0] == DIR_NAME_FREE; }
-  const bool isDeleted() { return name_raw[0] == DIR_NAME_DELETED; }
+  bool isFile() { return (attributes & DIR_ATT_FILE_TYPE_MASK) == 0; }
+  bool isDirectory() { return (attributes & DIR_ATT_DIRECTORY) == DIR_ATT_DIRECTORY; }
+  bool isVolume() { return (attributes & DIR_ATT_VOLUME_ID) == DIR_ATT_VOLUME_ID; }
+  bool isReadOnly() { return (attributes & DIR_ATT_READ_ONLY) == DIR_ATT_READ_ONLY; }
+  bool isLFN() { return (attributes & DIR_ATT_LFN) == DIR_ATT_LFN; }
+  bool isFree() { return name_raw[0] == DIR_NAME_FREE; }
+  bool isDeleted() { return name_raw[0] == DIR_NAME_DELETED; }
 
-  const bool LFN_isDeleted() { return (((unsigned char*) this)[0] & 0x40) == 0x80; }
-  const bool LFN_isLast() { return (((unsigned char*) this)[0] & 0x40) == 0x40; }
-  const unsigned char LFN_ordinal() { return (((unsigned char*) this)[0] & 0x3F) - 1; }
-  const unsigned char LFN_checksum() { return ((unsigned char*) this)[13]; }
+  bool LFN_isDeleted() { return (((unsigned char*) this)[0] & 0x40) == 0x80; }
+  bool LFN_isLast() { return (((unsigned char*) this)[0] & 0x40) == 0x40; }
+  unsigned char LFN_ordinal() { return (((unsigned char*) this)[0] & 0x3F) - 1; }
+  unsigned char LFN_checksum() { return ((unsigned char*) this)[13]; }
 
   void LFN_setOrdinal(unsigned char ordinal, bool isLast) {
       ordinal++;
@@ -197,7 +197,7 @@ typedef struct {
 
   unsigned char name_crc() {
       unsigned char crc = 0;
-      for (char i=0; i<11; i++)
+      for (unsigned char i=0; i<11; i++)
         crc = ((crc<<7) | (crc>>1)) + name_raw[i];
       return crc;
   }
@@ -292,7 +292,7 @@ typedef struct DirectoryEntryPtr {
     quint32 block;
     quint8 index;
 
-    const bool isValid() { return (block != 0) || (index != 0); }
+    bool isValid() { return (block != 0) || (index != 0); }
     inline bool operator==(const DirectoryEntryPtr& ptr) {
         return (ptr.block == block) && (ptr.index == index);
     }

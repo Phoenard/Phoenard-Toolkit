@@ -1,4 +1,5 @@
 #include "portselectbox.h"
+#include "stk500/stk500port.h"
 
 PortSelectBox::PortSelectBox(QWidget *parent) :
     QComboBox(parent)
@@ -7,8 +8,9 @@ PortSelectBox::PortSelectBox(QWidget *parent) :
 
 void PortSelectBox::refreshPorts() {
     int index = 0;
-    for (QSerialPortInfo info : QSerialPortInfo::availablePorts()) {
-        QString name = info.portName();
+    QList<QString> portNames = stk500Port::getPortNames();
+    for (int pi = 0; pi < portNames.count(); pi++) {
+        QString name = portNames[pi];
         if (index >= count()) {
             addItem(name);
         } else if (itemText(index) != name) {

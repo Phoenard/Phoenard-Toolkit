@@ -82,8 +82,8 @@ void stk500Serial::executeAll(QList<stk500Task*> tasks, bool asynchronous, bool 
 
     /* If not open, fail all tasks right away */
     if (!isOpen()) {
-        for (stk500Task *task : tasks) {
-            task->setError(ProtocolException("Port is not opened"));
+        for (int i = 0; i < tasks.count(); i++) {
+            tasks[i]->setError(ProtocolException("Port is not opened"));
         }
         return;
     }
@@ -293,19 +293,14 @@ void stk500_ProcessThread::run() {
     }
     if (!this->closeRequested) {
         /* First attempt to open the Serial port */
-        QSerialPort port;
+        stk500Port port;
         stk500 protocol(&port);
         updateStatus("Opening...");
 
-        /* Initialize the port */
-        port.setPortName(portName);
-        port.setReadBufferSize(4096);
-        port.setSettingsRestoredOnClose(false);
-        port.setBaudRate(115200);
-
-        /* Close again if opening fails */
-        if (!port.open(QIODevice::ReadWrite)) {
+        /* Attempt tp open the serial port */
+        if (!port.open(portName)) {
             this->closeRequested = true;
+            qDebug() << "Could not open port: " << port.errorString();
         }
 
         /* Run process loop while not being closed */
@@ -313,7 +308,6 @@ void stk500_ProcessThread::run() {
         bool hasData = false;
         qint64 start_time;
         long currSerialBaud = 0;
-        char serialBuffer[1024];
         bool wasIdling = true;
         while (!this->closeRequested) {
             if (this->isBaudChanged) {
@@ -338,9 +332,7 @@ void stk500_ProcessThread::run() {
                             protocol.signOut();
                         } else {
                             /* Simple hardware reset */
-                            port.setDataTerminalReady(true);
-                            port.setDataTerminalReady(false);
-                            port.clear();
+                            port.reset();
                         }
                     } catch (ProtocolException &) {}
 
@@ -357,11 +349,6 @@ void stk500_ProcessThread::run() {
 
             if (currSerialBaud) {
                 /* Serial mode: process serial I/O */
-
-                /* If no data available, wait for reading to be done shortly */
-                if (!port.bytesAvailable()) {
-                    port.waitForReadyRead(20);
-                }
 
                 /* Write out data */
                 if (!this->writeBuff.isEmpty()) {
@@ -386,16 +373,16 @@ void stk500_ProcessThread::run() {
                 }
 
                 /* Read in data */
-                int cnt = port.read((char*) serialBuffer, sizeof(serialBuffer));
+                QByteArray serialData = port.readAll(20);
 
                 /* Copy to the read buffer */
-                if (cnt) {
+                if (!serialData.isEmpty()) {
                     if (!hasData) {
                         hasData = true;
                         qDebug() << "Program started after " << (QDateTime::currentMSecsSinceEpoch() - start_time) << "ms";
                     }
                     this->readBuffLock.lock();
-                    this->readBuff.append(serialBuffer, cnt);
+                    this->readBuff.append(serialData);
                     this->readBuffLock.unlock();
                 }
             } else {
@@ -496,8 +483,8 @@ void stk500_ProcessThread::run() {
                         }
 
                         // Finish the tasks
-                        for (stk500Task *syncTask : tasks) {
-                            owner->notifyTaskFinished(this, syncTask);
+                        for (int i = 0; i < tasks.count(); i++) {
+                            owner->notifyTaskFinished(this, tasks[i]);
                         }
                     } else {
 
@@ -586,8 +573,12 @@ void stk500_ProcessThread::updateStatus(QString status) {
 
 void stk500_ProcessThread::cancelTasks() {
     tasksLock.lock();
-    for (stk500Task *task : syncTasks) task->cancel();
-    for (stk500Task *task : asyncTasks) task->cancel();
+    for (int i = 0; i < syncTasks.count(); i++) {
+        syncTasks[i]->cancel();
+    }
+    for (int i = 0; i < asyncTasks.count(); i++) {
+        asyncTasks[i]->cancel();
+    }
     tasksLock.unlock();
 }
 

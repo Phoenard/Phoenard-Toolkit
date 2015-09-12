@@ -117,7 +117,7 @@ void MenuButton::paintEvent(QPaintEvent *) {
         gradient.setColorAt(1, bottomColor);
 
         QBrush brush(gradient);
-        brush.setStyle(Qt::BrushStyle::LinearGradientPattern);
+        brush.setStyle(Qt::LinearGradientPattern);
         painter.fillPath(buttonShape, brush);
     }
 

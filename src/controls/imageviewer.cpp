@@ -104,8 +104,8 @@ void ImageViewer::onMouseChanged(QMouseEvent* event) {
         }
 
         // Go by all points and fire the event
-        for (QPoint point : points) {
-            emit mouseChanged(point, event->buttons());
+        for (int i = 0; i < points.count(); i++) {
+            emit mouseChanged(points[i], event->buttons());
         }
     }
 }

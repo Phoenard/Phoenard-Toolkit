@@ -25,7 +25,8 @@ IconEditDialog::~IconEditDialog()
 }
 
 void IconEditDialog::loadIcon(const char* iconData) {
-    image().loadData(64, 64, 1, QByteArray(iconData, 512));
+    QByteArray data(iconData, 512);
+    image().loadData(64, 64, 1, data);
 }
 
 void IconEditDialog::saveIcon(char* iconData) {
@@ -135,7 +136,7 @@ void IconEditDialog::on_importBtn_clicked()
 void IconEditDialog::on_resetBtn_clicked()
 {
     // Load the default icon image
-    QByteArray iconData(SKETCH_DEFAULT_ICON, sizeof(SKETCH_DEFAULT_ICON));
+    QByteArray iconData((const char*) SKETCH_DEFAULT_ICON, sizeof(SKETCH_DEFAULT_ICON));
     PHNImage &image = this->image();
     image.loadData(64, 64, 1, iconData);
     image.setHeader(false);

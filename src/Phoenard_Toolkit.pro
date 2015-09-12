@@ -55,7 +55,8 @@ SOURCES += main.cpp\
     dialogs/asknamedialog.cpp \
     imaging/phniconprovider.cpp \
     controls/chipcontrolwidget.cpp \
-    controls/portselectbox.cpp
+    controls/portselectbox.cpp \
+    stk500/stk500port.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -88,7 +89,8 @@ HEADERS  += mainwindow.h \
     controls/chipcontrolwidget.h \
     stk500/stk500service.h \
     stk500/programdata.h \
-    controls/portselectbox.h
+    controls/portselectbox.h \
+    stk500/stk500port.h
 
 FORMS    += mainwindow.ui \
     dialogs/progressdialog.ui \

@@ -10,11 +10,11 @@ class MenuButton : public QToolButton
 public:
     explicit MenuButton(QWidget *parent = 0);
     void paintEvent(QPaintEvent *e);
-    const bool isTab() { return _isTab; }
+    bool isTab() { return _isTab; }
     void setIsTab(bool isTab);
 
-    void MenuButton::enterEvent(QEvent *event);
-    void MenuButton::leaveEvent(QEvent *event);
+    void enterEvent(QEvent *event);
+    void leaveEvent(QEvent *event);
 
 signals:
 

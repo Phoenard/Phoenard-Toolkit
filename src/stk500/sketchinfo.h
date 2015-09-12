@@ -5,7 +5,7 @@
 #include <QMetaType>
 
 /// Default sketch icon data
-extern const char SKETCH_DEFAULT_ICON[512];
+extern const unsigned char SKETCH_DEFAULT_ICON[512];
 
 typedef struct SketchInfo {
     QString name;

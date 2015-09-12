@@ -1,7 +1,6 @@
 #ifndef STK500_H
 #define STK500_H
 
-#include <QSerialPort>
 #include <QThread>
 #include <QDateTime>
 #include <QTimer>
@@ -12,6 +11,7 @@
 #include "stk500command.h"
 #include "stk500_fat.h"
 #include "stk500settings.h"
+#include "stk500port.h"
 
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
@@ -28,9 +28,9 @@ class stk500service;
 class stk500
 {
 public:
-    stk500(QSerialPort *port = NULL);
+    stk500(stk500Port *port = NULL);
     ~stk500();
-    QSerialPort* getPort() { return port; }
+    stk500Port* getPort() { return port; }
     void reset();
     void resetDelayed();
     quint64 idleTime();
@@ -72,10 +72,11 @@ public:
 
 private:
     /* Private commands used internally */
-    int command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength);
+    int command(STK500::CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength);
+    QString readCommandResponse(STK500::CMD command, const QByteArray &input, char* response, int responseMaxLength);
     void loadAddress(quint32 address);
-    void readData(STK_CMD data_command, quint32 address, char* dest, int destLen);
-    void writeData(STK_CMD data_command, quint32 address, const char* src, int srcLen);
+    void readData(STK500::CMD data_command, quint32 address, char* dest, int destLen);
+    void writeData(STK500::CMD data_command, quint32 address, const char* src, int srcLen);
 
     /* Folder in %temp% where we store temporary cached files */
     static QString phnTempFolder;
@@ -84,7 +85,7 @@ private:
     stk500(const stk500&); // no implementation
     stk500& operator=(const stk500&); // no implementation
 
-    QSerialPort *port;
+    stk500Port *port;
     QTimer *aliveTimer;
     qint64 lastCmdTime;
     uint sequenceNumber;

@@ -1,5 +1,4 @@
 #include "longfilenamegen.h"
-#include <qDebug>
 
 LongFileNameGen::LongFileNameGen() {
     clear();

@@ -1,6 +1,7 @@
 #include "formatselectdialog.h"
 #include "ui_formatselectdialog.h"
 #include <QDebug>
+#include <QtMath>
 
 int bitModes[] = {24, 1, 2, 4, 8, 16};
 
@@ -47,7 +48,8 @@ void FormatSelectDialog::setData(ImageViewer *editor, QByteArray &data) {
         }
 
         long totalPixels = totalBits / bpp;
-        int mid = sqrt(totalPixels);
+
+        int mid = qSqrt(totalPixels);
         for (int k = mid; k >= 1; k--) {
             if (totalPixels % k) {
                 continue;

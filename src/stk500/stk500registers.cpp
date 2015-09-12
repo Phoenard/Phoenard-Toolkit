@@ -48,7 +48,9 @@ void ChipRegisters::initRegisters() {
 
     // Store all entries at the addresses
     int index = 0;
-    for (ChipRegisterInfo &entry : entries) {
+
+    for (int i = 0; i < entries.count(); i++) {
+        ChipRegisterInfo &entry = entries[i];
         int addr = entry.addressValue;
         if ((addr >= 0) && (addr < CHIPREG_COUNT)) {
             registerInfo[addr] = entry;

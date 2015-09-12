@@ -1,7 +1,7 @@
 #include "stk500.h"
 #include <QDebug>
 
-stk500::stk500(QSerialPort *port)
+stk500::stk500(stk500Port *port)
 {
     this->port = port;
     this->lastCmdTime = 0;
@@ -60,16 +60,12 @@ void stk500::reset() {
     sd_handler->reset();
 
     /* Reset the device and clear the buffers */
-    port->setDataTerminalReady(true);
-    port->setDataTerminalReady(false);
+    port->reset();
     QThread::msleep(STK500_SERVICE_DELAY);
-    port->clear();
     port->write("HELLO", 5);
-    port->flush();
 
     /* Check if we get HELLO back, if so, service mode */
-    port->waitForReadyRead(STK500_RESET_DELAY - STK500_SERVICE_DELAY);
-    QByteArray data = port->readAll();
+    QByteArray data = port->readAll(STK500_RESET_DELAY - STK500_SERVICE_DELAY);
     serviceMode = (data == "HELLO");
     if (!data.isEmpty() && !serviceMode) {
         QString dataText = data;
@@ -110,12 +106,13 @@ void stk500::setServiceMode() {
         int message_length = 1;
         int total_length = message_length + 6;
         char* data = new char[total_length];
-        data[0] = MESSAGE_START;
+        data[0] = STK500::MESSAGE_START;
         data[1] = (char) (0x00 & 0xFF);
         data[2] = (char) ((message_length >> 8) & 0xFF);
         data[3] = (char) (message_length & 0xFF);
-        data[4] = TOKEN;
-        data[5] = (char) STK_CMD::SERVICE_MODE_ISP;
+        data[4] = STK500::TOKEN;
+        STK500::CMD cmd = STK500::SERVICE_MODE_ISP;
+        data[5] = (char) cmd;
 
         // Calculate and append CRC
         char crc = 0x0;
@@ -126,23 +123,19 @@ void stk500::setServiceMode() {
 
         // Send out the data, then discard it once sent
         port->write(data, total_length);
-        port->flush();
         delete[] data;
 
         // Verify shortly that no response is returned
         // If there is one, it means the command was normally executed
-        port->waitForReadyRead(250);
-        if (!port->readAll().isEmpty()) {
+        if (!port->readAll(250).isEmpty()) {
             throw ProtocolException("Service mode is not supported by the firmware on the device."
                                     "The SERVICE_MODE command gave an unexpected response.\n\n"
                                     "Perhaps outdated firmware is installed?");
         }
 
         // Verify that a connection is established by echo
-        port->write("HELLO");
-        port->flush();
-        port->waitForReadyRead(50);
-        QString response = port->readAll();
+        port->write("HELLO", 5);
+        QString response = port->readAll(50);
         if (response.isEmpty()) {
             throw ProtocolException("Failed to establish a connection with the service routine."
                                     "No response was returned from the device.\n\n"
@@ -161,7 +154,7 @@ void stk500::setServiceMode() {
     }
 }
 
-int stk500::command(STK_CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
+int stk500::command(STK500::CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
 
     // If bootloader timed out, reset the device first
     if (isTimeout()) {
@@ -179,11 +172,11 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
 
     // Build up a message to send out
     char* data = new char[total_length];
-    data[0] = MESSAGE_START;
+    data[0] = STK500::MESSAGE_START;
     data[1] = (char) (sequenceNumber & 0xFF);
     data[2] = (char) ((message_length >> 8) & 0xFF);
     data[3] = (char) (message_length & 0xFF);
-    data[4] = TOKEN;
+    data[4] = STK500::TOKEN;
     data[5] = (char) command;
 
     // Fill with message data
@@ -201,183 +194,189 @@ int stk500::command(STK_CMD command, const char* arguments, int argumentsLength,
     delete[] data;
 
     // Read the response
-    char incomingData[256];
-    qint64 incomingRead;
     qint64 totalRead = 0;
-    int msgParseState = ST_START;
-    unsigned char checksum = 0x0;
-    char status = 0;
-    quint16 respLength = 0, respLength_st1 = 0;
+    quint16 respLength = 0;
     bool processed = false;
-    QString errorInfo = "";
+    QString errorInfo = "No Response";
+    QByteArray receivedData;
 
-    // For timing measurement purposes
-    qint64 commandStartTime = QDateTime::currentMSecsSinceEpoch();
-    qint64 time = commandStartTime;
-
-    while (!processed) {
+    do {
 
         /* Read in received response data */
-        incomingRead = port->read(incomingData, sizeof(incomingData));
-        if (incomingRead == -1) {
-            errorInfo = port->errorString();
-            break;
-        }
-
-        /* Increment total received bytes counter */
-        totalRead += incomingRead;
+        QByteArray newData = port->read(STK500_READ_TIMEOUT);
+        receivedData.append(newData);
 
         /* Handle command read timeout */
-        time = QDateTime::currentMSecsSinceEpoch();
-        if ((time - commandStartTime) > STK500_READ_TIMEOUT) {
-            if (errorInfo.isEmpty()) {
-                errorInfo = "Read timeout";
-            }
+        if (newData.isEmpty()) {
             break;
         }
 
-        /* If nothing read, process I/O to read in new data */
-        if (!incomingRead) {
-            port->waitForReadyRead(50);
-            continue;
+        /* Process full response */
+        errorInfo = readCommandResponse(command, receivedData, response, responseMaxLength);
+        if (errorInfo.startsWith("RESP=")) {
+            respLength = errorInfo.remove(0, 5).toInt();
+            processed = true;
         }
+    } while (!processed);
 
-        /* On error, skip further processing */
-        if (!errorInfo.isEmpty()) {
-            continue;
-        }
+    totalRead = receivedData.length();
 
-        // Update last command time
-        lastCmdTime = time;
-
-        /* Got data, process received bytes */
-        for (int i = 0; i < incomingRead; i++) {
-            unsigned char c = (unsigned char) incomingData[i];
-
-            /* Process the incoming byte data */
-            /* ============================== */
-
-            /* Update the checksum */
-            checksum ^= c;
-
-            switch (msgParseState) {
-                case ST_START:
-                    if (c == MESSAGE_START) {
-                        msgParseState = ST_GET_SEQ_NUM;
-                    }
-                    break;
-
-                case ST_GET_SEQ_NUM:
-                    if (c != sequenceNumber) {
-                        errorInfo = "Sequence error mismatch";
-                        break;
-                    }
-                    msgParseState = ST_MSG_SIZE_1;
-                    break;
-
-                case ST_MSG_SIZE_1:
-                    respLength = c << 8;
-                    msgParseState = ST_MSG_SIZE_2;
-                    break;
-
-                case ST_MSG_SIZE_2:
-                    respLength |= c;
-                    msgParseState = ST_GET_TOKEN;
-                    break;
-
-                case ST_GET_TOKEN:
-                    /* Restart if token check fails */
-                    if (c != TOKEN) {
-                        errorInfo = "Token check failed";
-                        break;
-                    }
-                    /* Restart if response length too short */
-                    if (respLength < 2) {
-                        errorInfo = "Response too short";
-                        break;
-                    }
-                    respLength -= 2; // Exclude command/status bytes
-                    msgParseState = ST_GET_CMD;
-                    break;
-
-                case ST_GET_CMD:
-                    if (c != command) {
-                        errorInfo = "Response command incorrect";
-                        break;
-                    }
-                    msgParseState = ST_GET_STATUS;
-                    break;
-
-                case ST_GET_STATUS:
-                    status = c;
-                    if (respLength) {
-                        msgParseState = ST_GET_DATA;
-                    } else {
-                        msgParseState = ST_GET_CHECK;
-                    }
-                    break;
-
-                case ST_GET_DATA:
-                    if (respLength_st1 < responseMaxLength) {
-                        response[respLength_st1] = c;
-                    }
-                    if (++respLength_st1 == respLength) {
-                        msgParseState = ST_GET_CHECK;
-                    }
-                    break;
-
-                case ST_GET_CHECK:
-                    /*
-                     * Check if the checksum matches
-                     * If checksum ^ expected == 0 it was correct
-                     * Nonzero indicates the checksum was incorrect
-                     * If this passes, continue processing the message data
-                     * If this fails, restart this stage from the beginning
-                     *
-                     * In addition, check for a valid message response
-                     */
-                    if (checksum != 0) {
-                        errorInfo = "Checksum error";
-                    } else {
-                        processed = true;
-                    }
-                    break;
-            }
-            /* ============================== */
-        }
-    }
-
-    // Increment sequence number
-    sequenceNumber++;
-    if (sequenceNumber > 0xFF) {
-        sequenceNumber = 0;
-    }
+    // Update command response time
+    lastCmdTime = QDateTime::currentMSecsSinceEpoch();
 
     // Handle (the lack of) the response
     QString cmdName = commandNames[command] + " (" + getHexText((uint) command) + ")";
     if (!processed) {
         // Log the error
-        if (errorInfo.isEmpty()) {
-            errorInfo = "None";
-        }
         QString errorMessage;
-        if (totalRead) {
-            errorMessage = QString("Invalid response for command %1: %2\nReceived: %3 bytes, at state %4 sequence %5")
-                    .arg(cmdName).arg(errorInfo).arg(totalRead).arg(msgParseState).arg(sequenceNumber);
-        } else {
-            errorMessage = QString("No response for command %1").arg(cmdName);
+        errorMessage = QString("Failed to execute command %1: %2\nReceived: %3 bytes, sequence %4")
+                .arg(cmdName).arg(errorInfo).arg(totalRead).arg(sequenceNumber);
+
+        const bool report_data = false;
+        if (report_data) {
+            errorMessage += "\n\n";
+            for (int i = 0; i < receivedData.length(); i++) {
+                errorMessage += "[";
+                errorMessage += QString::number((uint) (unsigned char) receivedData[i], 10);
+                errorMessage += "] ";
+            }
         }
 
+        // Reset next time
+        resetDelayed();
+
         throw ProtocolException(errorMessage);
-    } else if (status != STATUS_CMD_OK) {
-        // An error occurred processing the command
-        QString errorMessage = QString("Command %1 was not recognized or an error occurred processing it").arg(cmdName);
-        throw ProtocolException(errorMessage);
+
     } else {
+        // Success: increment sequence number
+        sequenceNumber++;
+        if (sequenceNumber > 0xFF) {
+            sequenceNumber = 0;
+        }
+
         // Success! Return the received response length.
-        //qDebug() << "Responsetime for command " << cmdCode << ": " << (time - commandStartTime) << "MS";
+        //qDebug() << "Command finished: " << cmdName;
         return respLength;
     }
+}
+
+QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input, char* response, int responseMaxLength) {
+    const int MIN_MSG_LEN = 8;
+    if (input.length() == 0) {
+        return "No response received";
+    }
+    if (input.length() < MIN_MSG_LEN) {
+        QString lenTxt = QString::number(input.length());
+        return QString("Response too short (%1 bytes)").arg(lenTxt);
+    }
+
+    int level = 0;
+    quint16 respLength;
+    QString errorMessage = "No message start token found";
+    for (int offset = 0; offset <= (input.length() - MIN_MSG_LEN); offset++) {
+        const unsigned char* data = (const unsigned char*) (input.data() + offset);
+        int dataLength = input.length() - offset;
+        // =======================================================
+
+        // Verify the start token is present
+        if (data[0] != STK500::MESSAGE_START) {
+            continue;
+        }
+
+        // Verify sequence number matches up
+        if (data[1] != this->sequenceNumber) {
+            if (level < 1) {
+                level = 1;
+                errorMessage = "Sequence number mismatch (";
+                errorMessage += QString::number(data[1], 10);
+                errorMessage += " != ";
+                errorMessage += QString::number(this->sequenceNumber, 10);
+                errorMessage += ")";
+            }
+            continue;
+        }
+
+        // Read and verify the message size parameter
+        respLength = data[2] << 8;
+        respLength |= data[3];
+        if (respLength < 2) {
+            if (level < 2) {
+                level = 2;
+                QString lenText = QString::number(respLength, 10);
+                errorMessage = QString("Message header length too short (len: %1)").arg(lenText);
+            }
+            continue;
+        }
+        if (respLength > (dataLength-6)) {
+            if (level < 2) {
+                level = 2;
+                QString lenText = QString::number(respLength, 10);
+                errorMessage = QString("Response too short: message header indicates "
+                                       "length longer than the response (len: %1)").arg(lenText);
+            }
+            continue;
+        }
+
+        // Token check
+        if (data[4] != STK500::TOKEN) {
+            if (level < 3) {
+                level = 3;
+                errorMessage = "Message token invalid (";
+                errorMessage += QString::number(data[4], 10);
+                errorMessage += " != ";
+                errorMessage += QString::number(STK500::TOKEN, 10);
+                errorMessage += ")";
+            }
+            continue;
+        }
+
+        // Command ID check
+        if (data[5] != command) {
+            if (level < 4) {
+                level = 4;
+                errorMessage = "Message command ID invalid (";
+                errorMessage += QString::number(data[5], 10);
+                errorMessage += " != ";
+                errorMessage += QString::number(command, 10);
+                errorMessage += ")";
+            }
+            continue;
+        }
+
+        // Status OK Check
+        if (data[6] != STK500::STATUS_CMD_OK) {
+            if (level < 5) {
+                level = 5;
+                errorMessage = "An error occurred while processing the command on the device";
+            }
+            continue;
+        }
+
+        // Verify CRC
+        unsigned char crc = 0x0;
+        quint16 msg_end_idx = (MIN_MSG_LEN - 3 + respLength);
+        for (quint16 i = 0; i < msg_end_idx; i++) {
+            crc ^= data[i];
+        }
+        if (data[msg_end_idx] != crc) {
+            if (level < 6) {
+                level = 6;
+                errorMessage = "Message CRC check failed (";
+                errorMessage += QString::number(data[msg_end_idx], 10);
+                errorMessage += " != ";
+                errorMessage += QString::number(crc, 10);
+                errorMessage += ")";
+            }
+            continue;
+        }
+
+        // All alright; read in the data and reply with RESP: [len]
+        memcpy(response, data + 7, std::min(responseMaxLength, (int) respLength));
+        errorMessage = QString("RESP=%1").arg(respLength-2);
+        break;
+
+    }
+    return errorMessage;
 }
 
 void stk500::loadAddress(quint32 address) {
@@ -389,11 +388,11 @@ void stk500::loadAddress(quint32 address) {
     arguments[1] = (char) ((address >> 16) & 0xFF);
     arguments[2] = (char) ((address >> 8) & 0xFF);
     arguments[3] = (char) ((address >> 0) & 0xFF);
-    command(LOAD_ADDRESS, arguments, sizeof(arguments), NULL, 0);
+    command(STK500::LOAD_ADDRESS, arguments, sizeof(arguments), NULL, 0);
     currentAddress = address;
 }
 
-void stk500::readData(STK_CMD data_command, quint32 address, char* dest, int destLen) {
+void stk500::readData(STK500::CMD data_command, quint32 address, char* dest, int destLen) {
     /* Load the address (if needed) */
     loadAddress(address);
 
@@ -404,7 +403,7 @@ void stk500::readData(STK_CMD data_command, quint32 address, char* dest, int des
     command(data_command, arguments, sizeof(arguments), dest, destLen);
 }
 
-void stk500::writeData(STK_CMD data_command, quint32 address, const char* src, int srcLen) {
+void stk500::writeData(STK500::CMD data_command, quint32 address, const char* src, int srcLen) {
     /* Load the address (if needed) */
     loadAddress(address);
 
@@ -423,7 +422,7 @@ void stk500::writeData(STK_CMD data_command, quint32 address, const char* src, i
 
 QString stk500::signOn() {
     char resp[100];
-    int name_length = command(SIGN_ON, NULL, 0, resp, sizeof(resp)) - 1;
+    int name_length = command(STK500::SIGN_ON, NULL, 0, resp, sizeof(resp)) - 1;
     if (resp[0] < name_length) {
         name_length = resp[0];
     }
@@ -432,7 +431,7 @@ QString stk500::signOn() {
 }
 
 void stk500::signOut() {
-    command(LEAVE_PROGMODE_ISP, NULL, 0, NULL, 0);
+    command(STK500::LEAVE_PROGMODE_ISP, NULL, 0, NULL, 0);
     signedOn = false;
 }
 
@@ -442,12 +441,14 @@ bool stk500::isSignedOn() {
 
 CardVolume stk500::SD_init() {
     CardVolume volume;
-    int respLen = command(INIT_SD_ISP, NULL, 0, (char*) &volume, sizeof(CardVolume));
+    int respLen = command(STK500::INIT_SD_ISP, NULL, 0, (char*) &volume, sizeof(CardVolume));
     if (respLen != sizeof(CardVolume)) {
         /* Wrong size received */
         QString errorMessage;
-        errorMessage.append("Unexpected response length for SD_Init command: received: ").append(respLen);
-        errorMessage.append(" bytes, expected: ").append(sizeof(CardVolume)).append(" bytes");
+        QString sz_rec = QString::number(respLen, 10);
+        QString sz_exp = QString::number((int) sizeof(CardVolume), 10);
+        errorMessage.append("Unexpected response length for SD_Init command: received: ").append(sz_rec);
+        errorMessage.append(" bytes, expected: ").append(sz_exp).append(" bytes");
         throw ProtocolException(errorMessage);
     }
     if (!volume.isInitialized) {
@@ -467,39 +468,39 @@ void stk500::writeSettings(PHN_Settings settings) {
 }
 
 void stk500::SD_readBlock(quint32 block, char* dest, int destLen) {
-    readData(READ_SD_ISP, block, dest, destLen);
+    readData(STK500::READ_SD_ISP, block, dest, destLen);
     currentAddress++;
 }
 
 void stk500::SD_writeBlock(quint32 block, const char* src, int srcLen, bool isFAT) {
-    writeData(isFAT ? PROGRAM_SD_FAT_ISP : PROGRAM_SD_ISP, block, src, srcLen);
+    writeData(isFAT ? STK500::PROGRAM_SD_FAT_ISP : STK500::PROGRAM_SD_ISP, block, src, srcLen);
     currentAddress++;
 }
 
 void stk500::FLASH_readPage(quint32 address, char* dest, int destLen) {
-    readData(READ_FLASH_ISP, address >> 1, dest, destLen);
+    readData(STK500::READ_FLASH_ISP, address >> 1, dest, destLen);
     currentAddress += destLen / 2;
 }
 
 void stk500::FLASH_writePage(quint32 address, const char* src, int srcLen) {
-    writeData(PROGRAM_FLASH_ISP, address >> 1, src, srcLen);
+    writeData(STK500::PROGRAM_FLASH_ISP, address >> 1, src, srcLen);
     currentAddress += srcLen / 2;
 }
 
 void stk500::EEPROM_read(quint32 address, char* dest, int destLen) {
-    readData(READ_EEPROM_ISP, address, dest, destLen);
+    readData(STK500::READ_EEPROM_ISP, address, dest, destLen);
     currentAddress += destLen;
 }
 
 void stk500::EEPROM_write(quint32 address, const char* src, int srcLen) {
-    writeData(PROGRAM_EEPROM_ISP, address, src, srcLen);
+    writeData(STK500::PROGRAM_EEPROM_ISP, address, src, srcLen);
     currentAddress += srcLen;
 }
 
 void stk500::RAM_read(quint16 address, char* dest, int destLen) {
     while (destLen) {
         int step = std::min(512, destLen);
-        readData(READ_RAM_ISP, address, dest, step);
+        readData(STK500::READ_RAM_ISP, address, dest, step);
         currentAddress += step;
         address += step;
         dest += step;
@@ -508,7 +509,7 @@ void stk500::RAM_read(quint16 address, char* dest, int destLen) {
 }
 
 void stk500::RAM_write(quint16 address, const char* src, int srcLen) {
-    writeData(PROGRAM_RAM_ISP, address, src, srcLen);
+    writeData(STK500::PROGRAM_RAM_ISP, address, src, srcLen);
     currentAddress += srcLen;
 }
 
@@ -517,7 +518,7 @@ quint8 stk500::RAM_readByte(quint16 address) {
     char arguments[2];
     arguments[0] = (char) ((address >> 8) & 0xFF);
     arguments[1] = (char) ((address >> 0) & 0xFF);
-    command(READ_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
+    command(STK500::READ_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
     return output;
 }
 
@@ -528,7 +529,7 @@ quint8 stk500::RAM_writeByte(quint16 address, quint8 value, quint8 mask) {
     arguments[1] = (char) ((address >> 0) & 0xFF);
     arguments[2] = mask;
     arguments[3] = value;
-    command(PROGRAM_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
+    command(STK500::PROGRAM_RAM_BYTE_ISP, arguments, sizeof(arguments), &output, 1);
     return output;
 }
 
@@ -545,13 +546,13 @@ quint16 stk500::ANALOG_read(quint8 pin) {
     unsigned char admux = (analog_reference << 6) | (pin & 0x07);
 
     /* Use the analog read command */
-    char arguments[3] = { adcsra, adcsrb, admux };
-    command(READ_ANALOG_ISP, arguments, sizeof(arguments), output, sizeof(output));
+    unsigned char arguments[3] = { adcsra, adcsrb, admux };
+    command(STK500::READ_ANALOG_ISP, (char*) arguments, sizeof(arguments), output, sizeof(output));
     return (output[0] << 8) | (output[1] & 0xFF);
 }
 
 void stk500::SPI_transfer(const char *src, char* dest, int length) {
-    command(TRANSFER_SPI_ISP, src-1, length+1, dest, dest ? length : 0);
+    command(STK500::TRANSFER_SPI_ISP, src-1, length+1, dest, dest ? length : 0);
 }
 
 /* ============================= Directory info =============================== */
@@ -564,7 +565,7 @@ QString DirectoryInfo::fileSizeTextLong() {
 }
 
 QString stk500::getTimeText(qint64 timeMillis) {
-    char* unit = "";
+    const char* unit = "";
     int time_trunc = (timeMillis / 1000);
     if (time_trunc < 60) {
         unit = "second";
@@ -634,7 +635,7 @@ QString stk500::getFileExt(const QString &filePath) {
 
 QString stk500::getSizeText(quint32 size) {
     float size_trunc = 0.0F;
-    char* unit = "";
+    const char* unit = "";
     if (size < 1024) {
         size_trunc = size;
         unit = "bytes";

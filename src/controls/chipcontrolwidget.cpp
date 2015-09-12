@@ -70,6 +70,12 @@ void ChipControlWidget::serialTaskFinished(stk500Task *task) {
     // Refresh reg variable and delete the task again
     ChipRegisters newReg = lastTask->reg;
     if (!lastTask->isSuccessful()) {
+        QStringList errorLines = lastTask->getErrorMessage().split("\n");
+        qDebug() << "";
+        for (int i = 0; i < errorLines.count(); i++) {
+            qDebug() << errorLines[i];
+        }
+
         if (newReg.hasUserChanges() && !lastTask->isCancelled()) {
             QMessageBox::critical(this, "Communication Error",
                                   "An error occurred while updating the device. "

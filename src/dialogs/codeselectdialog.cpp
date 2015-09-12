@@ -1,6 +1,7 @@
 #include "codeselectdialog.h"
 #include "ui_codeselectdialog.h"
 #include <QDebug>
+#include <QtMath>
 
 CodeSelectDialog::CodeSelectDialog(QWidget *parent) :
     QDialog(parent),
@@ -195,7 +196,7 @@ void CodeSelectDialog::detect_settings() {
     for (int i = header.length() - 1; i >= 0; i--) {
         QChar c = header.at(i);
         bool is_delim = false;
-        for (int di = 0; di < (sizeof(delims) / sizeof(QChar)); di++) {
+        for (int di = 0; di < (int) (sizeof(delims) / sizeof(QChar)); di++) {
             is_delim |= (c == delims[di]);
         }
         if (is_delim && varname.length() > 0) {
@@ -255,7 +256,7 @@ void CodeSelectDialog::apply_settings() {
 
     /* Add all bytes, limiting it to a given bytes per line */
     const int space_offset = 2;
-    int total_entries = ceil((double) data.length() / (double) data_size);
+    int total_entries = qCeil((double) data.length() / (double) data_size);
     unsigned char entry_buff[4];
     int data_index = 0;
     int entry_index = 0;
@@ -267,7 +268,7 @@ void CodeSelectDialog::apply_settings() {
         entry_index++;
 
         /* Grab the next entry of data */
-        for (int i = 0; i < sizeof(entry_buff); i++) {
+        for (int i = 0; i < (int) sizeof(entry_buff); i++) {
             if (i >= data_size || data_index >= data.length()) {
                 entry_buff[i] = 0x00;
             } else {

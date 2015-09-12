@@ -1,6 +1,6 @@
 #include "colorselect.h"
 #include <QVBoxLayout>
-#include <qDebug>
+#include <QDebug>
 
 ColorSelect::ColorSelect(QWidget *parent) :
     QWidget(parent)
@@ -55,7 +55,8 @@ void ColorSelect::setColorMode(bool trueColor, int colorCount) {
             // Add items to the list to match the requested color count
             // Resets colors and adds any required items
             for (int i = 0; i < colorCount; i++) {
-                setColor(i, QColor(0xFF, 0xFF, 0xFF));
+                QColor c(0xFF, 0xFF, 0xFF);
+                setColor(i, c);
             }
 
         }
@@ -69,7 +70,8 @@ void ColorSelect::setColor(int index, QColor &color) {
     } else if (index > list->count()) {
         // Recursively set colors before this one to fill empty space
         // Should technically never be used; is a safety mechanism
-        setColor(index - 1, QColor(0xFF, 0xFF, 0xFF));
+        QColor c(0xFF, 0xFF, 0xFF);
+        setColor(index - 1, c);
     }
     // Set up the item color
     QListWidgetItem *item = list->item(index);
