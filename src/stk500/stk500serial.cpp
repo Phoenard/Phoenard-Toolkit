@@ -306,7 +306,7 @@ void stk500_ProcessThread::run() {
         /* Run process loop while not being closed */
         bool needSignOn = true;
         bool hasData = false;
-        qint64 start_time;
+        qint64 start_time = QDateTime::currentMSecsSinceEpoch();
         long currSerialBaud = 0;
         bool wasIdling = true;
         while (!this->closeRequested) {

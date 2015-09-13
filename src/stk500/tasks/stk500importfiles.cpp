@@ -99,7 +99,7 @@ void stk500ImportFiles::importFile(DirectoryEntryPtr dirStartPtr, QString source
         quint32 cluster_buffer[cluster_buffer_len];
         quint32 cluster_remaining = 0;
         bool isFirstCluster = true;
-        quint32 cluster;
+        quint32 cluster = 0;
         while (remaining > 0) {
 
             if (!cluster_remaining) {

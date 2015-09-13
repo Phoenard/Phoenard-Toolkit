@@ -52,7 +52,7 @@ char* stk500sd::cacheBlock(quint32 block, bool readBlock, bool markDirty, bool i
      * At the same time track which cache has the lowest use counter
      */
     int useMin = 0xFFFF;
-    BlockCache *selected;
+    BlockCache *selected = &_cache[0];
     for (int i = 0; i < SD_CACHE_CNT; i++) {
         // Is it the block requested? Return right away!
         if (_cache[i].block == block) {

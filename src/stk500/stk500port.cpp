@@ -3,13 +3,15 @@
 bool stk500Port::open(const QString &portName) {
     /* Initialize the port */
     port.setPortName(portName);
-    port.setReadBufferSize(4096);
-    port.setSettingsRestoredOnClose(false);
-    port.setBaudRate(QSerialPort::Baud115200);
-    port.setFlowControl(QSerialPort::NoFlowControl);
-    port.setParity(QSerialPort::NoParity);
     bool success = port.open(QIODevice::ReadWrite);
-    if (success) port.clearError();
+    if (success) {
+        port.setReadBufferSize(4096);
+        port.setSettingsRestoredOnClose(false);
+        port.setBaudRate(QSerialPort::Baud115200);
+        port.setFlowControl(QSerialPort::NoFlowControl);
+        port.setParity(QSerialPort::NoParity);
+        port.clearError();
+    }
     return success;
 }
 
