@@ -205,7 +205,7 @@
   <customwidget>
    <class>ImageViewer</class>
    <extends>QWidget</extends>
-   <header>controls/imageviewer.h</header>
+   <header>imageviewer.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,5 +1,5 @@
 #include "portselectbox.h"
-#include "stk500/stk500port.h"
+#include "stk500port.h"
 
 PortSelectBox::PortSelectBox(QWidget *parent) :
     QComboBox(parent)

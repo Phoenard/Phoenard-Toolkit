@@ -860,47 +860,47 @@
   <customwidget>
    <class>ImageViewer</class>
    <extends>QWidget</extends>
-   <header>controls/imageviewer.h</header>
+   <header>imageviewer.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>MenuButton</class>
    <extends>QToolButton</extends>
-   <header>controls/menubutton.h</header>
+   <header>menubutton.h</header>
   </customwidget>
   <customwidget>
    <class>SDBrowserWidget</class>
    <extends>QTreeWidget</extends>
-   <header>controls/sdbrowserwidget.h</header>
+   <header>sdbrowserwidget.h</header>
   </customwidget>
   <customwidget>
    <class>ColorSelect</class>
    <extends>QWidget</extends>
-   <header>controls/colorselect.h</header>
+   <header>colorselect.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>serialmonitorwidget</class>
    <extends>QWidget</extends>
-   <header>controls/serialmonitorwidget.h</header>
+   <header>serialmonitorwidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>SketchListWidget</class>
    <extends>QWidget</extends>
-   <header>controls/sketchlistwidget.h</header>
+   <header>sketchlistwidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>ChipControlWidget</class>
    <extends>QWidget</extends>
-   <header>controls/chipcontrolwidget.h</header>
+   <header>chipcontrolwidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PortSelectBox</class>
    <extends>QComboBox</extends>
-   <header>controls/portselectbox.h</header>
+   <header>portselectbox.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -14,6 +14,11 @@ TEMPLATE = app
 
 win32:RC_ICONS += App_Icon.ico
 
+INCLUDEPATH += $$PWD/controls \
+               $$PWD/dialogs \
+               $$PWD/imaging \
+               $$PWD/stk500
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     stk500/stk500.cpp \
