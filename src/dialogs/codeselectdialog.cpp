@@ -249,6 +249,7 @@ void CodeSelectDialog::apply_settings() {
         text.append("long");
     }
     text.append(" ").append(ui->varnameText->text());
+    text.append("[]");
     if (ui->progmemCheck->isChecked()) {
         text.append(" PROGMEM");
     }
