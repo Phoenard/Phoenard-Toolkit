@@ -242,6 +242,14 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
             }
         }
 
+        const bool log_errors = true;
+        if (log_errors) {
+            QStringList errorLines = errorMessage.split("\n");
+            for (int i = 0; i < errorLines.count(); i++) {
+                qDebug() << errorLines[i].toStdString().c_str();
+            }
+        }
+
         // Reset next time
         resetDelayed();
 

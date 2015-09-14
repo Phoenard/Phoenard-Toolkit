@@ -161,6 +161,7 @@ ChipRegisters::ChipRegisters() {
     memset(regDataLast, 0, sizeof(regDataLast));
     memset(regDataRead, 0, sizeof(regDataRead));
     memset(regDataError, 0, sizeof(regDataError));
+    analogDataIndex = 0;
 }
 
 bool ChipRegisters::changed(int address) {
