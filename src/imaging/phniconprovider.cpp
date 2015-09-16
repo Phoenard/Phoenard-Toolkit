@@ -31,9 +31,9 @@ QIcon PHNIconProvider::getIcon(const QString &filePath) {
             QString tmpFilePath = stk500::getTempFile("tmp" + extension);
             QFile tmpFile(tmpFilePath);
             if (tmpFile.open(QFile::WriteOnly)) {
-                icon = fileProvider.icon(QFileInfo(tmpFile));
                 tmpFile.close();
-                tmpFile.remove();
+
+                icon = fileProvider.icon(QFileInfo(tmpFile));
             } else {
                 icon = fileProvider.icon(QFileIconProvider::File);
             }
