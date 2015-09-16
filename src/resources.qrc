@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/">
+        <file>fonts/OpenSans-Regular.ttf</file>
+        <file>data/registers.csv</file>
+        <file>data/pinmapping.csv</file>
+        <file>data/commands.csv</file>
         <file>icons/serialmonitor.png</file>
         <file>icons/Icon.png</file>
         <file>icons/memories.png</file>
@@ -31,9 +35,6 @@
         <file>icons/sketchhex.png</file>
         <file>icons/sketchski.png</file>
         <file>icons/filelcd.png</file>
-        <file>data/registers.csv</file>
-        <file>data/pinmapping.csv</file>
-        <file>data/commands.csv</file>
         <file>icons/control.png</file>
         <file>icons/spi.png</file>
         <file>icons/pins.png</file>

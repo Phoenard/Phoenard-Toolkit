@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QFontDatabase>
 
 int main(int argc, char *argv[])
 {
@@ -58,6 +59,9 @@ int main(int argc, char *argv[])
         printf(program.firmwareVersion().toStdString().c_str());
         return 0;
     }
+
+    // Load fonts before GUI launches
+    QFontDatabase::addApplicationFont(":/fonts/OpenSans-Regular.ttf");
 
     // Run main application
     MainWindow w;

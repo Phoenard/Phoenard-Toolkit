@@ -6,10 +6,11 @@
 MenuButton::MenuButton(QWidget *parent) :
     QToolButton(parent) {
 
-    QFont font = this->font();
-    font.setPointSize(7);
+    // Set default font
+    QFont font("Open Sans", 7);
     this->setFont(font);
 
+    // Set default menu button size
     this->setMinimumSize(48, 50);
     _isTab = false;
     _isHover = false;
@@ -133,5 +134,5 @@ void MenuButton::paintEvent(QPaintEvent *) {
 
         painter.drawPixmap((this->width() - pixmap.width()) / 2, 4, pixmap);
     }
-    painter.drawText(0, 23, width(), height() - 13, Qt::AlignCenter, this->text());
+    painter.drawText(0, 22, width(), height() - 13, Qt::AlignCenter, this->text());
 }
