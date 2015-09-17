@@ -58,31 +58,25 @@ void MenuButton::paintEvent(QPaintEvent *) {
     }
 
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     QPainterPath buttonShape;
     buttonShape.setFillRule(Qt::WindingFill);
 
     // Winding clockwise
     if (_isTab) {
-        buttonShape.moveTo(0, shape_height);
-        buttonShape.lineTo(0, edge_round_size);
-        buttonShape.arcTo(0, 0, edge_w, edge_w, 180, -90);
-        buttonShape.lineTo(width() - 1 - edge_round_size, 0);
-        buttonShape.arcTo(width() - edge_w, 0, edge_w, edge_w, 90, -90);
-        buttonShape.lineTo(width() - 1, shape_height);
+        buttonShape.moveTo(0.5, shape_height+0.5);
+        buttonShape.lineTo(0.5, edge_round_size+0.5);
+        buttonShape.arcTo(0.5, 0.5, edge_w, edge_w, 180, -90);
+        buttonShape.lineTo(width() - 1 - edge_round_size+0.5, 0.5);
+        buttonShape.arcTo(width() - edge_w+0.5, 0.5, edge_w-1, edge_w, 90, -90);
+        buttonShape.lineTo(width() - 0.5, shape_height+0.5);
         if (!isChecked()) {
-            buttonShape.lineTo(0, shape_height);
+            buttonShape.lineTo(0.5, shape_height+0.5);
         }
     } else {
         // Start bottom-left after the first curve
-        buttonShape.moveTo(0, shape_height - edge_round_size);
-        buttonShape.lineTo(0, edge_round_size);
-        buttonShape.arcTo(0, 0, edge_w, edge_w, 180, -90);
-        buttonShape.lineTo(width() - 1 - edge_round_size, 0);
-        buttonShape.arcTo(width() - edge_w, 0, edge_w, edge_w, 90, -90);
-        buttonShape.lineTo(width() - 1, shape_height - edge_round_size);
-        buttonShape.arcTo(width() - edge_w, shape_height - edge_w, edge_w, edge_w, 0, -90);
-        buttonShape.lineTo(edge_round_size + 1, shape_height - 1);
-        buttonShape.arcTo(0, shape_height - edge_w, edge_w, edge_w, 270, -90);
+        buttonShape.addRoundedRect(0.5, 0.5, width()-1, shape_height,
+                                   edge_round_size, edge_round_size);
     }
 
     if (!isEnabled()) {
@@ -111,10 +105,16 @@ void MenuButton::paintEvent(QPaintEvent *) {
         } else {
             bottomColor = palette().color(QPalette::Inactive, QPalette::Button);
         }
+        if (isDown()) {
+            bottomColor = PHNButton::getColorFact(bottomColor, 0.8);
+        }
 
-        // Reversed gradient when pressed down
-        QLinearGradient gradient(0, 0, 0, 35);
+        // Draw using a button gradient
+        qreal grad_mid = 0.45;
+        QLinearGradient gradient(0, 0, 0, height());
         gradient.setColorAt(0, topColor);
+        gradient.setColorAt(grad_mid-0.01, PHNButton::getGradientFactor(topColor, bottomColor));
+        gradient.setColorAt(grad_mid+0.01, PHNButton::getGradientFactor(bottomColor, topColor));
         gradient.setColorAt(1, bottomColor);
 
         QBrush brush(gradient);

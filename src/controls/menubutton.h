@@ -3,6 +3,7 @@
 
 #include <QToolButton>
 #include <QPaintEvent>
+#include "phnbutton.h"
 
 class MenuButton : public QToolButton
 {

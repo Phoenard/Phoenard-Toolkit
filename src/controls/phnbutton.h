@@ -13,16 +13,15 @@ public:
     void leaveEvent(QEvent *event);
 
     static void drawBase(QWidget *widget, bool isHover, bool isDown);
+    static QColor getGradientFactor(const QColor &ca, const QColor &cb);
+    static QColor getColorFact(const QColor &c, qreal factor);
+    static QColor getColorFact(const QColor &c, qreal fr, qreal fg, qreal fb);
 
 signals:
 
 public slots:
 
 private:
-    static QColor getGradientFactor(const QColor &ca, const QColor &cb);
-    static QColor getColorFact(const QColor &c, qreal factor);
-    static QColor getColorFact(const QColor &c, qreal fr, qreal fg, qreal fb);
-
     bool isMouseOver;
 
 };
