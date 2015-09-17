@@ -20,6 +20,11 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     ui->outputImage->setVisible(false);
     resetScreen();
 
+    // Setup fonts
+    QFont serialFont("Inconsolata", 10);
+    ui->outputText->setFont(serialFont);
+    ui->messageTxt->setFont(serialFont);
+
     // Attach right-click menu to the output image viewer
     ui->outputImage->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->outputImage, SIGNAL(customContextMenuRequested(const QPoint&)),

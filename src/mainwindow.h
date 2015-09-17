@@ -99,5 +99,6 @@ private:
 };
 
 /* Global functions used during startup */
+void loadFont(const QString& fontPath);
 
 #endif // MAINWINDOW_H

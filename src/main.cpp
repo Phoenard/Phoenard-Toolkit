@@ -61,11 +61,24 @@ int main(int argc, char *argv[])
     }
 
     // Load fonts before GUI launches
-    QFontDatabase::addApplicationFont(":/fonts/OpenSans-Regular.ttf");
+    loadFont(":/fonts/OpenSans-Regular.ttf");
+    loadFont(":/fonts/Inconsolata-Regular.ttf");
 
     // Run main application
     MainWindow w;
     w.show();
 
     return app.exec();
+}
+
+void loadFont(const QString& fontPath) {
+    const bool log_font_names = false;
+    int id = QFontDatabase::addApplicationFont(fontPath);
+    if (log_font_names) {
+        QStringList families = QFontDatabase::applicationFontFamilies(id);
+        qDebug() << "Families of font:" << fontPath;
+        for (int i = 0; i < families.count(); i++) {
+            qDebug() << " " << families[i];
+        }
+    }
 }

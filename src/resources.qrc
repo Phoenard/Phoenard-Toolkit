@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>fonts/OpenSans-Regular.ttf</file>
+        <file>fonts/Inconsolata-Regular.ttf</file>
         <file>data/registers.csv</file>
         <file>data/pinmapping.csv</file>
         <file>data/commands.csv</file>
