@@ -195,11 +195,11 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
 
     // Read the response
     qint64 totalRead = 0;
+    qint64 cmdStartTime = QDateTime::currentMSecsSinceEpoch();
     quint16 respLength = 0;
     bool processed = false;
     QString errorInfo = "No Response";
     QByteArray receivedData;
-
     do {
 
         /* Read in received response data */
@@ -207,7 +207,8 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
         receivedData.append(newData);
 
         /* Handle command read timeout */
-        if (newData.isEmpty()) {
+        lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+        if (newData.isEmpty() || ((lastCmdTime-cmdStartTime) > STK500_READ_TIMEOUT)) {
             break;
         }
 
@@ -217,12 +218,14 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
             respLength = errorInfo.remove(0, 5).toInt();
             processed = true;
         }
+
+        /* Abort if too much data is received (ERR_OVERFLOW) */
+        if (receivedData.length() > 800) {
+            break;
+        }
     } while (!processed);
 
     totalRead = receivedData.length();
-
-    // Update command response time
-    lastCmdTime = QDateTime::currentMSecsSinceEpoch();
 
     // Handle (the lack of) the response
     QString cmdName = commandNames[command] + " (" + getHexText((uint) command) + ")";

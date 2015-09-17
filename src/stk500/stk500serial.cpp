@@ -336,6 +336,9 @@ void stk500_ProcessThread::run() {
                         }
                     } catch (ProtocolException &) {}
 
+                    // Cancel all pending tasks
+                    this->cancelTasks();
+
                     this->owner->notifySerialOpened(this);
                     port.setBaudRate(currSerialBaud);
                     updateStatus("[Serial] Active");
