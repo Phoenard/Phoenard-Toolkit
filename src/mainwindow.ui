@@ -56,7 +56,7 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="spacing">
-           <number>4</number>
+           <number>2</number>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -73,14 +73,14 @@
           <item>
            <widget class="PortSelectBox" name="port_nameBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>0</width>
+              <width>100</width>
               <height>22</height>
              </size>
             </property>
@@ -99,7 +99,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="port_toggleBtn">
+           <widget class="PHNButton" name="port_toggleBtn">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -905,8 +905,13 @@
   </customwidget>
   <customwidget>
    <class>PortSelectBox</class>
-   <extends>QComboBox</extends>
+   <extends>QPushButton</extends>
    <header>portselectbox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PHNButton</class>
+   <extends>QPushButton</extends>
+   <header>phnbutton.h</header>
   </customwidget>
  </customwidgets>
  <resources>

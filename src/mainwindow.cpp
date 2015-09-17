@@ -109,12 +109,11 @@ void MainWindow::closeEvent (QCloseEvent *)
 
 void MainWindow::openSerial()
 {
-    int index = ui->port_nameBox->currentIndex();
-    if (index == -1) {
+    QString portName = ui->port_nameBox->portName();
+    if (portName.isEmpty()) {
         serial->close();
     } else {
-        QString serialName = ui->port_nameBox->itemText(index);
-        serial->open(serialName);
+        serial->open(portName);
         ui->port_toggleBtn->setText("Close");
     }
     /* Notify current tab */

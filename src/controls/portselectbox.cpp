@@ -4,6 +4,41 @@
 PortSelectBox::PortSelectBox(QWidget *parent) :
     QComboBox(parent)
 {
+    isMouseOver = false;
+}
+
+void PortSelectBox::paintEvent(QPaintEvent *) {
+   PHNButton::drawBase(this, isMouseOver, isDropDown);
+   QPainter painter(this);
+
+   // Draw an arrow pointing down
+   const int tri_s = 5;
+   const int tri_x = width() - tri_s - 5;
+   const int d_s = isDropDown ? 1 : 0;
+   const int tri_y = height() / 2 - 2 + d_s;
+   QBrush tri_b(Qt::black);
+   QPainterPath tri_path;
+   tri_path.moveTo(tri_x-tri_s, tri_y);
+   tri_path.lineTo(tri_x+tri_s, tri_y);
+   tri_path.lineTo(tri_x, tri_y+tri_s);
+   tri_path.lineTo(tri_x-tri_s, tri_y);
+   painter.fillPath(tri_path, tri_b);
+
+   // Draw text of the currently selected port
+   const int txt_w = tri_x-tri_s-4;
+   QFontMetrics metrics(painter.font());
+   QString text = metrics.elidedText(portName(), Qt::ElideRight, txt_w);
+   painter.drawText(4, 2+d_s, txt_w, height()-4, Qt::AlignVCenter, text);
+}
+
+void PortSelectBox::enterEvent(QEvent *event) {
+    isMouseOver = true;
+    QComboBox::enterEvent(event);
+}
+
+void PortSelectBox::leaveEvent(QEvent *event) {
+    isMouseOver = false;
+    QComboBox::leaveEvent(event);
 }
 
 void PortSelectBox::refreshPorts() {
@@ -41,7 +76,19 @@ void PortSelectBox::refreshPorts() {
     }
 }
 
+QString PortSelectBox::portName() {
+    int idx = currentIndex();
+    return (idx == -1) ? "" : itemText(idx);
+}
+
 void PortSelectBox::showPopup() {
     refreshPorts();
+    isDropDown = true;
+    update();
     QComboBox::showPopup();
+}
+
+void PortSelectBox::hidePopup() {
+  QComboBox::hidePopup();
+  isDropDown = false;
 }

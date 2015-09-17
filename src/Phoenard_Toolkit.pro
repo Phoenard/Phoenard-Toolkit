@@ -61,7 +61,8 @@ SOURCES += main.cpp\
     imaging/phniconprovider.cpp \
     controls/chipcontrolwidget.cpp \
     controls/portselectbox.cpp \
-    stk500/stk500port.cpp
+    stk500/stk500port.cpp \
+    controls/phnbutton.cpp
 
 HEADERS  += mainwindow.h \
     stk500/stk500.h \
@@ -95,7 +96,8 @@ HEADERS  += mainwindow.h \
     stk500/stk500service.h \
     stk500/programdata.h \
     controls/portselectbox.h \
-    stk500/stk500port.h
+    stk500/stk500port.h \
+    controls/phnbutton.h
 
 FORMS    += mainwindow.ui \
     dialogs/progressdialog.ui \

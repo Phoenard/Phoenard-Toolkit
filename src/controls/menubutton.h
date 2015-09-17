@@ -9,10 +9,10 @@ class MenuButton : public QToolButton
     Q_OBJECT
 public:
     explicit MenuButton(QWidget *parent = 0);
-    void paintEvent(QPaintEvent *e);
     bool isTab() { return _isTab; }
     void setIsTab(bool isTab);
 
+    void paintEvent(QPaintEvent *e);
     void enterEvent(QEvent *event);
     void leaveEvent(QEvent *event);
 
