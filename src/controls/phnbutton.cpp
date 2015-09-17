@@ -5,15 +5,22 @@ PHNButton::PHNButton(QWidget *parent) :
     QPushButton(parent)
 {
     isMouseOver = false;
+
+    setStyleSheet("QWidget {"
+                  "  border: 0px solid black;"
+                  "  margin: 0px 0px 0px 0px;"
+                  "}");
 }
 
 void PHNButton::enterEvent(QEvent* event) {
     isMouseOver = true;
+    update();
     QPushButton::enterEvent(event);
 }
 
 void PHNButton::leaveEvent(QEvent* event) {
     isMouseOver = false;
+    update();
     QPushButton::leaveEvent(event);
 }
 

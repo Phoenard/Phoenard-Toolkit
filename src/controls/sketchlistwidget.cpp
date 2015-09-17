@@ -10,6 +10,9 @@ SketchListWidget::SketchListWidget(QWidget *parent) :
     ui->setupUi(this);
     setStyleSheet("QListWidget::item { border: 5px solid black; }");
 
+    // Disable the blue outline on OS X
+    ui->list->setAttribute(Qt::WA_MacShowFocusRect, false);
+
     loadIcon = QIcon(":/icons/sketchloading.png");
 
     stopLoadingIcons();

@@ -1,11 +1,17 @@
 #include "portselectbox.h"
 #include "stk500port.h"
+#include <QListView>
 
 PortSelectBox::PortSelectBox(QWidget *parent) :
     QComboBox(parent)
 {
     isMouseOver = false;
     isDropDown = false;
+
+    setStyleSheet("QWidget {"
+                  "  border: 0px solid black;"
+                  "  margin: 0px 0px 0px 0px;"
+                  "}");
 }
 
 void PortSelectBox::paintEvent(QPaintEvent *) {
@@ -28,17 +34,19 @@ void PortSelectBox::paintEvent(QPaintEvent *) {
    // Draw text of the currently selected port
    const int txt_w = tri_x-tri_s-4;
    QFontMetrics metrics(painter.font());
-   QString text = metrics.elidedText(portName(), Qt::ElideRight, txt_w);
-   painter.drawText(4, 2+d_s, txt_w, height()-4, Qt::AlignVCenter, text);
+   QString name = metrics.elidedText(portName(), Qt::ElideLeft, txt_w);
+   painter.drawText(4, 2+d_s, txt_w, height()-4, Qt::AlignVCenter, name);
 }
 
 void PortSelectBox::enterEvent(QEvent *event) {
     isMouseOver = true;
+    update();
     QComboBox::enterEvent(event);
 }
 
 void PortSelectBox::leaveEvent(QEvent *event) {
     isMouseOver = false;
+    update();
     QComboBox::leaveEvent(event);
 }
 
