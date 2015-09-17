@@ -8,6 +8,7 @@ MenuButton::MenuButton(QWidget *parent) :
 
     // Set default font
     QFont font("Open Sans", 7);
+    font.setPixelSize(10);
     this->setFont(font);
 
     // Set default menu button size

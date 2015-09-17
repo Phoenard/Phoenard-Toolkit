@@ -17,6 +17,9 @@ SDBrowserWidget::SDBrowserWidget(QWidget *parent)
     this->setEditTriggers(EditKeyPressed | SelectedClicked);
     this->setExpandsOnDoubleClick(true);
 
+    // Disable the blue outline on OS X
+    this->setAttribute(Qt::WA_MacShowFocusRect, false);
+
     // Slots
     connect(this, SIGNAL(itemExpanded(QTreeWidgetItem*)), SLOT(on_itemExpanded(QTreeWidgetItem*)));
     connect(this, SIGNAL(itemChanged(QTreeWidgetItem*,int)), SLOT(on_itemChanged(QTreeWidgetItem*,int)));
