@@ -122,7 +122,6 @@ void MainWindow::openSerial()
 
 void MainWindow::on_port_nameBox_activated(int)
 {
-    qDebug() << "ACTIVATED";
     openSerial();
 }
 

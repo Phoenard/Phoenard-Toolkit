@@ -20,7 +20,8 @@ void PHNButton::leaveEvent(QEvent* event) {
 void PHNButton::paintEvent(QPaintEvent *) {
     drawBase(this, isMouseOver, isDown());
     QPainter painter(this);
-    painter.drawText(2, 2, width()-5, height()-5, Qt::AlignHCenter | Qt::AlignVCenter, this->text());
+    int d_s = isDown() ? 1 : 0;
+    painter.drawText(2, 2+d_s, width()-5, height()-5, Qt::AlignHCenter | Qt::AlignVCenter, this->text());
 }
 
 void PHNButton::drawBase(QWidget *widget, bool isHover, bool isDown) {
@@ -33,10 +34,11 @@ void PHNButton::drawBase(QWidget *widget, bool isHover, bool isDown) {
     buttonShape.addRoundedRect(0.5, 0.5, widget->width()-1, widget->height()-1, rad, rad);
 
     QColor face_color(210, 210, 210);
+    qreal grad_step = 1.0 / (qreal) widget->height();
     qreal grad_mid = 0.5;
     if (isDown) {
         face_color = getColorFact(face_color, 0.8);
-        grad_mid = 0.57;
+        grad_mid += grad_step;
     } else if (isHover) {
         face_color = getColorFact(face_color, 0.95, 0.95, 1.3);
     }
@@ -48,8 +50,8 @@ void PHNButton::drawBase(QWidget *widget, bool isHover, bool isDown) {
     if (isDown) {
         // Add small shadow when pressed down
         QColor bg(0, 0, 0);
-        gradient.setColorAt(0, bg);
-        gradient.setColorAt(0.2, fc1);
+        gradient.setColorAt(1.0 * grad_step, bg);
+        gradient.setColorAt(2.0 * grad_step, fc1);
     } else {
         // Otherwise, no shadow
         gradient.setColorAt(0, fc1);

@@ -7,6 +7,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QPainter>
+#include <QMouseEvent>
 
 class PortSelectBox : public QComboBox
 {
@@ -21,6 +22,7 @@ public:
     virtual void paintEvent(QPaintEvent *e);
     virtual void enterEvent(QEvent *event);
     virtual void leaveEvent(QEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
 
 private:
     bool isMouseOver;

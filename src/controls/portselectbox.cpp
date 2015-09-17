@@ -5,6 +5,7 @@ PortSelectBox::PortSelectBox(QWidget *parent) :
     QComboBox(parent)
 {
     isMouseOver = false;
+    isDropDown = false;
 }
 
 void PortSelectBox::paintEvent(QPaintEvent *) {
@@ -39,6 +40,13 @@ void PortSelectBox::enterEvent(QEvent *event) {
 void PortSelectBox::leaveEvent(QEvent *event) {
     isMouseOver = false;
     QComboBox::leaveEvent(event);
+}
+
+void PortSelectBox::mouseReleaseEvent(QMouseEvent *event) {
+    if ((count() == 0) && (event->button() == Qt::LeftButton)) {
+        isDropDown = false;
+        update();
+    }
 }
 
 void PortSelectBox::refreshPorts() {
