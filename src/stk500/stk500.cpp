@@ -104,7 +104,7 @@ void stk500::setBaudRate(qint32 baud) {
     reg.getChangedRange(&address, &dataLength);
 
     /* Logging for debugging */
-    const bool log_ram_changes = true;
+    const bool log_ram_changes = false;
     if (log_ram_changes) {
         qDebug() << "WRITING OUT " << address << " LEN " << dataLength;
         for (int i = 0; i < dataLength; i++) {
@@ -137,6 +137,9 @@ void stk500::setBaudRate(qint32 baud) {
     port->clear();
     currentAddress += dataLength;
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+
+    // Verify that the connection is preserved
+    signOn();
 }
 
 void stk500::setState(STK500::State newState, qint32 baudRate) {
@@ -190,8 +193,34 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         // Simply sign on to verify current connection / put into firmware mode
         signOn();
 
-        // Switch firmware baud rate
-        setBaudRate(baudRate);
+        // Switch firmware baud rate if non-standard
+        this->setBaudRate(baudRate);
+
+        // Switch to multi-serial mode for some states
+        // Also turn devices on/off as required
+        int multiSerialIdx = -1;
+        if (newState == STK500::SIM_GSM) {
+            multiSerialIdx = 1;
+            //TODO: Turn on SIM
+
+        } else if (newState == STK500::SIM_GPS) {
+            multiSerialIdx = 3;
+            //TODO: Turn on SIM (and GPS?)
+
+        } else if (newState == STK500::WIFI) {
+            multiSerialIdx = 2;
+            //TODO: Turn off Bluetooth/turn on WiFi
+
+        } else if (multiSerialIdx == STK500::BLUETOOTH) {
+            multiSerialIdx = 2;
+            //TODO: Turn off WiFi/turn on Bluetooth
+
+        }
+
+        // Switch to multi-serial mode
+        if (multiSerialIdx != -1) {
+            SERIAL_begin(0, multiSerialIdx);
+        }
     }
 
     // Done!
@@ -209,10 +238,10 @@ STK500::State stk500::state() {
 QString stk500::stateName() {
     switch (currentState) {
     case STK500::SKETCH: return "Sketch";
-    case STK500::FIRMWARE: return "Firmware";
+    case STK500::FIRMWARE: return "STK500";
     case STK500::SERVICE: return "Service";
-    case STK500::SIM_GSM: return "Sim908 (GSM)";
-    case STK500::SIM_GPS: return "Sim908 (GPS)";
+    case STK500::SIM_GSM: return "Sim908 GSM";
+    case STK500::SIM_GPS: return "Sim908 GPS";
     case STK500::BLUETOOTH: return "Bluetooth";
     case STK500::WIFI: return "WiFi";
     default:
@@ -225,10 +254,6 @@ bool stk500::isFirmwareTimeout() {
         return true;
     }
     return firmwareIdleTime() > STK500_DEVICE_TIMEOUT;
-}
-
-bool stk500::isServiceMode() {
-    return currentState == STK500::SERVICE;
 }
 
 int stk500::command(STK500::CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
@@ -671,10 +696,29 @@ void stk500::SPI_transfer(const char *src, char* dest, int length) {
     command(STK500::TRANSFER_SPI_ISP, src-1, length+1, dest, dest ? length : 0);
 }
 
-void stk500::SERIAL_begin(quint8 serialA, quint8 serialB) {
-    char arguments[2] = {(char) serialA, (char) serialB};
+void stk500::SERIAL_begin(int serialIdxA, int serialIdxB) {
+    ChipRegisters reg;
+    int serial[2] = {serialIdxA, serialIdxB};
+    char arguments[4];
+    for (int i = 0; i < 2; i++) {
+        // Acquire address to first UART register
+        QString serialN = QString::number(serial[i]);
+        QString regName = QString("UCSR%1A").arg(serialN);
+        int registerAddr = reg.findRegisterAddress(regName);
+        arguments[2*i+0] = (char) (registerAddr & 0xFF);
+        arguments[2*i+1] = (char) (registerAddr >> 8);
+
+        // Initialize baud rate if not self
+        if (serial[i] != 0) {
+            reg.setupUART(serial[i], port->baudRate());
+        }
+    }
+
+    // Write out the register changes
+    this->reg().write(reg);
+
+    // Set device to multi-serial mode (this command has no response)
     commandWrite(STK500::MULTISERIAL_ISP, arguments, sizeof(arguments));
-    /* This function has no response */
 }
 
 /* ============================= Directory info =============================== */

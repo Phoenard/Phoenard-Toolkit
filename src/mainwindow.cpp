@@ -698,3 +698,8 @@ void MainWindow::on_control_firmwareBtn_clicked()
         delete tasks[i];
     }
 }
+
+void MainWindow::on_serial_deviceMode_clicked()
+{
+    serial->openSerial(115200, STK500::SIM_GSM);
+}

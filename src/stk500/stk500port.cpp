@@ -33,7 +33,6 @@ qint32 stk500Port::baudRate() {
 }
 
 void stk500Port::setBaudRate(qint32 baud) {
-    qDebug() << "Switch to baud rate" << baud;
     port.setBaudRate(baud);
 }
 

@@ -117,11 +117,11 @@ void serialmonitorwidget::on_sendButton_clicked()
 
     // Append newlines
     int newline_idx = ui->lineEndingBox->currentIndex();
-    if (newline_idx == 1 || newline_idx == 3) {
-        message.append('\n'); // Newline
-    }
     if (newline_idx == 2 || newline_idx == 3) {
         message.append('\r'); // Carriage return
+    }
+    if (newline_idx == 1 || newline_idx == 3) {
+        message.append('\n'); // Newline
     }
 
     // Send it to Serial

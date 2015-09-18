@@ -22,7 +22,7 @@ public:
     void execute(stk500Task &task, bool asynchronous = false, bool dialogDelay = true);
     void executeAll(QList<stk500Task*> tasks, bool asynchronous = false, bool dialogDelay = true);
     void cancelTasks();
-    void openSerial(int baudrate);
+    void openSerial(int baudrate, STK500::State mode = STK500::SKETCH);
     void closeSerial();
     bool isSerialOpen();
     bool isExecuting();
@@ -60,7 +60,7 @@ public:
 protected:
     virtual void run();
     bool trySignOn(stk500 *protocol);
-    void updateStatus(QString status);
+    void updateStatus(const QString &stateName, const QString &stateStatus);
     void runTests(stk500 &protocol);
 
 public:
@@ -79,6 +79,7 @@ public:
     bool isProcessing;
     bool isBaudChanged;
     int serialBaud;
+    STK500::State serialMode;
     QString protocolName;
     QString portName;
     QString status;

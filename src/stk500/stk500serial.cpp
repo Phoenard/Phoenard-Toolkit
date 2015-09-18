@@ -208,7 +208,7 @@ void stk500Serial::closeSerial() {
     openSerial(0);
 }
 
-void stk500Serial::openSerial(int baudrate) {
+void stk500Serial::openSerial(int baudrate, STK500::State mode) {
     // Don't do anything if not open
     if (!isOpen()) {
         return;
@@ -216,6 +216,10 @@ void stk500Serial::openSerial(int baudrate) {
     // If already closed; ignore
     if (!baudrate && !this->process->serialBaud) {
         return;
+    }
+    // Update requested state if baud rate specified
+    if (baudrate) {
+        this->process->serialMode = mode;
     }
     // Update baud rate and notify the change
     this->process->serialBaud = baudrate;
@@ -285,17 +289,17 @@ void stk500_ProcessThread::run() {
     QSerialPortInfo info(portName);
     if (info.isBusy()) {
         this->closeRequested = true;
-        updateStatus("Serial port busy");
+        updateStatus("Port", "Busy");
     }
     if (!info.isValid()) {
         this->closeRequested = true;
-        updateStatus("Serial port invalid");
+        updateStatus("Port", "Invalid");
     }
     if (!this->closeRequested) {
         /* First attempt to open the Serial port */
         stk500Port port;
         stk500 protocol(&port);
-        updateStatus("Opening...");
+        updateStatus("Port", "Opening...");
 
         /* Attempt tp open the serial port */
         if (!port.open(portName)) {
@@ -308,11 +312,13 @@ void stk500_ProcessThread::run() {
         bool hasData = false;
         qint64 start_time = QDateTime::currentMSecsSinceEpoch();
         long currSerialBaud = 0;
+        STK500::State currSerialMode = STK500::SKETCH;
         bool wasIdling = true;
         while (!this->closeRequested) {
             if (this->isBaudChanged) {
                 this->isBaudChanged = false;
                 currSerialBaud = this->serialBaud;
+                currSerialMode = this->serialMode;
 
                 /* Clear input/output buffers */
                 this->readBuffLock.lock();
@@ -329,9 +335,14 @@ void stk500_ProcessThread::run() {
                     // Cancel all pending tasks
                     this->cancelTasks();
 
+                    // Always reset if currently in Sketch mode
+                    if (protocol.state() == STK500::SKETCH) {
+                        protocol.reset();
+                    }
+
                     // Put stk500 into sketch mode
                     try {
-                        protocol.setState(STK500::SKETCH, currSerialBaud);
+                        protocol.setState(currSerialMode, currSerialBaud);
                     } catch (ProtocolException &err) {
                         qDebug() << err.what();
 
@@ -340,7 +351,7 @@ void stk500_ProcessThread::run() {
                     }
 
                     this->owner->notifySerialOpened(this);
-                    updateStatus("[Serial] Active");
+                    updateStatus(protocol.stateName(), "Active");
 
                 } else {
                     // Leaving Serial mode - sign on needed
@@ -412,30 +423,26 @@ void stk500_ProcessThread::run() {
                 }
 
                 /* Sign on with the bootloader */
-                if (needSignOn && !protocol.isServiceMode()) {
+                if (needSignOn && (protocol.state() != STK500::SERVICE)) {
                     needSignOn = false;
                     wasIdling = true;
-                    updateStatus("[STK500] Signing on");
+                    updateStatus("STK500", "Signing on");
                     if (trySignOn(&protocol)) {
                         runTests(protocol);
                     } else {
-                        updateStatus("[STK500] Sign-on error");
+                        updateStatus("STK500", "Sign-on error");
                     }
                 }
 
                 if (task != NULL) {
                     /* Update status */
-                    if (protocol.isServiceMode()) {
-                        updateStatus("[Service] Busy");
-                    } else {
-                        updateStatus("[STK500] Busy");
-                    }
+                    updateStatus(protocol.stateName(), "Busy");
 
                     /* Process the current task */
                     try {
                         task->init();
                         if (task->usesFirmware() && !protocol.isSignedOn()) {
-                            if (protocol.isServiceMode()) {
+                            if (protocol.state() == STK500::SERVICE) {
                                 throw ProtocolException("Device is in service mode and can not "
                                                         "handle standard STK commands.\nPlease "
                                                         "install the latest firmware by uploading "
@@ -517,12 +524,15 @@ void stk500_ProcessThread::run() {
                     // Waited for the full interval time, ping with a signOn command
                     // Still alive?
                     wasIdling = true;
-                    if (protocol.isServiceMode()) {
-                        updateStatus("[Service] Idle");
-                    } else if (trySignOn(&protocol)) {
-                        updateStatus("[STK500] Idle");
+                    if (protocol.state() == STK500::FIRMWARE) {
+                        if (trySignOn(&protocol)) {
+                            updateStatus(protocol.stateName(), "Idle");
+                        } else {
+                            updateStatus(protocol.stateName(), "Session lost");
+                        }
+                        updateStatus(protocol.stateName(), "Idle");
                     } else {
-                        updateStatus("[STK500] Session lost");
+                        updateStatus(protocol.stateName(), "Idle");
                     }
 
                     /* Wait for a short time to keep the bootloader in the right mode */
@@ -539,13 +549,13 @@ void stk500_ProcessThread::run() {
         }
 
         /* Notify owner that this port is (being) closed */
-        updateStatus("Closing...");
+        updateStatus("Port", "Closing...");
 
         /* Close the serial port; this can hang in some cases */
         port.close();
 
         /* Notify owner that port has been closed */
-        updateStatus("Port closed");
+        updateStatus("Port", "Closed");
     }
 
     this->isRunning = false;
@@ -566,7 +576,8 @@ bool stk500_ProcessThread::trySignOn(stk500 *protocol) {
     return false;
 }
 
-void stk500_ProcessThread::updateStatus(QString status) {
+void stk500_ProcessThread::updateStatus(const QString &stateName, const QString &stateStatus) {
+    QString status = QString("[%1] %2").arg(stateName, stateStatus);
     if (this->status != status) {
         this->status = status;
         this->owner->notifyStatus(this, this->status);

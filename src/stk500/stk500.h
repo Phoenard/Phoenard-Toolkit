@@ -51,7 +51,6 @@ public:
     QString signOn();
     void signOut();
     bool isSignedOn();
-    bool isServiceMode();
     CardVolume SD_init();
     PHN_Settings readSettings();
     void writeSettings(PHN_Settings settings);
@@ -67,7 +66,7 @@ public:
     quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
     quint16 ANALOG_read(quint8 adc);
     void SPI_transfer(const char *src, char* dest, int length);
-    void SERIAL_begin(quint8 serialA, quint8 serialB);
+    void SERIAL_begin(int serialIdxA, int serialIdxB);
 
     static QString trimFileExt(const QString &filePath);
     static QString getTempFile(const QString &filePath);
