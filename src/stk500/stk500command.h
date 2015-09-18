@@ -88,7 +88,14 @@ enum CMD {
     PROGRAM_SD_FAT_ISP              = 0xE9,
     READ_ANALOG_ISP                 = 0xEA,
     TRANSFER_SPI_ISP                = 0xEB,
+    MULTISERIAL_ISP                 = 0xEC,
     SERVICE_MODE_ISP                = 0xEF
+};
+
+// *****************[ STK operation enumeration ]*******************
+
+enum State {
+    SKETCH, FIRMWARE, SERVICE, BLUETOOTH, WIFI, SIM_GSM, SIM_GPS
 };
 
 // *****************[ STK status constants ]***************************

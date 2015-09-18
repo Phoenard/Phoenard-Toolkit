@@ -14,7 +14,7 @@ void stk500sd::reset() {
 
 void stk500sd::init(bool forceInit) {
     /* Various conditions to check whether we are initialized already */
-    if (!forceInit && (_volume.isInitialized == 1) && !_handler->isTimeout()) return;
+    if (!forceInit && (_volume.isInitialized == 1) && !_handler->isFirmwareTimeout()) return;
 
     /* Reset the cache and volume state before initializing */
     reset();

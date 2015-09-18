@@ -326,21 +326,20 @@ void stk500_ProcessThread::run() {
                     // Changing to a different baud rate
                     start_time = QDateTime::currentMSecsSinceEpoch();
 
-                    // If currently signed on the reset can be skipped
-                    try {
-                        if (protocol.isSignedOn()) {
-                            protocol.signOut();
-                        } else {
-                            /* Simple hardware reset */
-                            port.reset();
-                        }
-                    } catch (ProtocolException &) {}
-
                     // Cancel all pending tasks
                     this->cancelTasks();
 
+                    // Put stk500 into sketch mode
+                    try {
+                        protocol.setState(STK500::SKETCH, currSerialBaud);
+                    } catch (ProtocolException &err) {
+                        qDebug() << err.what();
+
+                        //TODO: What to do here...?
+                        port.setBaudRate(currSerialBaud);
+                    }
+
                     this->owner->notifySerialOpened(this);
-                    port.setBaudRate(currSerialBaud);
                     updateStatus("[Serial] Active");
 
                 } else {
@@ -512,7 +511,7 @@ void stk500_ProcessThread::run() {
 
                     wasIdling = false;
 
-                } else if (protocol.idleTime() >= STK500_CMD_MIN_INTERVAL) {
+                } else if (protocol.firmwareIdleTime() >= STK500_CMD_MIN_INTERVAL) {
                     /* No task and protocol inactive - ping while waiting for tasks to be sent our way */
 
                     // Waited for the full interval time, ping with a signOn command
@@ -561,7 +560,7 @@ bool stk500_ProcessThread::trySignOn(stk500 *protocol) {
             return true;
         } catch (ProtocolException& ex) {
             qDebug() << "Failed to sign on: " << ex.what();
-            protocol->resetDelayed();
+            protocol->resetFirmware();
         }
     }
     return false;

@@ -588,3 +588,7 @@ QString stk500Task::sd_findShortName(QString name_base, QString name_ext, QStrin
     return "";
 }
 
+void stk500BeginSerial::run() {
+    protocol->SERIAL_begin(0xC0, 0xC8);
+
+}

@@ -9,7 +9,7 @@ stk500::stk500(stk500Port *port)
     this->reg_handler = new stk500registers(this);
     this->service_handler = new stk500service(this);
     this->signedOn = false;
-    this->serviceMode = false;
+    this->currentState = STK500::SKETCH;
 
     // Initialize the command names table
     QFile cmdFile(":/data/commands.csv");
@@ -49,7 +49,7 @@ void stk500::printData(char* title, char* data, int len) {
     qDebug() << title << msg;
 }
 
-void stk500::resetDelayed() {
+void stk500::resetFirmware() {
     lastCmdTime = 0;
 }
 
@@ -59,6 +59,9 @@ void stk500::reset() {
     currentAddress = 0;
     sd_handler->reset();
 
+    /* Reset baud rate */
+    port->setBaudRate(115200);
+
     /* Reset the device and clear the buffers */
     port->reset();
     QThread::msleep(STK500_SERVICE_DELAY);
@@ -66,64 +69,88 @@ void stk500::reset() {
 
     /* Check if we get HELLO back, if so, service mode */
     QByteArray data = port->readAll(STK500_RESET_DELAY - STK500_SERVICE_DELAY);
-    serviceMode = (data == "HELLO");
-    if (!data.isEmpty() && !serviceMode) {
-        QString dataText = data;
-        QString errorMessage = QString("Failed to reset firmware:\n"
-                                       "Invalid response received\n\n"
-                                       "Data: %1").arg(dataText);
-        throw ProtocolException(errorMessage);
+    if (data == "HELLO") {
+        currentState = STK500::SERVICE;
+    } else {
+        currentState = STK500::FIRMWARE;
+        if (!data.isEmpty()) {
+            QString dataText = data;
+            QString errorMessage = QString("Failed to reset firmware:\n"
+                                           "Invalid response received\n\n"
+                                           "Data: %1").arg(dataText);
+            throw ProtocolException(errorMessage);
+        }
     }
-
-    if (serviceMode) qDebug() << "RESET: Service mode.";
 
     /* Reset timeout to prevent successive resetting */
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+
+    /* Test alternative baud rate operation here */
+    //setBaudRate(300);
 }
 
-quint64 stk500::idleTime() {
-    return (QDateTime::currentMSecsSinceEpoch() - lastCmdTime);
-}
+void stk500::setBaudRate(qint32 baud) {
+    if (baud == port->baudRate()) {
+        return;
+    }
 
-bool stk500::isTimeout() {
-    return !serviceMode && (idleTime() > STK500_DEVICE_TIMEOUT);
-}
+    // Read current register information
+    ChipRegisters reg;
+    this->reg().read(reg);
+    reg.resetChanges();
 
-bool stk500::isServiceMode() {
-    return serviceMode;
-}
+    // Set UART0 to the specified baud rate
+    reg.setupUART(0, baud);
 
-void stk500::setServiceMode() {
-    /* If not already in service mode, switch */
-    if (!serviceMode) {
-        /* Ensure in firmware mode */
-        if (isTimeout()) {
-            reset();
+    // Find the block of memory where changes were made
+    int address = 0;
+    int dataLength = 0;
+    reg.getChangedRange(&address, &dataLength);
+
+    /* Logging for debugging */
+    const bool log_ram_changes = true;
+    if (log_ram_changes) {
+        qDebug() << "WRITING OUT " << address << " LEN " << dataLength;
+        for (int i = 0; i < dataLength; i++) {
+            qDebug() << "  [" << getHexText(address+i) << "] = " << getHexText(reg.data(address)[i]);
         }
+    }
 
-        /* Send out the service mode command */
-        // Build up a message to send out
-        int message_length = 1;
-        int total_length = message_length + 6;
-        char* data = new char[total_length];
-        data[0] = STK500::MESSAGE_START;
-        data[1] = (char) (0x00 & 0xFF);
-        data[2] = (char) ((message_length >> 8) & 0xFF);
-        data[3] = (char) (message_length & 0xFF);
-        data[4] = STK500::TOKEN;
-        STK500::CMD cmd = STK500::SERVICE_MODE_ISP;
-        data[5] = (char) cmd;
+    /* Load the address (if needed) */
+    loadAddress(address);
 
-        // Calculate and append CRC
-        char crc = 0x0;
-        for (int i = 0; i < (total_length - 1); i++) {
-            crc ^= data[i];
-        }
-        data[total_length - 1] = crc;
+    /* Perform the write command, passing along the size and data to write */
+    char arguments[1024];
+    arguments[0] = (char) (((quint16) dataLength >> 8) & 0xFF);
+    arguments[1] = (char) (((quint16) dataLength >> 0) & 0xFF);
 
-        // Send out the data, then discard it once sent
-        port->write(data, total_length);
-        delete[] data;
+    // Then there are 7 unused bytes, pad them with 0
+    memset(arguments + 2, 0, 7);
+
+    // Then the data
+    memcpy(arguments + 9, reg.data(address), dataLength);
+
+    // Write out the command, and switch baud rate.
+    // It is impossible to read the response; it is received
+    // at the wrong baud rate. Instead of receiving, wait until
+    // the response data is received. This is done by waiting for
+    // the calculated time-to-send.
+    commandWrite(STK500::PROGRAM_RAM_ISP, arguments, dataLength + 9);
+    port->setBaudRate(baud);
+    port->waitBaudCycles(10);
+    lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+}
+
+void stk500::setState(STK500::State newState, qint32 baudRate) {
+    /* Check if there are any changes at all */
+    if ((newState == currentState) && (baudRate == port->baudRate())) {
+        return;
+    }
+
+    if (newState == STK500::SERVICE) {
+
+        // Write out the SERVICE_MODE command
+        commandWrite(STK500::SERVICE_MODE_ISP, NULL, 0);
 
         // Verify shortly that no response is returned
         // If there is one, it means the command was normally executed
@@ -149,21 +176,163 @@ void stk500::setServiceMode() {
             throw ProtocolException(errorMessage);
         }
 
-        // Done
-        serviceMode = true;
+    } else if (newState == STK500::SKETCH) {
+        // If not currently in firmware mode, first reset
+        if (currentState != STK500::FIRMWARE) {
+            reset();
+        }
+
+        // Sign out to instantly go to the sketch
+        signOut();
+
+        // Switch baud rate
+        port->setBaudRate(baudRate);
+
+    } else {
+        // Simply sign on to verify current connection / put into firmware mode
+        signOn();
+
+        // Switch firmware baud rate
+        setBaudRate(baudRate);
     }
+
+    // Done!
+    currentState = newState;
+}
+
+quint64 stk500::firmwareIdleTime() {
+    return (QDateTime::currentMSecsSinceEpoch() - lastCmdTime);
+}
+
+STK500::State stk500::state() {
+    return currentState;
+}
+
+QString stk500::stateName() {
+    switch (currentState) {
+    case STK500::SKETCH: return "Sketch";
+    case STK500::FIRMWARE: return "Firmware";
+    case STK500::SERVICE: return "Service";
+    case STK500::SIM_GSM: return "Sim908 (GSM)";
+    case STK500::SIM_GPS: return "Sim908 (GPS)";
+    case STK500::BLUETOOTH: return "Bluetooth";
+    case STK500::WIFI: return "WiFi";
+    default:
+        return "Unknown state";
+    }
+}
+
+bool stk500::isFirmwareTimeout() {
+    if (currentState != STK500::FIRMWARE) {
+        return true;
+    }
+    return firmwareIdleTime() > STK500_DEVICE_TIMEOUT;
+}
+
+bool stk500::isServiceMode() {
+    return currentState == STK500::SERVICE;
 }
 
 int stk500::command(STK500::CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength) {
 
+    // Write out the command (also arranges firmware initialization)
+    commandWrite(command, arguments, argumentsLength);
+
+    // Read the response
+    qint64 totalRead = 0;
+    qint64 cmdStartTime = QDateTime::currentMSecsSinceEpoch();
+    quint16 respLength = 0;
+    bool processed = false;
+    bool hasResponse = false;
+    QString errorInfo = "No Response";
+    QByteArray receivedData;
+    do {
+
+        /* Read in received response data */
+        QByteArray newData = port->read(STK500_READ_TIMEOUT);
+        receivedData.append(newData);
+
+        /* If no data is received at this point, we will not expect any */
+        if (newData.isEmpty()) {
+            break;
+        }
+
+        /* Handle command read timeout if no response is received */
+        lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+        if (!hasResponse && ((lastCmdTime-cmdStartTime) > STK500_READ_TIMEOUT)) {
+            break;
+        }
+
+        /* Process full response */
+        errorInfo = readCommandResponse(command, receivedData, response, responseMaxLength, &hasResponse);
+        if (errorInfo.startsWith("RESP=")) {
+            respLength = errorInfo.remove(0, 5).toInt();
+            processed = true;
+        }
+
+        /* Abort if too much data is received (ERR_OVERFLOW) */
+        if (receivedData.length() > 800) {
+            break;
+        }
+    } while (!processed);
+
+    totalRead = receivedData.length();
+
+    // Handle (the lack of) the response
+    QString cmdName = commandNames[command] + " (" + getHexText((uint) command) + ")";
+    if (!processed) {
+        // Log the error
+        QString errorMessage;
+        errorMessage = QString("Failed to execute command %1: %2\nReceived: %3 bytes, sequence %4")
+                .arg(cmdName).arg(errorInfo).arg(totalRead).arg(sequenceNumber);
+
+        const bool report_data = true;
+        if (report_data) {
+            errorMessage += "\n\n";
+            for (int i = 0; i < receivedData.length(); i++) {
+                errorMessage += "[";
+                errorMessage += QString::number((uint) (unsigned char) receivedData[i], 10);
+                errorMessage += "] ";
+            }
+        }
+
+        const bool log_errors = true;
+        if (log_errors) {
+            QStringList errorLines = errorMessage.split("\n");
+            for (int i = 0; i < errorLines.count(); i++) {
+                qDebug() << errorLines[i].toStdString().c_str();
+            }
+        }
+
+        // Reset next time
+        resetFirmware();
+
+        throw ProtocolException(errorMessage);
+
+    } else {
+        // Success: increment sequence number
+        sequenceNumber++;
+        if (sequenceNumber > 0xFF) {
+            sequenceNumber = 0;
+        }
+
+        // Success! Return the received response length.
+        //qDebug() << "Command finished: " << cmdName;
+        return respLength;
+    }
+}
+
+void stk500::commandWrite(STK500::CMD command, const char* arguments, int argumentsLength) {
     // If bootloader timed out, reset the device first
-    if (isTimeout()) {
+    if (isFirmwareTimeout()) {
         reset();
     }
 
-    // If in service mode, fail right away - this can not work.
-    if (this->serviceMode) {
-        throw ProtocolException("Device is in service mode");
+    // Fail if we are not in firmware mode at all
+    if (currentState != STK500::FIRMWARE) {
+        QString err = QString("Device is not in firmware mode\n"
+                              "Current mode: %1").arg(stateName());
+        throw ProtocolException(err);
     }
 
     // Read length to be written out and reset position to beginning
@@ -193,90 +362,23 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
     port->write(data, total_length);
     delete[] data;
 
-    // Read the response
-    qint64 totalRead = 0;
-    qint64 cmdStartTime = QDateTime::currentMSecsSinceEpoch();
-    quint16 respLength = 0;
-    bool processed = false;
-    QString errorInfo = "No Response";
-    QByteArray receivedData;
-    do {
-
-        /* Read in received response data */
-        QByteArray newData = port->read(STK500_READ_TIMEOUT);
-        receivedData.append(newData);
-
-        /* Handle command read timeout */
-        lastCmdTime = QDateTime::currentMSecsSinceEpoch();
-        if (newData.isEmpty() || ((lastCmdTime-cmdStartTime) > STK500_READ_TIMEOUT)) {
-            break;
-        }
-
-        /* Process full response */
-        errorInfo = readCommandResponse(command, receivedData, response, responseMaxLength);
-        if (errorInfo.startsWith("RESP=")) {
-            respLength = errorInfo.remove(0, 5).toInt();
-            processed = true;
-        }
-
-        /* Abort if too much data is received (ERR_OVERFLOW) */
-        if (receivedData.length() > 800) {
-            break;
-        }
-    } while (!processed);
-
-    totalRead = receivedData.length();
-
-    // Handle (the lack of) the response
-    QString cmdName = commandNames[command] + " (" + getHexText((uint) command) + ")";
-    if (!processed) {
-        // Log the error
-        QString errorMessage;
-        errorMessage = QString("Failed to execute command %1: %2\nReceived: %3 bytes, sequence %4")
-                .arg(cmdName).arg(errorInfo).arg(totalRead).arg(sequenceNumber);
-
-        const bool report_data = false;
-        if (report_data) {
-            errorMessage += "\n\n";
-            for (int i = 0; i < receivedData.length(); i++) {
-                errorMessage += "[";
-                errorMessage += QString::number((uint) (unsigned char) receivedData[i], 10);
-                errorMessage += "] ";
-            }
-        }
-
-        const bool log_errors = true;
-        if (log_errors) {
-            QStringList errorLines = errorMessage.split("\n");
-            for (int i = 0; i < errorLines.count(); i++) {
-                qDebug() << errorLines[i].toStdString().c_str();
-            }
-        }
-
-        // Reset next time
-        resetDelayed();
-
-        throw ProtocolException(errorMessage);
-
-    } else {
-        // Success: increment sequence number
-        sequenceNumber++;
-        if (sequenceNumber > 0xFF) {
-            sequenceNumber = 0;
-        }
-
-        // Success! Return the received response length.
-        //qDebug() << "Command finished: " << cmdName;
-        return respLength;
-    }
+    // This short delay is needed to guarantee data is written before receiving
+    // Especially important in low-baud rate operation mode to include TX delay
+    port->waitBaudCycles(total_length);
 }
 
-QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input, char* response, int responseMaxLength) {
+QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input,
+                                    char* response, int responseMaxLength, bool* hasResponse) {
+
+    *hasResponse = false;
+
     const int MIN_MSG_LEN = 8;
     if (input.length() == 0) {
+        *hasResponse = false;
         return "No response received";
     }
     if (input.length() < MIN_MSG_LEN) {
+        *hasResponse = false;
         QString lenTxt = QString::number(input.length());
         return QString("Response too short (%1 bytes)").arg(lenTxt);
     }
@@ -307,31 +409,10 @@ QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input
             continue;
         }
 
-        // Read and verify the message size parameter
-        respLength = data[2] << 8;
-        respLength |= data[3];
-        if (respLength < 2) {
-            if (level < 2) {
-                level = 2;
-                QString lenText = QString::number(respLength, 10);
-                errorMessage = QString("Message header length too short (len: %1)").arg(lenText);
-            }
-            continue;
-        }
-        if (respLength > (dataLength-6)) {
-            if (level < 2) {
-                level = 2;
-                QString lenText = QString::number(respLength, 10);
-                errorMessage = QString("Response too short: message header indicates "
-                                       "length longer than the response (len: %1)").arg(lenText);
-            }
-            continue;
-        }
-
         // Token check
         if (data[4] != STK500::TOKEN) {
-            if (level < 3) {
-                level = 3;
+            if (level < 2) {
+                level = 2;
                 errorMessage = "Message token invalid (";
                 errorMessage += QString::number(data[4], 10);
                 errorMessage += " != ";
@@ -343,8 +424,8 @@ QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input
 
         // Command ID check
         if (data[5] != command) {
-            if (level < 4) {
-                level = 4;
+            if (level < 3) {
+                level = 3;
                 errorMessage = "Message command ID invalid (";
                 errorMessage += QString::number(data[5], 10);
                 errorMessage += " != ";
@@ -356,9 +437,33 @@ QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input
 
         // Status OK Check
         if (data[6] != STK500::STATUS_CMD_OK) {
+            if (level < 4) {
+                level = 4;
+                errorMessage = "An error occurred while processing the command on the device";
+            }
+            continue;
+        }
+
+        // Read and verify the message size parameter
+        respLength = data[2] << 8;
+        respLength |= data[3];
+        if (respLength < 2) {
             if (level < 5) {
                 level = 5;
-                errorMessage = "An error occurred while processing the command on the device";
+                QString lenText = QString::number(respLength, 10);
+                errorMessage = QString("Message header length too short (len: %1)").arg(lenText);
+            }
+            continue;
+        }
+        if (respLength > (dataLength-6)) {
+            if (level < 5) {
+                level = 5;
+
+                // Data can still be expected at this point
+                *hasResponse = true;
+                QString lenText = QString::number(respLength, 10);
+                errorMessage = QString("Response too short: message header indicates "
+                                       "length longer than the response (len: %1)").arg(lenText);
             }
             continue;
         }
@@ -372,6 +477,8 @@ QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input
         if (data[msg_end_idx] != crc) {
             if (level < 6) {
                 level = 6;
+                // Data corrupted, no more response
+                *hasResponse = false;
                 errorMessage = "Message CRC check failed (";
                 errorMessage += QString::number(data[msg_end_idx], 10);
                 errorMessage += " != ";
@@ -447,7 +554,7 @@ void stk500::signOut() {
 }
 
 bool stk500::isSignedOn() {
-    return !serviceMode && signedOn && !isTimeout();
+    return (currentState == STK500::FIRMWARE) && signedOn && !isFirmwareTimeout();
 }
 
 CardVolume stk500::SD_init() {
@@ -564,6 +671,12 @@ quint16 stk500::ANALOG_read(quint8 pin) {
 
 void stk500::SPI_transfer(const char *src, char* dest, int length) {
     command(STK500::TRANSFER_SPI_ISP, src-1, length+1, dest, dest ? length : 0);
+}
+
+void stk500::SERIAL_begin(quint8 serialA, quint8 serialB) {
+    char arguments[2] = {(char) serialA, (char) serialB};
+    commandWrite(STK500::MULTISERIAL_ISP, arguments, sizeof(arguments));
+    /* This function has no response */
 }
 
 /* ============================= Directory info =============================== */

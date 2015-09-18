@@ -5,6 +5,7 @@
 #include <QSerialPortInfo>
 #include <QDateTime>
 #include <QDebug>
+#include <QThread>
 
 class stk500Port
 {
@@ -12,7 +13,9 @@ public:
     bool open(const QString &portName);
     void close();
     void reset();
-    void setBaudRate(int baud);
+    qint32 baudRate();
+    void setBaudRate(qint32 baud);
+    void waitBaudCycles(int nrOfBytes);
     QString portName();
     QByteArray readAll(int timeout);
     QByteArray read(int timeout);

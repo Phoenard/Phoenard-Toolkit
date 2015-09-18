@@ -31,20 +31,27 @@ public:
     stk500(stk500Port *port = NULL);
     ~stk500();
     stk500Port* getPort() { return port; }
-    void reset();
-    void resetDelayed();
-    quint64 idleTime();
-    bool isTimeout();
     stk500sd& sd() { return *sd_handler; }
     stk500registers& reg() { return *reg_handler; }
     stk500service& service() { return *service_handler; }
+
+    /* STK500 Device state and operation */
+    void reset();
+    STK500::State state();
+    QString stateName();
+    void setBaudRate(qint32 baud);
+    void setState(STK500::State newState, qint32 baudRate = 115200);
+
+    /* Firmware mode specific */
+    void resetFirmware();
+    quint64 firmwareIdleTime();
+    bool isFirmwareTimeout();
 
     /* Commands */
     QString signOn();
     void signOut();
     bool isSignedOn();
     bool isServiceMode();
-    void setServiceMode();
     CardVolume SD_init();
     PHN_Settings readSettings();
     void writeSettings(PHN_Settings settings);
@@ -60,6 +67,7 @@ public:
     quint8 RAM_writeByte(quint16 address, quint8 value, quint8 mask = 0xFF);
     quint16 ANALOG_read(quint8 adc);
     void SPI_transfer(const char *src, char* dest, int length);
+    void SERIAL_begin(quint8 serialA, quint8 serialB);
 
     static QString trimFileExt(const QString &filePath);
     static QString getTempFile(const QString &filePath);
@@ -73,7 +81,8 @@ public:
 private:
     /* Private commands used internally */
     int command(STK500::CMD command, const char* arguments, int argumentsLength, char* response, int responseMaxLength);
-    QString readCommandResponse(STK500::CMD command, const QByteArray &input, char* response, int responseMaxLength);
+    void commandWrite(STK500::CMD command, const char* arguments, int argumentsLength);
+    QString readCommandResponse(STK500::CMD command, const QByteArray &input, char* response, int responseMaxLength, bool* hasResponse);
     void loadAddress(quint32 address);
     void readData(STK500::CMD data_command, quint32 address, char* dest, int destLen);
     void writeData(STK500::CMD data_command, quint32 address, const char* src, int srcLen);
@@ -94,7 +103,7 @@ private:
     stk500registers *reg_handler;
     stk500service *service_handler;
     bool signedOn;
-    bool serviceMode;
+    STK500::State currentState;
     QString commandNames[256];
 };
 

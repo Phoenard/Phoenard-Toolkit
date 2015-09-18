@@ -1,12 +1,11 @@
 #include "stk500service.h"
 
 void stk500service::begin() {
-    _handler->setServiceMode();
+    _handler->setState(STK500::SERVICE);
 }
 
 void stk500service::end() {
-    // Reset to get out of service mode
-    _handler->reset();
+    _handler->setState(STK500::FIRMWARE);
 }
 
 void stk500service::checkConnection() {

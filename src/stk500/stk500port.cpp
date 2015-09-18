@@ -7,7 +7,6 @@ bool stk500Port::open(const QString &portName) {
     if (success) {
         port.setReadBufferSize(4096);
         port.setSettingsRestoredOnClose(false);
-        port.setBaudRate(QSerialPort::Baud115200);
         port.setFlowControl(QSerialPort::NoFlowControl);
         port.setParity(QSerialPort::NoParity);
         port.clearError();
@@ -27,8 +26,22 @@ void stk500Port::reset() {
     port.clear();
 }
 
-void stk500Port::setBaudRate(int baud) {
+qint32 stk500Port::baudRate() {
+    return port.baudRate();
+}
+
+void stk500Port::setBaudRate(qint32 baud) {
+    qDebug() << "Switch to baud rate" << baud;
     port.setBaudRate(baud);
+}
+
+void stk500Port::waitBaudCycles(int nrOfBytes) {
+    qint32 total_bits = nrOfBytes * 10;
+    qint32 bits_per_second = baudRate();
+    qint32 time_to_send_ms = 1000 * total_bits / bits_per_second;
+    if (time_to_send_ms) {
+        QThread::msleep(time_to_send_ms + 2);
+    }
 }
 
 bool stk500Port::isOpen() {

@@ -6,6 +6,6 @@ void stk500LaunchSketch::run() {
         settings.setToload(sketchName);
         settings.flags |= SETTINGS_LOAD;
         protocol->writeSettings(settings);
-        protocol->resetDelayed();
+        protocol->resetFirmware();
     }
 }

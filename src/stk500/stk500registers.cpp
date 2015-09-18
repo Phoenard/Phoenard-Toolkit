@@ -180,6 +180,10 @@ void ChipRegisters::resetUserChanges() {
     memcpy(regData, regDataRead, sizeof(regData));
 }
 
+void ChipRegisters::resetChanges() {
+    memcpy(regDataLast, regDataRead, sizeof(regDataRead));
+}
+
 void ChipRegisters::applyUserChanges(const ChipRegisters& other) {
     for (int i = 0; i < CHIPREG_BUFFSIZE; i++) {
         quint8 changeMask = other.regData[i] ^ other.regDataRead[i];
@@ -224,12 +228,61 @@ const PinMapInfo &ChipRegisters::pinmapHeader() {
 }
 
 int ChipRegisters::findRegisterAddress(const QString &name) {
+    initRegisters();
     for (int i = 0; i < CHIPREG_COUNT; i++) {
         if (registerInfoByIndex[i]->name == name) {
             return registerInfoByIndex[i]->addressValue;
         }
     }
     return -1;
+}
+
+quint8 ChipRegisters::operator [](const QString &name) const {
+    int idx = findRegisterAddress(name);
+    return (idx==-1) ? 0 : regData[idx];
+}
+
+quint8& ChipRegisters::operator [](const QString &name) {
+    int idx = findRegisterAddress(name);
+    return (idx==-1) ? regData[0x1FF] : regData[idx];
+}
+
+bool ChipRegisters::getChangedRange(int* address, int* count) {
+    bool found = false;
+    for (int i = CHIPREG_ADDR_START; i < CHIPREG_BUFFSIZE; i++) {
+        if (changed(i)) {
+            // First element
+            if (!found) {
+                found = true;
+                *address = i;
+            }
+            // Last changed element
+            *count = (i - *address) + 1;
+        }
+    }
+    return found;
+}
+
+void ChipRegisters::setupUART(int idx, qint32 baudRate) {
+    // Calculate baud rate register value
+    qreal F_CPU = 16000000;
+    quint16 baudData = (quint16) (F_CPU/(((qreal) baudRate)*8.0)-0.5);
+
+    // For baud values exceeding 0x0FFF, disable double-speed
+    quint8 UCSRA = 0x62;
+    if (baudData > 0x0FFF) {
+        baudData /= 2;
+        UCSRA &= ~0x2;
+    }
+
+    // Set the registers
+    ChipRegisters &reg = *this;
+    QString n = QString::number(idx, 10);
+    reg[QString("UCSR%1A").arg(n)] = UCSRA;
+    reg[QString("UCSR%1B").arg(n)] = 0x18;
+    reg[QString("UCSR%1C").arg(n)] = 0x06;
+    reg[QString("UBRR%1L").arg(n)] = (baudData & 0xFF);
+    reg[QString("UBRR%1H").arg(n)] = (baudData >> 8);
 }
 
 /* stk500 Register handler functions */

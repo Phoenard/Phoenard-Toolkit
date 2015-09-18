@@ -195,4 +195,15 @@ public:
     QByteArray programData;
 };
 
+class stk500BeginSerial : public stk500Task {
+public:
+    stk500BeginSerial(int idxFrom, int idxTo, quint32 baudRate) :
+        stk500Task("Starting serial"), idxFrom(idxFrom), idxTo(idxTo), baudRate(baudRate) {}
+    virtual void run();
+
+    int idxFrom;
+    int idxTo;
+    quint32 baudRate;
+};
+
 #endif // STK500TASK_H

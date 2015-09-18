@@ -51,10 +51,12 @@ public:
     ChipRegisters();
     int count() const { return CHIPREG_COUNT; }
     void resetUserChanges();
+    void resetChanges();
     void applyUserChanges(const ChipRegisters& other);
     bool changed(int address);
     bool hasUserChanges();
-    quint8* data() { return regData; }
+    bool getChangedRange(int* address, int* count);
+    quint8* data(int addrStart = CHIPREG_ADDR_START) { return regData + addrStart; }
     quint8 error(int address);
     quint16 analog(int pinNr) const { return analogData[pinNr]; }
     const ChipRegisterInfo &info(int address);
@@ -64,8 +66,12 @@ public:
     const QList<PinMapInfo> &pinmap();
     const PinMapInfo &pinmapHeader();
 
+    void setupUART(int idx, qint32 baudRate);
+
     quint8 operator [](int i) const { return regData[i]; }
     quint8& operator [](int i) { return regData[i]; }
+    quint8 operator [](const QString &name) const;
+    quint8& operator [](const QString &name);
 
     friend class stk500registers;
 
