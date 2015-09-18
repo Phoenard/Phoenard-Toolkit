@@ -94,12 +94,8 @@ void stk500::setBaudRate(qint32 baud) {
         return;
     }
 
-    // Read current register information
-    ChipRegisters reg;
-    this->reg().read(reg);
-    reg.resetChanges();
-
     // Set UART0 to the specified baud rate
+    ChipRegisters reg;
     reg.setupUART(0, baud);
 
     // Find the block of memory where changes were made
@@ -138,6 +134,8 @@ void stk500::setBaudRate(qint32 baud) {
     commandWrite(STK500::PROGRAM_RAM_ISP, arguments, dataLength + 9);
     port->setBaudRate(baud);
     port->waitBaudCycles(10);
+    port->clear();
+    currentAddress += dataLength;
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();
 }
 

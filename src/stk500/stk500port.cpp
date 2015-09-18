@@ -14,16 +14,18 @@ bool stk500Port::open(const QString &portName) {
     return success;
 }
 
+void stk500Port::clear() {
+    port.clear();
+}
+
 void stk500Port::close() {
     port.close();
 }
 
 void stk500Port::reset() {
-    //port.close();
-    //port.open(QIODevice::ReadWrite);
     port.setDataTerminalReady(true);
     port.setDataTerminalReady(false);
-    port.clear();
+    clear();
 }
 
 qint32 stk500Port::baudRate() {

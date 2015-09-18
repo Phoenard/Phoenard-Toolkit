@@ -12,6 +12,7 @@ class stk500Port
 public:
     bool open(const QString &portName);
     void close();
+    void clear();
     void reset();
     qint32 baudRate();
     void setBaudRate(qint32 baud);

@@ -162,9 +162,16 @@ ChipRegisters::ChipRegisters() {
     memset(regDataRead, 0, sizeof(regDataRead));
     memset(regDataError, 0, sizeof(regDataError));
     analogDataIndex = 0;
+    regDataWasRead = false;
 }
 
 bool ChipRegisters::changed(int address) {
+    // If not read before, the last registers indicate access flags
+    if (!regDataWasRead) {
+        return (regDataLast[address] == 0xFF);
+    }
+
+    // General check
     return regDataLast[address] != regData[address];
 }
 
@@ -237,6 +244,13 @@ int ChipRegisters::findRegisterAddress(const QString &name) {
     return -1;
 }
 
+quint8& ChipRegisters::operator [](int i) {
+    // Keep track of access if not read before
+    if (!regDataWasRead) regDataLast[i] = 0xFF;
+
+    // Return reference to data
+    return regData[i];
+}
 quint8 ChipRegisters::operator [](const QString &name) const {
     int idx = findRegisterAddress(name);
     return (idx==-1) ? 0 : regData[idx];
@@ -244,7 +258,8 @@ quint8 ChipRegisters::operator [](const QString &name) const {
 
 quint8& ChipRegisters::operator [](const QString &name) {
     int idx = findRegisterAddress(name);
-    return (idx==-1) ? regData[0x1FF] : regData[idx];
+    if (idx == -1) idx = 0x1FF;
+    return (*this)[idx];
 }
 
 bool ChipRegisters::getChangedRange(int* address, int* count) {
@@ -291,10 +306,20 @@ void stk500registers::write(ChipRegisters &registers) {
     // For any bytes that differ, write the byte to the chip
     // Only write out the bits that changed for added safety
     // When done, reset the value to the read one
-    for (int addr = CHIPREG_ADDR_START; addr < CHIPREG_BUFFSIZE; addr++) {
-        quint8 changeMask = registers.regData[addr] ^ registers.regDataRead[addr];
-        if (changeMask) {
-            _handler->RAM_writeByte(addr, registers[addr], changeMask);
+    if (registers.regDataWasRead) {
+        // Compare old to new
+        for (int addr = CHIPREG_ADDR_START; addr < CHIPREG_BUFFSIZE; addr++) {
+            quint8 changeMask = registers.regData[addr] ^ registers.regDataRead[addr];
+            if (changeMask) {
+                _handler->RAM_writeByte(addr, registers[addr], changeMask);
+            }
+        }
+    } else {
+        // Use access flag
+        for (int addr = CHIPREG_ADDR_START; addr < CHIPREG_BUFFSIZE; addr++) {
+            if (registers.regDataLast[addr] == 0xFF) {
+                _handler->RAM_writeByte(addr, registers[addr]);
+            }
         }
     }
 }
@@ -322,6 +347,9 @@ void stk500registers::read(ChipRegisters &registers) {
 
     // Synchronize the current register values with the last ones read
     memcpy(registers.regData, registers.regDataRead, sizeof(registers.regData));
+
+    // Mark as read
+    registers.regDataWasRead = true;
 }
 
 void stk500registers::readADC(ChipRegisters &registers) {

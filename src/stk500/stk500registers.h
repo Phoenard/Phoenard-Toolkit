@@ -69,7 +69,7 @@ public:
     void setupUART(int idx, qint32 baudRate);
 
     quint8 operator [](int i) const { return regData[i]; }
-    quint8& operator [](int i) { return regData[i]; }
+    quint8& operator [](int i);
     quint8 operator [](const QString &name) const;
     quint8& operator [](const QString &name);
 
@@ -82,6 +82,7 @@ protected:
     quint8 regDataError[CHIPREG_BUFFSIZE]; // Contains the bits it failed to write out last time
     quint16 analogData[ANALOG_PIN_COUNT];  // Live updates analog input values
     quint8 analogDataIndex;                // Index of the analog pin to be refreshed next
+    bool regDataWasRead;                   // Whether the register data was previously read
 private:
     static void initRegisters();
     static ChipRegisterInfo registerInfo[CHIPREG_BUFFSIZE];
