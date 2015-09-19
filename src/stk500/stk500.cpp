@@ -10,7 +10,7 @@ stk500::stk500(stk500Port *port)
     this->service_handler = new stk500service(this);
     this->signedOn = false;
     this->lastResetTime = QDateTime::currentMSecsSinceEpoch() - STK500_MIN_RESET_TIME;
-    this->currentState = STK500::SKETCH;
+    this->currentState = STK500::NONE;
 
     // Initialize the command names table
     QFile cmdFile(":/data/commands.csv");
@@ -76,8 +76,8 @@ void stk500::reset() {
 
     /* Try to get some kind of communication going, */
     const int MAX_TRIALS = 5;
-    bool gotResponse = false;
-    for (int trial = 0; trial < MAX_TRIALS && !gotResponse; trial++) {
+    currentState = STK500::NONE;
+    for (int trial = 0; trial < MAX_TRIALS && (currentState == STK500::NONE); trial++) {
 
         /*
          * Write out a command which excludes the service w/r characters
@@ -106,12 +106,10 @@ void stk500::reset() {
             // Check momentarily what kind of response is received
             if (memcmp(response.data(), test_response, sizeof(test_response)) == 0) {
                 currentState = STK500::FIRMWARE;
-                gotResponse = true;
                 break;
             }
             if (memcmp(response.data(), test_command, sizeof(test_command)) == 0) {
                 currentState = STK500::SERVICE;
-                gotResponse = true;
                 break;
             }
         } while ((QDateTime::currentMSecsSinceEpoch() - lastCmdTime) < 300);
@@ -119,7 +117,7 @@ void stk500::reset() {
         /* Reset timeout to prevent successive resetting */
         lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
     }
-    if (!gotResponse) {
+    if (currentState == STK500::NONE) {
         QString errorMessage = QString("Failed to reset firmware: "
                                        "Unable to establish connection");
         throw ProtocolException(errorMessage);
@@ -188,8 +186,11 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         return;
     }
 
-    if (newState == STK500::SERVICE) {
+    if (newState == STK500::NONE) {
+        // Simply change the settings but do nothing else
+        port->setBaudRate(baudRate);
 
+    } else if (newState == STK500::SERVICE) {
         // Write out the SERVICE_MODE command
         commandWrite(STK500::SERVICE_MODE_ISP, NULL, 0);
 
@@ -281,6 +282,7 @@ QString stk500::stateName() {
 
 QString stk500::stateName(STK500::State state) {
     switch (state) {
+    case STK500::NONE: return "No Connection";
     case STK500::SKETCH: return "Sketch";
     case STK500::FIRMWARE: return "STK500";
     case STK500::SERVICE: return "Service";
