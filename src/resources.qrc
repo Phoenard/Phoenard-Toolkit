@@ -40,5 +40,10 @@
         <file>icons/spi.png</file>
         <file>icons/pins.png</file>
         <file>icons/uploadhex.png</file>
+        <file>icons/serial_sketch.png</file>
+        <file>icons/serial_sim_gsm.png</file>
+        <file>icons/serial_sim_gps.png</file>
+        <file>icons/serial_wifi.png</file>
+        <file>icons/serial_bluetooth.png</file>
     </qresource>
 </RCC>

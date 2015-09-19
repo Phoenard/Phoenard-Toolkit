@@ -9,6 +9,7 @@ stk500::stk500(stk500Port *port)
     this->reg_handler = new stk500registers(this);
     this->service_handler = new stk500service(this);
     this->signedOn = false;
+    this->lastResetTime = QDateTime::currentMSecsSinceEpoch() - STK500_MIN_RESET_TIME;
     this->currentState = STK500::SKETCH;
 
     // Initialize the command names table
@@ -62,28 +63,67 @@ void stk500::reset() {
     /* Reset baud rate */
     port->setBaudRate(115200);
 
-    /* Reset the device and clear the buffers */
+    /* Reset the device and wait until it's ready, reading the data */
     port->reset();
-    QThread::msleep(STK500_SERVICE_DELAY);
-    port->write("HELLO", 5);
-
-    /* Check if we get HELLO back, if so, service mode */
-    QByteArray data = port->readAll(STK500_RESET_DELAY - STK500_SERVICE_DELAY);
-    if (data == "HELLO") {
-        currentState = STK500::SERVICE;
-    } else {
-        currentState = STK500::FIRMWARE;
-        if (!data.isEmpty()) {
-            QString dataText = data;
-            QString errorMessage = QString("Failed to reset firmware:\n"
-                                           "Invalid response received\n\n"
-                                           "Data: %1").arg(dataText);
-            throw ProtocolException(errorMessage);
-        }
+    QByteArray data = port->readAll(STK500_RESET_DELAY);
+    if (!data.isEmpty()) {
+        QString dataText = data;
+        QString errorMessage = QString("Failed to reset firmware: "
+                                       "Data was received unexpectedly\n\n"
+                                       "Data: %1").arg(dataText);
+        throw ProtocolException(errorMessage);
     }
 
-    /* Reset timeout to prevent successive resetting */
-    lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+    /* Try to get some kind of communication going, */
+    const int MAX_TRIALS = 5;
+    bool gotResponse = false;
+    for (int trial = 0; trial < MAX_TRIALS && !gotResponse; trial++) {
+
+        /*
+         * Write out a command which excludes the service w/r characters
+         * The bytes 0x77 and 0x72 should not be used to prevent accidental writing
+         *
+         * Read the response back. If it is exactly the same as the data we sent, we
+         * are in service mode. If it is the same as the expected response, then we
+         * successfully entered firmware mode. If it is different, then something awful
+         * happened and we did not reset the device into a workable state.
+         */
+        unsigned char test_command[11] = {0x1B, 0x00, 0x00, 0x05, 0x0E, 0x06,
+                                          0x00, 0x00, 0x00, 0x00, 0x16};
+        unsigned char test_response[8] = {0x1B, 0x00, 0x00, 0x02,
+                                           0x0E, 0x06, 0x00, 0x11};
+
+        port->clear();
+        port->write((char*) test_command, sizeof(test_command));
+        port->waitBaudCycles((int) sizeof(test_command));
+
+        lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+        QByteArray response;
+        response.reserve(11);
+        do {
+            response.append(port->read(50));
+
+            // Check momentarily what kind of response is received
+            if (memcmp(response.data(), test_response, sizeof(test_response)) == 0) {
+                currentState = STK500::FIRMWARE;
+                gotResponse = true;
+                break;
+            }
+            if (memcmp(response.data(), test_command, sizeof(test_command)) == 0) {
+                currentState = STK500::SERVICE;
+                gotResponse = true;
+                break;
+            }
+        } while ((QDateTime::currentMSecsSinceEpoch() - lastCmdTime) < 300);
+
+        /* Reset timeout to prevent successive resetting */
+        lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+    }
+    if (!gotResponse) {
+        QString errorMessage = QString("Failed to reset firmware: "
+                                       "Unable to establish connection");
+        throw ProtocolException(errorMessage);
+    }
 
     /* Test alternative baud rate operation here */
     //setBaudRate(300);
@@ -236,7 +276,11 @@ STK500::State stk500::state() {
 }
 
 QString stk500::stateName() {
-    switch (currentState) {
+    return stateName(currentState);
+}
+
+QString stk500::stateName(STK500::State state) {
+    switch (state) {
     case STK500::SKETCH: return "Sketch";
     case STK500::FIRMWARE: return "STK500";
     case STK500::SERVICE: return "Service";
@@ -245,11 +289,14 @@ QString stk500::stateName() {
     case STK500::BLUETOOTH: return "Bluetooth";
     case STK500::WIFI: return "WiFi";
     default:
-        return "Unknown state";
+        return "Unknown";
     }
 }
 
 bool stk500::isFirmwareTimeout() {
+    if ((QDateTime::currentMSecsSinceEpoch() - lastResetTime) < STK500_MIN_RESET_TIME) {
+        return false;
+    }
     if (currentState != STK500::FIRMWARE) {
         return true;
     }
@@ -309,7 +356,7 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
         errorMessage = QString("Failed to execute command %1: %2\nReceived: %3 bytes, sequence %4")
                 .arg(cmdName).arg(errorInfo).arg(totalRead).arg(sequenceNumber);
 
-        const bool report_data = true;
+        const bool report_data = false;
         if (report_data) {
             errorMessage += "\n\n";
             for (int i = 0; i < receivedData.length(); i++) {
@@ -326,9 +373,6 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
                 qDebug() << errorLines[i].toStdString().c_str();
             }
         }
-
-        // Reset next time
-        resetFirmware();
 
         throw ProtocolException(errorMessage);
 
@@ -353,8 +397,7 @@ void stk500::commandWrite(STK500::CMD command, const char* arguments, int argume
 
     // Fail if we are not in firmware mode at all
     if (currentState != STK500::FIRMWARE) {
-        QString err = QString("Device is not in firmware mode\n"
-                              "Current mode: %1").arg(stateName());
+        QString err = QString("Can not send command because device is in %1 mode").arg(stateName());
         throw ProtocolException(err);
     }
 

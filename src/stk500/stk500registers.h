@@ -66,12 +66,19 @@ public:
     const QList<PinMapInfo> &pinmap();
     const PinMapInfo &pinmapHeader();
 
+    // Initialize the registers for a Hardware Serial UART
     void setupUART(int idx, qint32 baudRate);
 
-    quint8 operator [](int i) const { return regData[i]; }
-    quint8& operator [](int i);
-    quint8 operator [](const QString &name) const;
-    quint8& operator [](const QString &name);
+    // Getters / Setters with change tracking
+    quint8 get(int address) const;
+    quint8 get(const QString &name) const;
+    void set(int address, quint8 value);
+    void set(const QString &name, quint8 value);
+    quint8 setXor(int address, quint8 mask);
+
+    // Only getters are allowed for array access operator
+    quint8 operator [](int address) const { return get(address); }
+    quint8 operator [](const QString &name) const { return get(name); }
 
     friend class stk500registers;
 

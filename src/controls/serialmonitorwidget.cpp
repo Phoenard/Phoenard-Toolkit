@@ -15,6 +15,7 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     connect(this->updateTimer, SIGNAL(timeout()), this, SLOT(readSerialOutput()));
     this->updateTimer->start(20);
 
+    this->mode = STK500::SKETCH;
     this->screen.cmd_len = 0;
     this->screenEnabled = false;
     ui->outputImage->setVisible(false);
@@ -55,19 +56,28 @@ void serialmonitorwidget::setScreenShare(bool enabled)
     ui->outputText->setVisible(!enabled);
 }
 
+
+void serialmonitorwidget::setMode(STK500::State mode)
+{
+    if (this->mode != mode) {
+        this->mode = mode;
+        this->openSerial();
+    }
+}
+
 void serialmonitorwidget::openSerial()
 {
     if (!ui->runSketchCheck->isChecked()) {
         serial->closeSerial();
     } else if (this->screenEnabled) {
-        serial->openSerial(115200);
+        serial->openSerial(115200, this->mode);
     } else {
         QString baudSel = ui->baudrateBox->currentText();
         QString baud_pfix = " baud";
         if (baudSel.endsWith(baud_pfix)) {
             baudSel.chop(baud_pfix.length());
         }
-        serial->openSerial(baudSel.toInt());
+        serial->openSerial(baudSel.toInt(), this->mode);
     }
 }
 

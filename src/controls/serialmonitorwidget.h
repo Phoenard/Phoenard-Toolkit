@@ -33,6 +33,7 @@ public:
     ~serialmonitorwidget();
     void openSerial();
     void setScreenShare(bool enabled);
+    void setMode(STK500::State mode);
     virtual void setSerial(stk500Serial *serial);
 
 private:
@@ -59,6 +60,7 @@ private:
     Ui::serialmonitorwidget *ui;
     QTimer *updateTimer;
     ScreenRegisters screen;
+    STK500::State mode;
     bool screenEnabled;
 };
 

@@ -294,7 +294,7 @@
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
-                <normaloff>:/icons/sketchhex.png</normaloff>:/icons/sketchhex.png</iconset>
+                <normaloff>:/icons/serial_sketch.png</normaloff>:/icons/serial_sketch.png</iconset>
               </property>
               <property name="checked">
                <bool>false</bool>

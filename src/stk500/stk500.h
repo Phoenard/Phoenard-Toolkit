@@ -14,9 +14,11 @@
 #include "stk500port.h"
 
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
+#define STK500_MIN_RESET_TIME     50   // Minimum time between successive resets
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
 #define STK500_RESET_DELAY       200   // Delay between RESET and command sending
 #define STK500_SERVICE_DELAY      80   // Delay between RESET and service command handling
+#define STK500_SERVICE_RECOVER   500   // Delay between RESET and sketch-induced service mode
 #define STK500_CMD_MIN_INTERVAL  100   // Minimal interval of commands to stay in bootloader mode
 
 // Pre-define components up front
@@ -39,6 +41,7 @@ public:
     void reset();
     STK500::State state();
     QString stateName();
+    QString stateName(STK500::State state);
     void setBaudRate(qint32 baud);
     void setState(STK500::State newState, qint32 baudRate = 115200);
 
@@ -96,6 +99,7 @@ private:
     stk500Port *port;
     QTimer *aliveTimer;
     qint64 lastCmdTime;
+    qint64 lastResetTime;
     uint sequenceNumber;
     quint32 currentAddress;
     stk500sd *sd_handler;

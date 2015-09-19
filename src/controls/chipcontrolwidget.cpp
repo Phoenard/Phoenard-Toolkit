@@ -424,7 +424,7 @@ void ChipControlWidget::on_registerTable_itemChanged(QTableWidgetItem *item)
                 value = text.toInt(&succ, 10);
             }
             if (succ) {
-                _reg[address] = value;
+                _reg.set(address, value);
             } else {
                 item->setText(expectedText);
             }
@@ -442,7 +442,7 @@ void ChipControlWidget::on_registerTable_itemChanged(QTableWidgetItem *item)
         bool bitWasSet = (_reg[address] & bitMask) == bitMask;
         bool itemChecked = (item->checkState() == Qt::Checked);
         if (bitWasSet != itemChecked) {
-            _reg[address] ^= bitMask;
+            _reg.setXor(address, bitMask);
         }
     }
 }
@@ -462,7 +462,7 @@ void ChipControlWidget::on_registerTable_itemDoubleClicked(QTableWidgetItem *ite
 {
     int bitMask = getItemBitMask(item);
     if (bitMask) {
-        _reg[getItemAddress(item)] ^= bitMask;
+        _reg.setXor(getItemAddress(item), bitMask);
     }
 }
 
@@ -470,9 +470,9 @@ void ChipControlWidget::on_pinmapTable_cellDoubleClicked(int row, int column)
 {
     const PinMapInfo &info = _reg.pinmap()[row];
     if (column == PINMAP_COL_MODE) {
-        _reg[info.addr_ddr] ^= info.addr_mask;
+        _reg.setXor(info.addr_ddr, info.addr_mask);
     }
     if (column == PINMAP_COL_WRITE) {
-        _reg[info.addr_port] ^= info.addr_mask;
+        _reg.setXor(info.addr_port, info.addr_mask);
     }
 }

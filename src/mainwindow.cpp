@@ -701,5 +701,32 @@ void MainWindow::on_control_firmwareBtn_clicked()
 
 void MainWindow::on_serial_deviceMode_clicked()
 {
-    serial->openSerial(115200, STK500::SIM_GSM);
+    QIcon icon_sketch(":/icons/serial_sketch.png");
+    QIcon icon_sim_gsm(":/icons/serial_sim_gsm.png");
+    QIcon icon_sim_gps(":/icons/serial_sim_gps.png");
+    QIcon icon_wifi(":/icons/serial_wifi.png");
+    QIcon icon_blueooth(":/icons/serial_bluetooth.png");
+    QMenu menu;
+    QAction *sketchOpt = menu.addAction(icon_sketch, "Sketch (Serial 0)");
+    QAction *simGSMOpt = menu.addAction(icon_sim_gsm, "Sim GSM (Serial 1)");
+    QAction *simGPSOpt = menu.addAction(icon_sim_gps, "SIM GPS (Serial 3)");
+    QAction *wifiOpt = menu.addAction(icon_wifi, "WiFi (Serial 2)");
+    QAction *blueOpt = menu.addAction(icon_blueooth, "Bluetooth (Serial 2)");
+    QAction *result = showMenu(ui->serial_deviceMode, menu);
+    if (result) {
+        STK500::State mode = STK500::SKETCH;
+        if (result == sketchOpt) {
+            mode = STK500::SKETCH;
+        } else if (result == simGSMOpt) {
+            mode = STK500::SIM_GSM;
+        } else if (result == simGPSOpt) {
+            mode = STK500::SIM_GPS;
+        } else if (result == wifiOpt) {
+            mode = STK500::WIFI;
+        } else if (result == blueOpt) {
+            mode = STK500::BLUETOOTH;
+        }
+        ui->serialmonitor->setMode(mode);
+        ui->serial_deviceMode->setIcon(result->icon());
+    }
 }

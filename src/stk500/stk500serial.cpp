@@ -335,6 +335,9 @@ void stk500_ProcessThread::run() {
                     // Cancel all pending tasks
                     this->cancelTasks();
 
+                    // Update status while switching
+                    updateStatus(protocol.stateName(currSerialMode), "Switching...");
+
                     // Always reset if currently in Sketch mode
                     if (protocol.state() == STK500::SKETCH) {
                         protocol.reset();
@@ -343,15 +346,16 @@ void stk500_ProcessThread::run() {
                     // Put stk500 into sketch mode
                     try {
                         protocol.setState(currSerialMode, currSerialBaud);
+                        updateStatus(protocol.stateName(), "Active");
                     } catch (ProtocolException &err) {
                         qDebug() << err.what();
 
-                        //TODO: What to do here...?
+                        // Failure - still allow serial, but update status
                         port.setBaudRate(currSerialBaud);
+                        updateStatus(protocol.stateName(), "Failed to switch");
                     }
 
                     this->owner->notifySerialOpened(this);
-                    updateStatus(protocol.stateName(), "Active");
 
                 } else {
                     // Leaving Serial mode - sign on needed
