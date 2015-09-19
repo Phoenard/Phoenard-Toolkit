@@ -1,16 +1,15 @@
 #include "stk500.h"
 #include <QDebug>
 
-stk500::stk500(stk500Port *port)
+stk500::stk500()
 {
-    this->port = port;
     this->lastCmdTime = 0;
     this->sd_handler = new stk500sd(this);
     this->reg_handler = new stk500registers(this);
     this->service_handler = new stk500service(this);
     this->signedOn = false;
     this->lastResetTime = QDateTime::currentMSecsSinceEpoch() - STK500_MIN_RESET_TIME;
-    this->currentState = STK500::NONE;
+    this->currentState = STK500::UNOPENED;
 
     // Initialize the command names table
     QFile cmdFile(":/data/commands.csv");
@@ -54,6 +53,13 @@ void stk500::resetFirmware() {
     lastCmdTime = 0;
 }
 
+void stk500::open(const QString& portName) {
+    if (!port.open(portName)) {
+        QString err = QString("Could not open port: %1").arg(port.errorString());
+        throw ProtocolException(err);
+    }
+}
+
 void stk500::reset() {
     /* Reset state variables */
     sequenceNumber = 0;
@@ -61,11 +67,11 @@ void stk500::reset() {
     sd_handler->reset();
 
     /* Reset baud rate */
-    port->setBaudRate(115200);
+    port.setBaudRate(115200);
 
     /* Reset the device and wait until it's ready, reading the data */
-    port->reset();
-    QByteArray data = port->readAll(STK500_RESET_DELAY);
+    port.reset();
+    QByteArray data = port.readAll(STK500_RESET_DELAY);
     if (!data.isEmpty()) {
         QString dataText = data;
         QString errorMessage = QString("Failed to reset firmware: "
@@ -93,15 +99,15 @@ void stk500::reset() {
         unsigned char test_response[8] = {0x1B, 0x00, 0x00, 0x02,
                                            0x0E, 0x06, 0x00, 0x11};
 
-        port->clear();
-        port->write((char*) test_command, sizeof(test_command));
-        port->waitBaudCycles((int) sizeof(test_command));
+        port.clear();
+        port.write((char*) test_command, sizeof(test_command));
+        port.waitBaudCycles((int) sizeof(test_command));
 
         lastCmdTime = QDateTime::currentMSecsSinceEpoch();
         QByteArray response;
         response.reserve(11);
         do {
-            response.append(port->read(50));
+            response.append(port.read(50));
 
             // Check momentarily what kind of response is received
             if (memcmp(response.data(), test_response, sizeof(test_response)) == 0) {
@@ -128,7 +134,7 @@ void stk500::reset() {
 }
 
 void stk500::setBaudRate(qint32 baud) {
-    if (baud == port->baudRate()) {
+    if (baud == port.baudRate()) {
         return;
     }
 
@@ -170,9 +176,9 @@ void stk500::setBaudRate(qint32 baud) {
     // the response data is received. This is done by waiting for
     // the calculated time-to-send.
     commandWrite(STK500::PROGRAM_RAM_ISP, arguments, dataLength + 9);
-    port->setBaudRate(baud);
-    port->waitBaudCycles(10);
-    port->clear();
+    port.setBaudRate(baud);
+    port.waitBaudCycles(10);
+    port.clear();
     currentAddress += dataLength;
     lastCmdTime = QDateTime::currentMSecsSinceEpoch();
 
@@ -182,13 +188,17 @@ void stk500::setBaudRate(qint32 baud) {
 
 void stk500::setState(STK500::State newState, qint32 baudRate) {
     /* Check if there are any changes at all */
-    if ((newState == currentState) && (baudRate == port->baudRate())) {
+    if ((newState == currentState) && (baudRate == port.baudRate())) {
         return;
     }
 
-    if (newState == STK500::NONE) {
+    if (newState == STK500::UNOPENED) {
+        // Close the port
+        port.close();
+
+    } else if (newState == STK500::NONE) {
         // Simply change the settings but do nothing else
-        port->setBaudRate(baudRate);
+        port.setBaudRate(baudRate);
 
     } else if (newState == STK500::SERVICE) {
         // Write out the SERVICE_MODE command
@@ -196,15 +206,15 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
 
         // Verify shortly that no response is returned
         // If there is one, it means the command was normally executed
-        if (!port->readAll(250).isEmpty()) {
+        if (!port.readAll(250).isEmpty()) {
             throw ProtocolException("Service mode is not supported by the firmware on the device."
                                     "The SERVICE_MODE command gave an unexpected response.\n\n"
                                     "Perhaps outdated firmware is installed?");
         }
 
         // Verify that a connection is established by echo
-        port->write("HELLO", 5);
-        QString response = port->readAll(50);
+        port.write("HELLO", 5);
+        QString response = port.readAll(50);
         if (response.isEmpty()) {
             throw ProtocolException("Failed to establish a connection with the service routine."
                                     "No response was returned from the device.\n\n"
@@ -228,7 +238,7 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         signOut();
 
         // Switch baud rate
-        port->setBaudRate(baudRate);
+        port.setBaudRate(baudRate);
 
     } else {
         // Simply sign on to verify current connection / put into firmware mode
@@ -252,7 +262,7 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
             multiSerialIdx = 2;
             //TODO: Turn off Bluetooth/turn on WiFi
 
-        } else if (multiSerialIdx == STK500::BLUETOOTH) {
+        } else if (newState == STK500::BLUETOOTH) {
             multiSerialIdx = 2;
             //TODO: Turn off WiFi/turn on Bluetooth
 
@@ -282,6 +292,7 @@ QString stk500::stateName() {
 
 QString stk500::stateName(STK500::State state) {
     switch (state) {
+    case STK500::UNOPENED: return "-";
     case STK500::NONE: return "No Connection";
     case STK500::SKETCH: return "Sketch";
     case STK500::FIRMWARE: return "STK500";
@@ -321,7 +332,7 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
     do {
 
         /* Read in received response data */
-        QByteArray newData = port->read(STK500_READ_TIMEOUT);
+        QByteArray newData = port.read(STK500_READ_TIMEOUT);
         receivedData.append(newData);
 
         /* If no data is received at this point, we will not expect any */
@@ -427,12 +438,12 @@ void stk500::commandWrite(STK500::CMD command, const char* arguments, int argume
     data[total_length - 1] = crc;
 
     // Send out the data, then discard it once sent
-    port->write(data, total_length);
+    port.write(data, total_length);
     delete[] data;
 
     // This short delay is needed to guarantee data is written before receiving
     // Especially important in low-baud rate operation mode to include TX delay
-    port->waitBaudCycles(total_length);
+    port.waitBaudCycles(total_length);
 }
 
 QString stk500::readCommandResponse(STK500::CMD command, const QByteArray &input,
@@ -755,7 +766,7 @@ void stk500::SERIAL_begin(int serialIdxA, int serialIdxB) {
 
         // Initialize baud rate if not self
         if (serial[i] != 0) {
-            reg.setupUART(serial[i], port->baudRate());
+            reg.setupUART(serial[i], port.baudRate());
         }
     }
 

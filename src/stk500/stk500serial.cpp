@@ -37,14 +37,17 @@ void stk500Serial::close() {
             process->closeRequested = true;
             process->cancelTasks();
 
-            // Wait with 1s timeout for the process to exit
-            for (int i = 0; process->isRunning && i < 100; i++) {
+            // Wait with 2s timeout for the process to exit
+            for (int i = 0; process->isRunning && i < 200; i++) {
                 QThread::msleep(10);
             }
 
             // Force-terminate the thread if still running (locked)
+            // Also notify ourselves of the forcible closing of the port
             if (process->isRunning) {
                 process->terminate();
+                process->updateStatus("Closed");
+                this->notifyClosed(process);
             }
         }
 
@@ -282,29 +285,34 @@ stk500_ProcessThread::stk500_ProcessThread(stk500Serial *owner, QString portName
     this->serialBaud = 0;
     this->portName = portName;
     this->status = "";
+    this->protocol = NULL;
 }
 
 void stk500_ProcessThread::run() {
+    /* Initialize the protocol and internal port */
+    stk500 protocol;
+    this->protocol = &protocol;
+
     /* First check whether the port can be opened at all */
     QSerialPortInfo info(portName);
     if (info.isBusy()) {
         this->closeRequested = true;
-        updateStatus("Port", "Busy");
+        updateStatus("Port Busy");
     }
     if (!info.isValid()) {
         this->closeRequested = true;
-        updateStatus("Port", "Invalid");
+        updateStatus("Port Invalid");
     }
     if (!this->closeRequested) {
         /* First attempt to open the Serial port */
-        stk500Port port;
-        stk500 protocol(&port);
-        updateStatus("Port", "Opening...");
+        updateStatus("Opening port...");
 
         /* Attempt tp open the serial port */
-        if (!port.open(portName)) {
+        try {
+            protocol.open(portName);
+        } catch (ProtocolException &ex) {
+            qDebug() << ex.what();
             this->closeRequested = true;
-            qDebug() << "Could not open port: " << port.errorString();
         }
 
         /* Run process loop while not being closed */
@@ -336,7 +344,7 @@ void stk500_ProcessThread::run() {
                     this->cancelTasks();
 
                     // Update status while switching
-                    updateStatus(protocol.stateName(currSerialMode), "Switching...");
+                    updateStatus("Switching...");
 
                     // Always reset if currently in Sketch mode
                     if (protocol.state() == STK500::SKETCH) {
@@ -346,13 +354,12 @@ void stk500_ProcessThread::run() {
                     // Put stk500 into sketch mode
                     try {
                         protocol.setState(currSerialMode, currSerialBaud);
-                        updateStatus(protocol.stateName(), "Active");
+                        updateStatus("Active");
                     } catch (ProtocolException &err) {
                         qDebug() << err.what();
 
-                        // Failure - still allow serial, but update status
-                        port.setBaudRate(currSerialBaud);
-                        updateStatus(protocol.stateName(), "Failed to switch");
+                        // Failure
+                        updateStatus("Failed to switch");
                     }
 
                     this->owner->notifySerialOpened(this);
@@ -360,7 +367,6 @@ void stk500_ProcessThread::run() {
                 } else {
                     // Leaving Serial mode - sign on needed
                     needSignOn = true;
-                    port.setBaudRate(115200);
                 }
             }
 
@@ -373,7 +379,7 @@ void stk500_ProcessThread::run() {
 
                     char* buff = this->writeBuff.data();
                     int buff_len = this->writeBuff.length();
-                    int written = port.write(buff, buff_len);
+                    int written = protocol.getPort()->write(buff, buff_len);
                     int remaining = (buff_len - written);
                     if (!remaining) {
                         this->writeBuff.clear();
@@ -390,7 +396,7 @@ void stk500_ProcessThread::run() {
                 }
 
                 /* Read in data */
-                QByteArray serialData = port.readAll(20);
+                QByteArray serialData = protocol.getPort()->readAll(20);
 
                 /* Copy to the read buffer */
                 if (!serialData.isEmpty()) {
@@ -430,17 +436,17 @@ void stk500_ProcessThread::run() {
                 if (needSignOn && (protocol.state() != STK500::SERVICE)) {
                     needSignOn = false;
                     wasIdling = true;
-                    updateStatus("STK500", "Signing on");
+                    updateStatus("Signing on");
                     if (trySignOn(&protocol)) {
                         runTests(protocol);
                     } else {
-                        updateStatus("STK500", "Sign-on error");
+                        updateStatus("Sign-on error");
                     }
                 }
 
                 if (task != NULL) {
                     /* Update status */
-                    updateStatus(protocol.stateName(), "Busy");
+                    updateStatus("Busy");
 
                     /* Process the current task */
                     try {
@@ -527,43 +533,41 @@ void stk500_ProcessThread::run() {
 
                     // Waited for the full interval time, ping with a signOn command
                     // Still alive?
-                    wasIdling = true;
-                    if (protocol.state() == STK500::FIRMWARE) {
-                        if (trySignOn(&protocol)) {
-                            updateStatus(protocol.stateName(), "Idle");
-                        } else {
-                            updateStatus(protocol.stateName(), "Session lost");
-                        }
-                        updateStatus(protocol.stateName(), "Idle");
-                    } else {
-                        updateStatus(protocol.stateName(), "Idle");
+                    if ((protocol.state() == STK500::FIRMWARE) && !trySignOn(&protocol)) {
+                        updateStatus("Session Lost");
+                    } else if (wasIdling) {
+                        updateStatus("Idle");
                     }
+                    wasIdling = true;
 
-                    /* Wait for a short time to keep the bootloader in the right mode */
-                    sync.lock();
-                    cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
-                    sync.unlock();
+                    /*
+                     * Wait for a short time to keep the bootloader in the right mode
+                     * If no connection was established, wait the full time to reduce spam
+                     */
+                    if (protocol.state() == STK500::NONE) {
+                        QThread::msleep(STK500_CMD_MIN_INTERVAL);
+                    } else {
+                        sync.lock();
+                        cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
+                        sync.unlock();
+                    }
                 }
-            }
-
-            /* If port is closed, exit the thread */
-            if (!port.isOpen()) {
-                this->closeRequested = true;
             }
         }
 
         /* Notify owner that this port is (being) closed */
-        updateStatus("Port", "Closing...");
+        updateStatus("Closing port...");
 
         /* Close the serial port; this can hang in some cases */
-        port.close();
+        protocol.setState(STK500::UNOPENED);
 
         /* Notify owner that port has been closed */
-        updateStatus("Port", "Closed");
+        updateStatus("Port Closed");
     }
 
     this->isRunning = false;
     this->isProcessing = false;
+    this->protocol = NULL;
     this->owner->notifyClosed(this);
 }
 
@@ -580,8 +584,8 @@ bool stk500_ProcessThread::trySignOn(stk500 *protocol) {
     return false;
 }
 
-void stk500_ProcessThread::updateStatus(const QString &stateName, const QString &stateStatus) {
-    QString status = QString("[%1] %2").arg(stateName, stateStatus);
+void stk500_ProcessThread::updateStatus(const QString &stateStatus) {
+    QString status = QString("[%1] %2").arg(protocol->stateName(), stateStatus);
     if (this->status != status) {
         this->status = status;
         this->owner->notifyStatus(this, this->status);

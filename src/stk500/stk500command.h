@@ -95,7 +95,7 @@ enum CMD {
 // *****************[ STK operation enumeration ]*******************
 
 enum State {
-    NONE, SKETCH, FIRMWARE, SERVICE, BLUETOOTH, WIFI, SIM_GSM, SIM_GPS
+    UNOPENED, NONE, SKETCH, FIRMWARE, SERVICE, BLUETOOTH, WIFI, SIM_GSM, SIM_GPS
 };
 
 // *****************[ STK status constants ]***************************

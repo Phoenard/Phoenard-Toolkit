@@ -54,17 +54,18 @@ class stk500_ProcessThread : public QThread {
 
 public:
     stk500_ProcessThread(stk500Serial *owner, QString portName);
+    void updateStatus(const QString &stateStatus);
     void cancelTasks();
     void wake();
 
 protected:
     virtual void run();
     bool trySignOn(stk500 *protocol);
-    void updateStatus(const QString &stateName, const QString &stateStatus);
     void runTests(stk500 &protocol);
 
 public:
     stk500Serial *owner;
+    stk500 *protocol;
     QMutex sync;
     QWaitCondition cond;
     QQueue<stk500Task*> asyncTasks;
