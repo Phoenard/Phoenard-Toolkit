@@ -36,10 +36,14 @@ void stk500SaveFiles::saveFile(DirectoryEntry fileEntry, QString sourceFilePath,
                 }
 
                 time = QDateTime::currentMSecsSinceEpoch();
-                timeElapsed = (time - startTime);
+                timeElapsed = (time - startTime) / 1000;
                 done = (fileEntry.fileSize - remaining);
-                int speed_ps = 1000 * done / timeElapsed;
-                if (!speed_ps) speed_ps = 1;
+                int speed_ps;
+                if (timeElapsed == 0 || done == 0) {
+                    speed_ps = 6000;
+                } else {
+                    speed_ps = done / timeElapsed;
+                }
 
                 /* Update progress */
                 setProgress(progStart + progTotal * ((double) done / (double) fileEntry.fileSize));
@@ -50,7 +54,7 @@ void stk500SaveFiles::saveFile(DirectoryEntry fileEntry, QString sourceFilePath,
                 newStatus.append(stk500::getSizeText(remaining)).append(" remaining (");
                 newStatus.append(stk500::getSizeText(speed_ps)).append("/s)\n");
                 newStatus.append("Elapsed: ").append(stk500::getTimeText(timeElapsed));
-                newStatus.append(", estimated ").append(stk500::getTimeText(1000 * remaining / speed_ps));
+                newStatus.append(", estimated ").append(stk500::getTimeText(remaining / speed_ps));
                 newStatus.append(" remaining");
                 setStatus(newStatus);
 

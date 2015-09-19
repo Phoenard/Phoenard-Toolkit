@@ -814,16 +814,17 @@ QString DirectoryInfo::fileSizeTextLong() {
     return rval;
 }
 
-QString stk500::getTimeText(qint64 timeMillis) {
+QString stk500::getTimeText(qint64 timeSeconds) {
     const char* unit = "";
-    int time_trunc = (timeMillis / 1000);
-    if (time_trunc < 60) {
+    int time_trunc = 0;
+    if (timeSeconds < 60) {
+        time_trunc = timeSeconds;
         unit = "second";
-    } else if (time_trunc < (60 * 60)) {
-        time_trunc /= 60;
+    } else if (timeSeconds < (60 * 60)) {
+        time_trunc = timeSeconds / 60;
         unit = "minute";
     } else {
-        time_trunc /= 3600;
+        time_trunc = timeSeconds / 3600;
         unit = "hour";
     }
     QString rval;
