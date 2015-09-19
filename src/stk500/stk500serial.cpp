@@ -519,16 +519,19 @@ void stk500_ProcessThread::run() {
                         owner->notifyTaskFinished(this, task);
                     }
 
-                    // Check if still processing or not
-                    this->tasksLock.lock();
-                    if (syncTasks.empty() && asyncTasks.empty()) {
-                        isProcessing = false;
+                    // Wait shortly for any new tasks to be given to us
+                    if (!hasTasks()) {
+                        sync.lock();
+                        cond.wait(&sync, STK500_CMD_MIN_INTERVAL);
+                        sync.unlock();
+                        if (!hasTasks()) {
+                            isProcessing = false;
+                        }
                     }
-                    this->tasksLock.unlock();
 
                     wasIdling = false;
 
-                } else if (protocol.firmwareIdleTime() >= STK500_CMD_MIN_INTERVAL) {
+                } else {
                     /* No task and protocol inactive - ping while waiting for tasks to be sent our way */
 
                     // Waited for the full interval time, ping with a signOn command
@@ -601,6 +604,14 @@ void stk500_ProcessThread::cancelTasks() {
         asyncTasks[i]->cancel();
     }
     tasksLock.unlock();
+}
+
+bool stk500_ProcessThread::hasTasks() {
+    bool hasTasks;
+    tasksLock.lock();
+    hasTasks = (!syncTasks.empty() || !asyncTasks.empty());
+    tasksLock.unlock();
+    return hasTasks;
 }
 
 void stk500_ProcessThread::wake() {

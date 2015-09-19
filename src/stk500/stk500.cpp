@@ -67,7 +67,7 @@ void stk500::reset() {
     sd_handler->reset();
 
     /* Reset baud rate */
-    port.setBaudRate(115200);
+    port.setBaudRate(STK500_BAUD);
 
     /* Reset the device and wait until it's ready, reading the data */
     port.reset();
@@ -244,29 +244,57 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         // Simply sign on to verify current connection / put into firmware mode
         signOn();
 
-        // Switch firmware baud rate if non-standard
-        this->setBaudRate(baudRate);
-
         // Switch to multi-serial mode for some states
         // Also turn devices on/off as required
         int multiSerialIdx = -1;
         if (newState == STK500::SIM_GSM) {
             multiSerialIdx = 1;
-            //TODO: Turn on SIM
 
         } else if (newState == STK500::SIM_GPS) {
             multiSerialIdx = 3;
-            //TODO: Turn on SIM (and GPS?)
 
         } else if (newState == STK500::WIFI) {
             multiSerialIdx = 2;
-            //TODO: Turn off Bluetooth/turn on WiFi
+            // Turn off Bluetooth/turn on WiFi
+            ChipRegisters reg;
+            reg.setPin("WiFi", "Power Key", true, true);
+            reg.setPin("BlueTooth", "Reset", true, false);
+            this->reg().write(reg);
 
         } else if (newState == STK500::BLUETOOTH) {
             multiSerialIdx = 2;
-            //TODO: Turn off WiFi/turn on Bluetooth
-
+            // Turn off WiFi/turn on Bluetooth
+            ChipRegisters reg;
+            reg.setPin("WiFi", "Power Key", true, false);
+            reg.setPin("BlueTooth", "Reset", true, true);
+            this->reg().write(reg);
         }
+
+        // Special SIM powering routine (performed at full baud speed)
+        if ((newState == STK500::SIM_GSM) || (newState == STK500::SIM_GPS)) {
+            setBaudRate(STK500_BAUD);
+            ChipRegisters reg;
+            reg.setPin("Sim908", "DTRS", false, true);
+            this->reg().write(reg);
+
+            this->reg().read(reg);
+            if (!reg.getPin("Sim908", "Status") && !reg.getPin("Sim908", "DTRS")) {
+                reg.setPin("Sim908", "Power Key", true, true);
+                this->reg().write(reg);
+
+                qint64 timeOut = QDateTime::currentMSecsSinceEpoch();
+                do {
+                    signOn();
+                    QThread::msleep(STK500_CMD_MIN_INTERVAL);
+                } while ((QDateTime::currentMSecsSinceEpoch() - timeOut) < 1500);
+
+                reg.setPin("Sim908", "Power Key", true, false);
+                this->reg().write(reg);
+            }
+        }
+
+        // Switch firmware baud rate if non-standard
+        this->setBaudRate(baudRate);
 
         // Switch to multi-serial mode
         if (multiSerialIdx != -1) {

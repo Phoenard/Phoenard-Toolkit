@@ -56,6 +56,7 @@ public:
     stk500_ProcessThread(stk500Serial *owner, QString portName);
     void updateStatus(const QString &stateStatus);
     void cancelTasks();
+    bool hasTasks();
     void wake();
 
 protected:

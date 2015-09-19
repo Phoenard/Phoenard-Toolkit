@@ -237,7 +237,30 @@ int ChipRegisters::findRegisterAddress(const QString &name) {
             return registerInfoByIndex[i]->addressValue;
         }
     }
+    qDebug() << "Register not found:" << name;
     return -1;
+}
+
+PinMapInfo &ChipRegisters::findPinInfo(const QString module, const QString &function) {
+    initRegisters();
+    for (int i = 0; i < pinmapInfo.count(); i++) {
+        PinMapInfo &info = pinmapInfo[i];
+        if ((info.module == module) && (info.function == function)) {
+            return info;
+        }
+    }
+    qDebug() << "Pin information not found:" << module << "," << function;
+    return pinmapInfoHeader;
+}
+
+PinMapInfo &ChipRegisters::findPinInfo(int pin) {
+    initRegisters();
+    for (int i = 0; i < pinmapInfo.count(); i++) {
+        PinMapInfo &info = pinmapInfo[i];
+        if (info.pin == pin) return info;
+    }
+    qDebug() << "Pin information not found for pin: " << pin;
+    return pinmapInfoHeader;
 }
 
 quint8 ChipRegisters::get(const QString &name) const {
@@ -264,10 +287,50 @@ void ChipRegisters::set(int address, quint8 value) {
     regData[address] = value;
 }
 
+void ChipRegisters::setBit(int address, quint8 mask, bool bitSet) {
+    if (address < 0) return;
+
+    // Generate bit-changed value
+    quint8 oldValue = regData[address];
+    quint8 value = bitSet ? (oldValue | mask) : (oldValue & ~mask);
+
+    // Simulate a change of all bits if not read before
+    if (!regDataWasRead) {
+        quint8 changeMask = regDataRead[address] ^ regData[address];
+        changeMask |= mask;
+        regDataLast[address] = regDataRead[address] = value ^ changeMask;
+    }
+
+    // Return reference to data
+    regData[address] = value;
+}
+
 quint8 ChipRegisters::setXor(int address, quint8 mask) {
     quint8 value = get(address) ^ mask;
     set(address, value);
     return value;
+}
+
+bool ChipRegisters::getPin(const QString& module, const QString& function) {
+    PinMapInfo &info = findPinInfo(module, function);
+    return (regData[info.addr_pin] & info.addr_mask) != 0;
+}
+
+void ChipRegisters::setPin(const QString& module, const QString& function, bool mode, bool state) {
+    PinMapInfo &info = findPinInfo(module, function);
+    setBit(info.addr_ddr, info.addr_mask, mode);
+    setBit(info.addr_port, info.addr_mask, state);
+}
+
+bool ChipRegisters::getPin(int pin) {
+    PinMapInfo &info = findPinInfo(pin);
+    return (regData[info.addr_pin] & info.addr_mask) != 0;
+}
+
+void ChipRegisters::setPin(int pin, bool mode, bool state) {
+    PinMapInfo &info = findPinInfo(pin);
+    setBit(info.addr_ddr, info.addr_mask, mode);
+    setBit(info.addr_port, info.addr_mask, state);
 }
 
 bool ChipRegisters::getChangedRange(int* address, int* count) {

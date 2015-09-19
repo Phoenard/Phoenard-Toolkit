@@ -62,7 +62,6 @@ public:
     const ChipRegisterInfo &info(int address);
     const ChipRegisterInfo &infoHeader();
     const ChipRegisterInfo &infoByIndex(int index);
-    static int findRegisterAddress(const QString &name);
     const QList<PinMapInfo> &pinmap();
     const PinMapInfo &pinmapHeader();
 
@@ -74,11 +73,21 @@ public:
     quint8 get(const QString &name) const;
     void set(int address, quint8 value);
     void set(const QString &name, quint8 value);
+    void setBit(int address, quint8 mask, bool bitSet);
     quint8 setXor(int address, quint8 mask);
+    bool getPin(const QString& module, const QString& function);
+    bool getPin(int pin);
+    void setPin(const QString& module, const QString& function, bool mode, bool state);
+    void setPin(int pin, bool mode, bool state);
 
     // Only getters are allowed for array access operator
     quint8 operator [](int address) const { return get(address); }
     quint8 operator [](const QString &name) const { return get(name); }
+
+    // Stack accessors to register and pinmap tables
+    static int findRegisterAddress(const QString &name);
+    static PinMapInfo &findPinInfo(const QString module, const QString &function);
+    static PinMapInfo &findPinInfo(int pin);
 
     friend class stk500registers;
 

@@ -18,6 +18,7 @@
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
 #define STK500_RESET_DELAY       200   // Delay between RESET and command sending
 #define STK500_CMD_MIN_INTERVAL  100   // Minimal interval of commands to stay in bootloader mode
+#define STK500_BAUD           115200   // Default baud rate for the STK500 protocol
 
 // Pre-define components up front
 class stk500sd;
