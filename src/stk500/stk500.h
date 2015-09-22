@@ -12,6 +12,7 @@
 #include "stk500_fat.h"
 #include "stk500settings.h"
 #include "stk500port.h"
+#include "programdata.h"
 
 #define STK500_READ_TIMEOUT     2000   // After this much time, no response received
 #define STK500_MIN_RESET_TIME     50   // Minimum time between successive resets
@@ -56,11 +57,12 @@ public:
     bool isSignedOn();
     CardVolume SD_init();
     PHN_Settings readSettings();
-    void writeSettings(PHN_Settings settings);
+    void writeSettings(const PHN_Settings &settings);
     void SD_readBlock(quint32 block, char* dest, int destLen);
     void SD_writeBlock(quint32 block, const char* src, int srcLen, bool isFAT = false);
     void FLASH_readPage(quint32 address, char* dest, int destLen);
     void FLASH_writePage(quint32 address, const char* src, int srcLen);
+    void FLASH_verifyCorrect(quint32 address, const char* src, int srcLen);
     void EEPROM_read(quint32 address, char* dest, int destLen);
     void EEPROM_write(quint32 address, const char* src, int srcLen);
     void RAM_read(quint16 address, char* dest, int destLen);

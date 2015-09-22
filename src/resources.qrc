@@ -1,4 +1,7 @@
 <RCC>
+    <qresource prefix="/programs">
+        <file alias="FirmwareRecoverySketch.hex">programs/FirmwareRecoverySketch/FirmwareRecoverySketch.hex</file>
+    </qresource>
     <qresource prefix="/">
         <file>fonts/OpenSans-Regular.ttf</file>
         <file>fonts/Inconsolata-Regular.ttf</file>

@@ -7,6 +7,9 @@
 #include <QDebug>
 #include <QThread>
 
+// Amount of time (in ms) spent doing a single reading cycle
+#define PORT_READ_STEP_TIME 5
+
 class stk500Port
 {
 public:
@@ -27,6 +30,7 @@ public:
     static QList<QString> getPortNames();
 
 private:
+    QByteArray readStep();
     QSerialPort port;
 };
 

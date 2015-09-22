@@ -141,12 +141,37 @@ void ProgramData::load(const QByteArray &data) {
     /* Fill the sketch/firmware data buffers */
     _sketchData = QByteArray(fullData, sketch_end);
     _firmwareData = QByteArray(fullData+boot_start, firmware_end-boot_start);
+
+    /* Make sure to pad the data to 256 page size */
+    pageAlign(_sketchData);
+    pageAlign(_firmwareData);
+}
+
+const char* ProgramData::sketchPage(quint32 address) {
+    return _sketchData.data() + address;
+}
+
+const char* ProgramData::firmwarePage(quint32 address) {
+    return _firmwareData.data() + address;
+}
+
+bool ProgramData::isServicePage(const char* pageData) {
+    quint32 crc = ~0;
+    for (int i = 0; i < 256; i++) {
+        crc ^= (quint8) pageData[i];
+        for (unsigned char k = 8; k; k--) {
+          unsigned char m = (crc & 0x1);
+          crc >>= 1;
+          if (m) crc ^= 0xEDB88320;
+        }
+    }
+    crc = ~crc;
+    return (crc == 0xBBC8FBD5);
 }
 
 QString ProgramData::firmwareVersion() {
     // Generate CRC
     quint32 crc = ~0;
-    quint32 service_crc = ~0;
     for (int i = 0; i < _firmwareData.length(); i++) {
         crc ^= (quint8) _firmwareData[i];
         for (unsigned char k = 8; k; k--) {
@@ -154,12 +179,18 @@ QString ProgramData::firmwareVersion() {
           crc >>= 1;
           if (m) crc ^= 0xEDB88320;
         }
-        if (i == 255) service_crc = ~crc;
     }
     crc = ~crc;
 
     // Compile version token
     QString version = QString::number(crc, 16).toUpper();
-    version += (service_crc == 0xBBC8FBD5) ? "-Y" : "-N";
+    version += isServicePage(_firmwareData.data()) ? "-Y" : "-N";
     return version;
+}
+
+void ProgramData::pageAlign(QByteArray &data) {
+    int size = data.size();
+    int pageSize = (size + 256 - 1) & ~(256-1);
+    data.reserve(pageSize);
+    memset(data.data()+size, 0xFF, pageSize-size);
 }

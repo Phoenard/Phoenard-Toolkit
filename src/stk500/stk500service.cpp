@@ -103,7 +103,7 @@ int stk500service::readSerial(char* output, int limit) {
     int readLength = 0;
     stk500Port *port = _handler->getPort();
     while (readLength < limit) {
-        QByteArray data = port->readAll(250);
+        QByteArray data = port->read(250);
         int remaining = limit - readLength;
         int len = (data.length() > remaining) ? remaining : data.length();
         if (!len) break;

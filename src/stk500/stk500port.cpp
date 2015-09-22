@@ -60,27 +60,28 @@ QString stk500Port::portName() {
 }
 
 QByteArray stk500Port::read(int timeout) {
-    const int step_timeout = 50;
-    if (timeout < step_timeout) {
-        return readAll(timeout);
-    } else {
-        qint64 start_time = QDateTime::currentMSecsSinceEpoch();
-        QByteArray result;
-        do {
-            result = port.readAll();
-            if (result.isEmpty()) {
-                port.waitForReadyRead(step_timeout);
-            } else {
-                break;
-            }
-        } while ((QDateTime::currentMSecsSinceEpoch() - start_time) < timeout);
-
-        return result;
-    }
+    qint64 start_time = QDateTime::currentMSecsSinceEpoch();
+    QByteArray result;
+    do {
+        result = readStep();
+        if (!result.isEmpty()) {
+            break;
+        }
+    } while ((QDateTime::currentMSecsSinceEpoch() - start_time) < timeout);
+    return result;
 }
 
 QByteArray stk500Port::readAll(int timeout) {
-    port.waitForReadyRead(timeout);
+    qint64 start_time = QDateTime::currentMSecsSinceEpoch();
+    QByteArray data;
+    do {
+        data.append(readStep());
+    } while ((QDateTime::currentMSecsSinceEpoch() - start_time) < timeout);
+    return data;
+}
+
+QByteArray stk500Port::readStep() {
+    port.waitForReadyRead(PORT_READ_STEP_TIME);
     return port.readAll();
 }
 

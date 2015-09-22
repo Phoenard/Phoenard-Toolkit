@@ -5,21 +5,31 @@ void stk500UpdateFirmware::init() {
 }
 
 void stk500UpdateFirmware::run() {
+
     /* Page buffer used while reading / writing */
     char pageData[256];
+
+    /* Verify that the firmware we are programming supports service mode */
+    setStatus("Verifying firmware");
+    if (!ProgramData::isServicePage(firmwareData.data())) {
+        throw ProtocolException("This firmware is incompatible with the firmware that "
+                                "is currently installed. Only Phoenard firmware built "
+                                "after September 6, 2015, is compatible with service mode programming.\n\n"
+                                "You will need to use an ISP programmer to use this firmware. "
+                                "If this is old firmware, please download more recent firmware instead.");
+    }
 
     /* Initialize service routine */
     setStatus("Entering service mode");
     protocol->service().begin();
 
-    /* Verify the first page is compatible with the firmware */
-    setStatus("Verifying firmware");
+    /* Verify that the service routine flash matches up */
+    setStatus("Verifying service routine flash");
     protocol->service().readPage(BOOT_START_ADDR, pageData);
-    if (memcmp(pageData, firmwareData.data(), sizeof(pageData))) {
-        throw ProtocolException("This firmware is incompatible with the firmware that "
-                                "is currently installed. Only Phoenard firmware built "
-                                "after August 6, 2015, is compatible with service mode programming.\n\n"
-                                "You will need to use an ISP programmer to use this firmware");
+    if (!ProgramData::isServicePage(pageData)) {
+        throw ProtocolException("The firmware that is currently installed does not appear "
+                                "to contain a valid service routine. If uploading sketches "
+                                "is still possible, please contact our support team for help.");
     }
 
     /*
