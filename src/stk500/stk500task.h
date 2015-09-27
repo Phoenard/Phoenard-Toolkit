@@ -177,22 +177,14 @@ public:
     bool readADC;
 };
 
-class stk500UpdateFirmware : public stk500Task {
+class stk500Upload : public stk500Task {
 public:
-    stk500UpdateFirmware(const ProgramData &firmwareData)
-        : stk500Task("Updating firmware"), firmwareData(firmwareData) {}
+    stk500Upload(const ProgramData &data)
+        : stk500Task("Uploading"), data(data) {}
     virtual void run();
     virtual void init();
 
-    ProgramData firmwareData;
-};
-
-class stk500Upload : public stk500Task {
-public:
-    stk500Upload(const QByteArray &programData) : stk500Task("Uploading"), programData(programData) {}
-    virtual void run();
-
-    QByteArray programData;
+    ProgramData data;
 };
 
 class stk500BeginSerial : public stk500Task {

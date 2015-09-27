@@ -40,9 +40,8 @@ SOURCES += main.cpp\
     stk500/tasks/stk500renamefiles.cpp \
     stk500/tasks/stk500renamevolume.cpp \
     stk500/tasks/stk500savefiles.cpp \
-    stk500/tasks/stk500updateregisters.cpp \
-    stk500/tasks/stk500updatefirmware.cpp \
     stk500/tasks/stk500upload.cpp \
+    stk500/tasks/stk500updateregisters.cpp \
     imaging/quantize.cpp \
     controls/colorselect.cpp \
     controls/menubutton.cpp \

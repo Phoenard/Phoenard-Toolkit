@@ -20,6 +20,8 @@ public:
     quint32 firmwareSize() const { return (quint32) _firmwareData.size(); }
     const char* sketchPage(quint32 address) const;
     const char* firmwarePage(quint32 address) const;
+    void clearSketchData() { _sketchData.clear(); }
+    void clearFirmwareData() { _firmwareData.clear(); }
     bool hasServiceSupport() const;
 
     /* Verifies if a 256-byte page of data is the service page */

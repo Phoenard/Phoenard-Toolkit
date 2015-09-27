@@ -671,8 +671,6 @@ void MainWindow::on_control_firmwareBtn_clicked()
     /* Load the firmware */
     ProgramData data;
     data.loadFile(filePath);
-
-    QList<stk500Task*> tasks;
     if (data.hasFirmwareData()) {
         QString message = QString("The hex file you selected contains device firmware\n"
                                   "Firmware version: %1\n\n"
@@ -686,17 +684,11 @@ void MainWindow::on_control_firmwareBtn_clicked()
                                           QMessageBox::No);
 
         if (result == QMessageBox::Cancel) return;
-        if (result == QMessageBox::Yes) {
-            tasks.append(new stk500UpdateFirmware(data));
+        if (result == QMessageBox::No) {
+            data.clearFirmwareData();
         }
     }
-    if (data.hasSketchData()) {
-        tasks.append(new stk500Upload(data.sketchData()));
-    }
-    serial->executeAll(tasks, false, false);
-    for (int i = 0; i < tasks.count(); i++) {
-        delete tasks[i];
-    }
+    serial->execute(stk500Upload(data), false, false);
 }
 
 void MainWindow::on_serial_deviceMode_clicked()
