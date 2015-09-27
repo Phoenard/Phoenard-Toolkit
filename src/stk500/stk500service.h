@@ -14,6 +14,7 @@ public:
     stk500service(stk500 *handler) : _handler(handler) {}
     void begin();
     void end();
+    void setMode(char mode);
     void readPage(quint32 address, char* pageData);
     void writePage(quint32 address, const char* pageData);
 

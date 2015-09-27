@@ -179,12 +179,12 @@ public:
 
 class stk500UpdateFirmware : public stk500Task {
 public:
-    stk500UpdateFirmware(const QByteArray &firmwareData)
+    stk500UpdateFirmware(const ProgramData &firmwareData)
         : stk500Task("Updating firmware"), firmwareData(firmwareData) {}
     virtual void run();
     virtual void init();
 
-    QByteArray firmwareData;
+    ProgramData firmwareData;
 };
 
 class stk500Upload : public stk500Task {

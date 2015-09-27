@@ -687,7 +687,7 @@ void MainWindow::on_control_firmwareBtn_clicked()
 
         if (result == QMessageBox::Cancel) return;
         if (result == QMessageBox::Yes) {
-            tasks.append(new stk500UpdateFirmware(data.firmwareData()));
+            tasks.append(new stk500UpdateFirmware(data));
         }
     }
     if (data.hasSketchData()) {

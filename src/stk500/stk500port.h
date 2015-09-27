@@ -23,6 +23,7 @@ public:
     QString portName();
     QByteArray readAll(int timeout);
     QByteArray read(int timeout);
+    QByteArray readStep();
     int write(const char* buffer, int nrOfBytes);
     QString errorString();
     bool isOpen();
@@ -30,7 +31,6 @@ public:
     static QList<QString> getPortNames();
 
 private:
-    QByteArray readStep();
     QSerialPort port;
 };
 

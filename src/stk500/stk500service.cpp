@@ -15,6 +15,40 @@ void stk500service::checkConnection() {
     }
 }
 
+void stk500service::setMode(char mode) {
+
+    // Execute the 'm' command and switch modes
+    char command[2] = {'m', mode};
+    if (!writeVerifyRetry(command, sizeof(command))) {
+        throw ProtocolException("Failed to switch SPM mode: No response");
+    }
+
+    // Read the address part; send 4 bytes to push it out
+    quint32 address = 0;
+    _handler->getPort()->write("\0\0\0\0" , 4);
+    int recLen = readSerial((char*) &address, sizeof(address));
+    if (recLen != (int) sizeof(address)) {
+        // Could not get a full response for the switch mode command
+        QString errorMessage = QString("Failed to switch SPM mode: Response too short\n"
+                                       "Received: %1 bytes").arg(recLen+2);
+        throw ProtocolException(errorMessage);
+    }
+
+    // Verify address is valid
+    QString addrText = QString("0x%0").arg(QString::number(address*2, 16).toUpper());
+    if (address == 0) {
+        throw ProtocolException("Failed to switch SPM mode: Function not found. "
+                                "Could not locate the firmware section "
+                                "used to write to flash memory.\n\n"
+                                "The firmware currently on the device does not support "
+                                "service updates. Use an ISP programmer to upload the "
+                                "right firmware to the device.");
+    }
+
+    // Debug: print address information
+    qDebug() << "[Service] mode =" << mode << "; spm_addr =" << addrText;
+}
+
 void stk500service::readPage(quint32 address, char* pageData) {
     setAddress(address);
 
@@ -43,29 +77,17 @@ void stk500service::readPage(quint32 address, char* pageData) {
 void stk500service::writePage(quint32 address, const char* pageData) {
     QString addressText = QString("0x") + QString::number(address, 16);
 
-    for (int i = 0; i < 2; i++) {
-        /* Refresh address */
-        setAddress(address);
+    /* Set address */
+    setAddress(address);
 
-        /* Enter write mode */
-        if (!writeVerifyRetry("w", 1)) {
-            QString err = QString("Failed to start writing page at address %1").arg(addressText);
-            throw ProtocolException(err);
-        }
-
-        /* Write out in three steps: erase, fill, write */
-        if (writeVerify(pageData, 1) &&
-            writeVerify(pageData+1, 254) &&
-            writeVerify(pageData+255, 1) ) {
-            return;
-        } else {
-            /* On errors, flush state and retry */
-            flushData();
-        }
+    /* Try to execute 'w' command */
+    char commandData[1+256];
+    commandData[0] = 'w';
+    memcpy(commandData+1, pageData, 256);
+    if (!writeVerifyRetry(commandData, sizeof(commandData))) {
+        QString err = QString("Failed to write page data at address %1").arg(addressText);
+        throw ProtocolException(err);
     }
-
-    QString err = QString("Failed to write page data at address %1").arg(addressText);
-    throw ProtocolException(err);
 }
 
 void stk500service::setAddress(quint32 address) {

@@ -19,6 +19,7 @@
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
 #define STK500_RESET_DELAY       200   // Delay between RESET and command sending
 #define STK500_CMD_MIN_INTERVAL  100   // Minimal interval of commands to stay in bootloader mode
+#define STK500_SERVICE_DELAY     100   // Delay between signOut and service mode sketch ready
 #define STK500_BAUD           115200   // Default baud rate for the STK500 protocol
 
 // Pre-define components up front
@@ -63,6 +64,7 @@ public:
     void FLASH_readPage(quint32 address, char* dest, int destLen);
     void FLASH_writePage(quint32 address, const char* src, int srcLen);
     void FLASH_verifyCorrect(quint32 address, const char* src, int srcLen);
+    void FLASH_upload(const ProgramData &programData);
     void EEPROM_read(quint32 address, char* dest, int destLen);
     void EEPROM_write(quint32 address, const char* src, int srcLen);
     void RAM_read(quint16 address, char* dest, int destLen);

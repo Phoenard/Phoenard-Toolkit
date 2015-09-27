@@ -81,13 +81,13 @@ void stk500::reset() {
     }
 
     /* Try to get some kind of communication going, */
-    const int MAX_TRIALS = 5;
+    const int MAX_TRIALS = 2;
     currentState = STK500::NONE;
     for (int trial = 0; trial < MAX_TRIALS && (currentState == STK500::NONE); trial++) {
 
         /*
-         * Write out a command which excludes the service w/r characters
-         * The bytes 0x77 and 0x72 should not be used to prevent accidental writing
+         * Write out a command which excludes the service w/r/a/m characters
+         * The bytes 0x77,0x72,0x61,0x6D should not be used to prevent accidents
          *
          * Read the response back. If it is exactly the same as the data we sent, we
          * are in service mode. If it is the same as the expected response, then we
@@ -107,7 +107,7 @@ void stk500::reset() {
         QByteArray response;
         response.reserve(11);
         do {
-            response.append(port.read(50));
+            response.append(port.readStep());
 
             // Check momentarily what kind of response is received
             if (memcmp(response.data(), test_response, sizeof(test_response)) == 0) {
@@ -118,7 +118,7 @@ void stk500::reset() {
                 currentState = STK500::SERVICE;
                 break;
             }
-        } while ((QDateTime::currentMSecsSinceEpoch() - lastCmdTime) < 300);
+        } while ((QDateTime::currentMSecsSinceEpoch() - lastCmdTime) < STK500_READ_TIMEOUT);
 
         /* Reset timeout to prevent successive resetting */
         lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
@@ -201,121 +201,35 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         port.setBaudRate(baudRate);
 
     } else if (newState == STK500::SERVICE) {
-        // Read the first page of the firmware and verify if service mode is available
-        char pageBuffer[256];
-        FLASH_readPage(BOOT_START_ADDR, pageBuffer, sizeof(pageBuffer));
-        bool hasServiceFunction = ProgramData::isServicePage(pageBuffer);
-        do {
-            if (hasServiceFunction) {
+        // Upload the service mode sketch to enter service mode
+        // Restore settings to make sure they are preserved
+        PHN_Settings oldSettings;
+        ProgramData serviceSketch;
+        serviceSketch.loadFile(":/programs/SetServiceMode.hex");
+        oldSettings = readSettings();
+        FLASH_upload(serviceSketch);
+        writeSettings(oldSettings);
 
-                // Attempt to put the device into service mode
-                // If response is given; assume failure.
-                // Write out the SERVICE_MODE command
-                commandWrite(STK500::SERVICE_MODE_ISP, NULL, 0);
+        // Run sketch and wait for it to boot
+        signOut();
+        QThread::msleep(STK500_SERVICE_DELAY);
 
-                // Check if command was handled as expected
-                if (!port.readAll(250).isEmpty()) {
-                    hasServiceFunction = false;
-                    continue;
-                }
+        // We are in service mode at this point
+        // Verify that service routine is running as expected
+        port.write("HELLO", 5);
+        QString response = port.readAll(50);
+        if (response.isEmpty()) {
+            throw ProtocolException("Failed to establish a connection with the service routine. "
+                                    "No response was returned from the device.\n\n"
+                                    "Perhaps incompatible firmware is installed?");
 
-                // Verify connection with service routine
-                port.write("HELLO", 5);
-                QString response = port.readAll(50);
-                if (response != "HELLO") {
-                    hasServiceFunction = false;
-                    continue;
-                }
-
-            } else {
-
-                // No service function is available or accessible: use recovery sketch
-                ProgramData recovery;
-                recovery.loadFile(":/programs/FirmwareRecoverySketch.hex");
-
-                // Read previous settings and sketch data in flash
-                PHN_Settings oldSettings = readSettings();
-                QByteArray oldSketchData;
-                for (quint32 addr = 0; addr < recovery.sketchSize(); addr += 256) {
-                    char arr[256];
-                    FLASH_readPage(addr, arr, 256);
-                    oldSketchData.append(arr, 256);
-                }
-
-                // Wipe the first page of program data (prevent running)
-                memset(pageBuffer, 0xFF, sizeof(pageBuffer));
-                FLASH_writePage(0, pageBuffer, 256);
-
-                // Program the recovery sketch
-                // Skip the first page to prevent accidental incomplete runtime
-                for (quint32 addr = 256; addr <= recovery.sketchSize(); addr += 256) {
-                    FLASH_writePage(addr, recovery.sketchPage(addr), 256);
-                }
-
-                // Verify and attempt to correct the programmed sketch before execution
-                for (quint32 addr = 256; addr <= recovery.sketchSize(); addr += 256) {
-                    FLASH_verifyCorrect(addr, recovery.sketchPage(addr), 256);
-                }
-
-                // Finally, write the first page to complete the program
-                FLASH_writePage(0, recovery.sketchPage(0), 256);
-                FLASH_verifyCorrect(0, recovery.sketchPage(0), 256);
-
-                // Restore EEPROM settings
-                writeSettings(oldSettings);
-
-                // Run the program and evaluate the response
-                signOut();
-                QString log;
-                QTextStream outStr(stdout);
-                bool service_success = false;
-                for (;;) {
-                    QString text = port.read(500);
-                    if (text.isEmpty()) break;
-                    log.append(text);
-                    outStr << text;
-                    if (text.contains("SUCCESS")) {
-                        service_success = true;
-                        break;
-                    }
-                    if (text.contains("ERROR")) {
-                        break;
-                    }
-                }
-                if (!service_success) {
-                    if (!log.endsWith("\n")) {
-                        log.append("\n");
-                    }
-                    QString err = QString("Failed to program device into service mode:\n"
-                                          "==========================================\n"
-                                          "%0"
-                                          "==========================================").arg(log);
-                    throw ProtocolException(err);
-                }
-
-                // We are in service mode at this point
-                // Verify that service mode is running as expected
-                port.write("HELLO", 5);
-                QString response = port.readAll(50);
-                if (response.isEmpty()) {
-                    throw ProtocolException("Failed to establish a connection with the service routine."
-                                            "No response was returned from the device.\n\n"
-                                            "Perhaps incompatible firmware is installed?");
-
-                } else if (response != "HELLO") {
-                    QString errorMessage = QString("Failed to establish a connection with the service routine."
-                                                   "An invalid response was returned from the device.\n\n"
-                                                   "%1\n\n"
-                                                   "Perhaps incompatible firmware is installed?").arg(response);
-                    throw ProtocolException(errorMessage);
-                }
-
-                // Right away, restore the original sketch data
-                for (quint32 addr = 0; addr < (quint32) oldSketchData.size(); addr += 256) {
-                    service().writePage(addr, oldSketchData.data() + addr);
-                }
-            }
-        } while (0);
+        } else if (response != "HELLO") {
+            QString errorMessage = QString("Failed to establish a connection with the service routine. "
+                                           "An invalid response was returned from the device.\n\n"
+                                           "%1\n\n"
+                                           "Perhaps incompatible firmware is installed?").arg(response);
+            throw ProtocolException(errorMessage);
+        }
 
     } else if (newState == STK500::SKETCH) {
         // If not currently in firmware mode, first reset
@@ -818,6 +732,17 @@ void stk500::FLASH_verifyCorrect(quint32 address, const char* src, int srcLen) {
             }
         }
     } while (0);
+}
+
+void stk500::FLASH_upload(const ProgramData &programData) {
+    // Write data
+    for (quint32 address = 0; address < programData.sketchSize(); address += 256) {
+        FLASH_writePage(address, programData.sketchPage(address), 256);
+    }
+    // Verify and correct data
+    for (quint32 address = 0; address < programData.sketchSize(); address += 256) {
+        FLASH_verifyCorrect(address, programData.sketchPage(address), 256);
+    }
 }
 
 void stk500::EEPROM_read(quint32 address, char* dest, int destLen) {

@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/programs">
-        <file alias="FirmwareRecoverySketch.hex">programs/FirmwareRecoverySketch/FirmwareRecoverySketch.hex</file>
+        <file alias="SetServiceMode.hex">programs/SetServiceMode/SetServiceMode.hex</file>
     </qresource>
     <qresource prefix="/">
         <file>fonts/OpenSans-Regular.ttf</file>
