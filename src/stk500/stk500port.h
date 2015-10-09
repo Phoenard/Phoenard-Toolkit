@@ -3,6 +3,8 @@
 
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QTcpSocket>
+#include <QHostAddress>
 #include <QDateTime>
 #include <QDebug>
 #include <QThread>
@@ -13,6 +15,8 @@
 class stk500Port
 {
 public:
+    stk500Port();
+    ~stk500Port();
     bool open(const QString &portName);
     void close();
     void clear();
@@ -27,11 +31,15 @@ public:
     int write(const char* buffer, int nrOfBytes);
     QString errorString();
     bool isOpen();
+    bool isNet() const { return isNetMode; }
+    bool isSerialPort() const;
 
     static QList<QString> getPortNames();
 
 private:
-    QSerialPort port;
+    QIODevice *device;
+    bool isNetMode;
+    QString errorStr;
 };
 
 #endif // STK500PORT_H

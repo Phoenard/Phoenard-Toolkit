@@ -1,39 +1,109 @@
 #include "stk500port.h"
 
+stk500Port::stk500Port() {
+    isNetMode = false;
+    device = NULL;
+    errorStr = "";
+}
+
+stk500Port::~stk500Port() {
+    delete device;
+    device = NULL;
+}
+
 bool stk500Port::open(const QString &portName) {
-    /* Initialize the port */
-    port.setPortName(portName);
-    bool success = port.open(QIODevice::ReadWrite);
-    if (success) {
-        port.setReadBufferSize(4096);
-        port.setSettingsRestoredOnClose(false);
-        port.setFlowControl(QSerialPort::NoFlowControl);
-        port.setParity(QSerialPort::NoParity);
-        port.clearError();
+    /* Don't open anything if already open */
+    if (isOpen()) {
+        errorStr = "Already open";
+        return false;
     }
-    return success;
+
+    if (portName.startsWith("net:")) {
+        /* Initialize a new socket over UDP */
+        QTcpSocket *socket = new QTcpSocket();
+        QHostAddress deviceAddr(portName.mid(4));
+        socket->connectToHost(deviceAddr, 7265);
+        if (socket->waitForConnected(5000)) {
+            /* Swap out devices */
+            delete device;
+            device = socket;
+            isNetMode = true;
+        } else {
+            errorStr = socket->errorString();
+            delete socket;
+            return false;
+        }
+    } else {
+        /* Check if the port can be opened */
+        QSerialPortInfo info(portName);
+        if (info.isBusy()) {
+            errorStr = "Port Busy";
+            return false;
+        }
+        if (!info.isValid()) {
+            errorStr = "Port Invalid";
+            return false;
+        }
+
+        /* Initialize a new serial port */
+        QSerialPort *port = new QSerialPort(info);
+        if (port->open(QIODevice::ReadWrite)) {
+            port->setReadBufferSize(4096);
+            port->setSettingsRestoredOnClose(false);
+            port->setFlowControl(QSerialPort::NoFlowControl);
+            port->setParity(QSerialPort::NoParity);
+            port->clearError();
+
+            /* Swap out devices */
+            delete device;
+            device = port;
+            isNetMode = false;
+        } else {
+            errorStr = port->errorString();
+            delete port;
+            return false;
+        }
+    }
+    return true;
+}
+
+bool stk500Port::isSerialPort() const {
+    return !isNetMode && (device != NULL);
 }
 
 void stk500Port::clear() {
-    port.clear();
+    if (isSerialPort()) {
+        ((QSerialPort*) device)->clear();
+    }
 }
 
 void stk500Port::close() {
-    port.close();
+    if ((device != NULL) && device->isOpen()) {
+        device->close();
+    }
 }
 
 void stk500Port::reset() {
-    port.setDataTerminalReady(true);
-    port.setDataTerminalReady(false);
+    if (isSerialPort()) {
+        QSerialPort* port = (QSerialPort*) device;
+        port->setDataTerminalReady(true);
+        port->setDataTerminalReady(false);
+    }
     clear();
 }
 
 qint32 stk500Port::baudRate() {
-    return port.baudRate();
+    if (isSerialPort()) {
+        return ((QSerialPort*) device)->baudRate();
+    } else {
+        return 115200;
+    }
 }
 
 void stk500Port::setBaudRate(qint32 baud) {
-    port.setBaudRate(baud);
+    if (isSerialPort()) {
+        ((QSerialPort*) device)->setBaudRate(baud);
+    }
 }
 
 void stk500Port::waitBaudCycles(int nrOfBytes) {
@@ -46,17 +116,28 @@ void stk500Port::waitBaudCycles(int nrOfBytes) {
 }
 
 bool stk500Port::isOpen() {
-    return port.isOpen();
+    return (device != NULL) && device->isOpen();
 }
 
 QString stk500Port::errorString() {
-    QString text = port.errorString();
-    port.clearError();
+    if (!errorStr.isEmpty()) {
+        QString err = errorStr;
+        errorStr = "";
+        return err;
+    }
+    QString text = device->errorString();
+    if (isSerialPort()) {
+        ((QSerialPort*) device)->clearError();
+    }
     return text;
 }
 
 QString stk500Port::portName() {
-    return port.portName();
+    if (isSerialPort()) {
+        return ((QSerialPort*) device)->portName();
+    } else {
+        return "Unknown";
+    }
 }
 
 QByteArray stk500Port::read(int timeout) {
@@ -81,13 +162,15 @@ QByteArray stk500Port::readAll(int timeout) {
 }
 
 QByteArray stk500Port::readStep() {
-    port.waitForReadyRead(PORT_READ_STEP_TIME);
-    return port.readAll();
+    device->waitForReadyRead(PORT_READ_STEP_TIME);
+    return device->readAll();
 }
 
 int stk500Port::write(const char* buffer, int nrOfBytes) {
-    int len = port.write(buffer, nrOfBytes);
-    port.flush();
+    int len = device->write(buffer, nrOfBytes);
+    if (isSerialPort()) {
+        ((QSerialPort*) device)->flush();
+    }
     return len;
 }
 

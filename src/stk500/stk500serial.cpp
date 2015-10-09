@@ -293,29 +293,17 @@ void stk500_ProcessThread::run() {
     stk500 protocol;
     this->protocol = &protocol;
 
-    /* First check whether the port can be opened at all */
-    QSerialPortInfo info(portName);
-    if (info.isBusy()) {
+    /* Attempt to open the port */
+    updateStatus("Opening port...");
+    try {
+        protocol.open(portName);
+    } catch (ProtocolException &ex) {
+        updateStatus(ex.what());
         this->closeRequested = true;
-        updateStatus("Port Busy");
     }
-    if (!info.isValid()) {
-        this->closeRequested = true;
-        updateStatus("Port Invalid");
-    }
+
+    /* Continue processing if successful */
     if (!this->closeRequested) {
-        /* First attempt to open the Serial port */
-        updateStatus("Opening port...");
-
-        /* Attempt tp open the serial port */
-        try {
-            protocol.open(portName);
-        } catch (ProtocolException &ex) {
-            qDebug() << ex.what();
-            this->closeRequested = true;
-        }
-
-        /* Run process loop while not being closed */
         bool needSignOn = true;
         bool hasData = false;
         qint64 start_time = QDateTime::currentMSecsSinceEpoch();

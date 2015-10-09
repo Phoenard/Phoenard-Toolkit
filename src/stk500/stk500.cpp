@@ -55,8 +55,7 @@ void stk500::resetFirmware() {
 
 void stk500::open(const QString& portName) {
     if (!port.open(portName)) {
-        QString err = QString("Could not open port: %1").arg(port.errorString());
-        throw ProtocolException(err);
+        throw ProtocolException(port.errorString());
     }
 }
 
@@ -71,6 +70,14 @@ void stk500::reset() {
 
     /* Reset the device and wait until it's ready, reading the data */
     port.reset();
+
+    /* For ports over WiFi no additional logic needed */
+    if (port.isNet()) {
+        lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+        currentState = STK500::FIRMWARE;
+        return;
+    }
+
     QByteArray data = port.readAll(STK500_RESET_DELAY);
     if (!data.isEmpty()) {
         QString dataText = data;

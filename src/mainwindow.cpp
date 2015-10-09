@@ -688,7 +688,8 @@ void MainWindow::on_control_firmwareBtn_clicked()
             data.clearFirmwareData();
         }
     }
-    serial->execute(stk500Upload(data), false, false);
+    stk500Upload task(data);
+    serial->execute(task, false, false);
 }
 
 void MainWindow::on_serial_deviceMode_clicked()
