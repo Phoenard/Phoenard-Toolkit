@@ -290,7 +290,7 @@ stk500_ProcessThread::stk500_ProcessThread(stk500Serial *owner, QString portName
 
 void stk500_ProcessThread::run() {
     /* Initialize the protocol and internal port */
-    stk500 protocol;
+    stk500 protocol(this);
     this->protocol = &protocol;
 
     /* Attempt to open the port */
@@ -562,6 +562,10 @@ void stk500_ProcessThread::run() {
     this->owner->notifyClosed(this);
 }
 
+void stk500_ProcessThread::commandFinished() {
+    updateStatus(this->stateStatus);
+}
+
 bool stk500_ProcessThread::trySignOn(stk500 *protocol) {
     for (int i = 0; i < 2; i++) {
         try {
@@ -576,7 +580,46 @@ bool stk500_ProcessThread::trySignOn(stk500 *protocol) {
 }
 
 void stk500_ProcessThread::updateStatus(const QString &stateStatus) {
+    this->stateStatus = stateStatus;
     QString status = QString("[%1] %2").arg(protocol->stateName(), stateStatus);
+    if (this->protocol->state() == STK500::FIRMWARE) {
+
+        // Add a progress indicator using the STK500 sequence number
+        uint seq = this->protocol->seqNr() % 64;
+        QString token;
+        if (seq < 35) {
+            // Filling a bar up
+            token = "........";
+            uint len = 8;
+            while (seq >= len && len) {
+                seq -= len;
+                len--;
+                token[len] = '|';
+            }
+            token[seq] = '|';
+        } else {
+            // Emptying the bar again
+            seq -= 35;
+            token = "||||||||";
+            while (seq--) {
+                if (token[7] == '|') {
+                    token[7] = '.';
+                } else {
+                    for (int i = 6; i >= 0; i--) {
+                        if (token[i] == '|') {
+                            token[i] = '.';
+                            token[i+1] = '|';
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add the 8-char token generated
+        status += " ";
+        status += token;
+    }
     if (this->status != status) {
         this->status = status;
         this->owner->notifyStatus(this, this->status);

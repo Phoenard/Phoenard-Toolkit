@@ -1,7 +1,10 @@
 #include "stk500.h"
 #include <QDebug>
 
-stk500::stk500()
+// Default interface when none is specified - does nothing
+stk500StatusInterface stk500_empty_status_interface;
+
+stk500::stk500(stk500StatusInterface *status_interface)
 {
     this->lastCmdTime = 0;
     this->sd_handler = new stk500sd(this);
@@ -10,6 +13,12 @@ stk500::stk500()
     this->signedOn = false;
     this->lastResetTime = QDateTime::currentMSecsSinceEpoch() - STK500_MIN_RESET_TIME;
     this->currentState = STK500::UNOPENED;
+
+    // Status logger interface
+    this->status_interface = status_interface;
+    if (this->status_interface == NULL) {
+        this->status_interface = &stk500_empty_status_interface;
+    }
 
     // Initialize the command names table
     QFile cmdFile(":/data/commands.csv");
@@ -433,6 +442,9 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
         if (sequenceNumber > 0xFF) {
             sequenceNumber = 0;
         }
+
+        // Success: update activity monitor
+        status_interface->commandFinished();
 
         // Success! Return the received response length.
         //qDebug() << "Command finished: " << cmdName;

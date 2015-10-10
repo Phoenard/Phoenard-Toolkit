@@ -26,12 +26,13 @@
 class stk500sd;
 class stk500registers;
 class stk500service;
+class stk500StatusInterface;
 
 // Main STK500 protocol handling class
 class stk500
 {
 public:
-    stk500();
+    stk500(stk500StatusInterface *status_interface = NULL);
     ~stk500();
     stk500Port* getPort() { return &port; }
     stk500sd& sd() { return *sd_handler; }
@@ -46,6 +47,7 @@ public:
     QString stateName(STK500::State state);
     void setBaudRate(qint32 baud);
     void setState(STK500::State newState, qint32 baudRate = 115200);
+    uint seqNr() const { return sequenceNumber; }
 
     /* Firmware mode specific */
     void resetFirmware();
@@ -109,6 +111,7 @@ private:
     stk500sd *sd_handler;
     stk500registers *reg_handler;
     stk500service *service_handler;
+    stk500StatusInterface *status_interface;
     bool signedOn;
     STK500::State currentState;
     QString commandNames[256];
@@ -123,6 +126,12 @@ struct ProtocolException : public std::exception {
     ProtocolException(QString ss) : s(ss.toStdString()) {}
     ~ProtocolException() throw () {} // Updated
     const char* what() const throw() { return s.c_str(); }
+};
+
+// Interface used to let the stk500 protocol respond back with status updates
+class stk500StatusInterface {
+public:
+    virtual void commandFinished() {}
 };
 
 // Include all components after (!) stk500
