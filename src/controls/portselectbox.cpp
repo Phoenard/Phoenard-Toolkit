@@ -91,8 +91,9 @@ void PortSelectBox::refreshPorts() {
         removeItem(index);
     }
 
-    // Add test port for wifi
+    // Add test ports for wifi
     addItem("net:192.168.1.128");
+    addItem("net:192.168.2.128");
 }
 
 QString PortSelectBox::portName() {

@@ -155,6 +155,11 @@ void serialmonitorwidget::readSerialOutput()
                 receiveScreen(buff[i]);
             }
         } else {
+            // First filter out invalid characters from the string
+            for (int i = 0; i < len; i++) {
+                if (buff[i] == 0) buff[i] = '0';
+            }
+
             QString myString = QString::fromLatin1(buff, len);
             myString = myString.remove('\r');
 

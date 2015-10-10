@@ -4,6 +4,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QTcpSocket>
+#include <QUdpSocket>
 #include <QHostAddress>
 #include <QDateTime>
 #include <QDebug>

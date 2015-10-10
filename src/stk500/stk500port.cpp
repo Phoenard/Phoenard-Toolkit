@@ -7,8 +7,7 @@ stk500Port::stk500Port() {
 }
 
 stk500Port::~stk500Port() {
-    delete device;
-    device = NULL;
+    close();
 }
 
 bool stk500Port::open(const QString &portName) {
@@ -20,8 +19,15 @@ bool stk500Port::open(const QString &portName) {
 
     if (portName.startsWith("net:")) {
         /* Initialize a new socket over UDP */
-        QTcpSocket *socket = new QTcpSocket();
+        const bool useUDP = false;
         QHostAddress deviceAddr(portName.mid(4));
+        QAbstractSocket *socket;
+        if (useUDP) {
+            socket = new QUdpSocket();
+        } else {
+            socket = new QTcpSocket();
+        }
+        socket->setSocketOption(QAbstractSocket::KeepAliveOption, true );
         socket->connectToHost(deviceAddr, 7265);
         if (socket->waitForConnected(5000)) {
             /* Swap out devices */
@@ -79,7 +85,15 @@ void stk500Port::clear() {
 
 void stk500Port::close() {
     if ((device != NULL) && device->isOpen()) {
-        device->close();
+        if (isNet()) {
+            QAbstractSocket *socket = (QAbstractSocket*) device;
+            socket->abort();
+            socket->close();
+        } else if (isSerialPort()) {
+            device->close();
+        }
+        delete device;
+        device = NULL;
     }
 }
 
