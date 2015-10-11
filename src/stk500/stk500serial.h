@@ -54,6 +54,7 @@ class stk500_ProcessThread : public QThread, public stk500StatusInterface {
 
 public:
     stk500_ProcessThread(stk500Serial *owner, QString portName);
+    ~stk500_ProcessThread();
     void updateStatus(const QString &stateStatus);
     void cancelTasks();
     bool hasTasks();
@@ -62,8 +63,8 @@ public:
 protected:
     virtual void run();
     virtual void commandFinished();
-    bool trySignOn(stk500 *protocol);
-    void runTests(stk500 &protocol);
+    bool trySignOn();
+    void runTests();
 
 public:
     stk500Serial *owner;

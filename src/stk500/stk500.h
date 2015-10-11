@@ -14,7 +14,7 @@
 #include "stk500port.h"
 #include "programdata.h"
 
-#define STK500_READ_TIMEOUT     8000   // After this much time, no response received
+#define STK500_READ_TIMEOUT     5000   // After this much time, no response received
 #define STK500_MIN_RESET_TIME     50   // Minimum time between successive resets
 #define STK500_DEVICE_TIMEOUT    300   // After this much time, command mode is timed out
 #define STK500_RESET_DELAY       200   // Delay between RESET and command sending

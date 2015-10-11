@@ -38,8 +38,8 @@ void stk500Serial::close() {
             process->cancelTasks();
 
             // Wait with 2s timeout for the process to exit
-            for (int i = 0; process->isRunning && i < 200; i++) {
-                QThread::msleep(10);
+            for (int i = 0; process->isRunning && i < ((1000+STK500_READ_TIMEOUT)/20); i++) {
+                QThread::msleep(20);
             }
 
             // Force-terminate the thread if still running (locked)
@@ -288,15 +288,19 @@ stk500_ProcessThread::stk500_ProcessThread(stk500Serial *owner, QString portName
     this->protocol = NULL;
 }
 
+stk500_ProcessThread::~stk500_ProcessThread() {
+    delete this->protocol;
+    this->protocol = NULL;
+}
+
 void stk500_ProcessThread::run() {
     /* Initialize the protocol and internal port */
-    stk500 protocol(this);
-    this->protocol = &protocol;
+    this->protocol = new stk500(this);
 
     /* Attempt to open the port */
     updateStatus("Opening port...");
     try {
-        protocol.open(portName);
+        protocol->open(portName);
     } catch (ProtocolException &ex) {
         updateStatus(ex.what());
         this->closeRequested = true;
@@ -335,13 +339,13 @@ void stk500_ProcessThread::run() {
                     updateStatus("Switching...");
 
                     // Always reset if currently in Sketch mode
-                    if (protocol.state() == STK500::SKETCH) {
-                        protocol.reset();
+                    if (protocol->state() == STK500::SKETCH) {
+                        protocol->reset();
                     }
 
                     // Put stk500 into sketch mode
                     try {
-                        protocol.setState(currSerialMode, currSerialBaud);
+                        protocol->setState(currSerialMode, currSerialBaud);
                         updateStatus("Active");
                     } catch (ProtocolException &err) {
                         qDebug() << err.what();
@@ -367,7 +371,7 @@ void stk500_ProcessThread::run() {
 
                     char* buff = this->writeBuff.data();
                     int buff_len = this->writeBuff.length();
-                    int written = protocol.getPort()->write(buff, buff_len);
+                    int written = protocol->getPort()->write(buff, buff_len);
                     int remaining = (buff_len - written);
                     if (!remaining) {
                         this->writeBuff.clear();
@@ -384,7 +388,7 @@ void stk500_ProcessThread::run() {
                 }
 
                 /* Read in data */
-                QByteArray serialData = protocol.getPort()->readAll(20);
+                QByteArray serialData = protocol->getPort()->readAll(20);
 
                 /* Copy to the read buffer */
                 if (!serialData.isEmpty()) {
@@ -416,17 +420,17 @@ void stk500_ProcessThread::run() {
                 tasksLock.unlock();
 
                 /* If not signed on and a task is to be handled, sign on first */
-                if (task != NULL && task->usesFirmware() && !protocol.isSignedOn()) {
+                if (task != NULL && task->usesFirmware() && !protocol->isSignedOn()) {
                     needSignOn = true;
                 }
 
                 /* Sign on with the bootloader */
-                if (needSignOn && (protocol.state() != STK500::SERVICE)) {
+                if (needSignOn && (protocol->state() != STK500::SERVICE)) {
                     needSignOn = false;
                     wasIdling = true;
                     updateStatus("Signing on");
-                    if (trySignOn(&protocol)) {
-                        runTests(protocol);
+                    if (trySignOn()) {
+                        runTests();
                     } else {
                         updateStatus("Sign-on error");
                     }
@@ -439,8 +443,8 @@ void stk500_ProcessThread::run() {
                     /* Process the current task */
                     try {
                         task->init();
-                        if (task->usesFirmware() && !protocol.isSignedOn()) {
-                            if (protocol.state() == STK500::SERVICE) {
+                        if (task->usesFirmware() && !protocol->isSignedOn()) {
+                            if (protocol->state() == STK500::SERVICE) {
                                 throw ProtocolException("Device is in service mode and can not "
                                                         "handle standard STK commands.\nPlease "
                                                         "install the latest firmware by uploading "
@@ -453,23 +457,23 @@ void stk500_ProcessThread::run() {
                         // Before processing, force the Micro-SD to re-read information
                         // Only needed if we were idling before (and user may have switched card)
                         if (wasIdling) {
-                            protocol.sd().reset();
+                            protocol->sd().reset();
                         }
 
                         // Process the task after setting the protocol
                         if (!task->isCancelled()) {
-                            task->setProtocol(&protocol);
+                            task->setProtocol(protocol);
                             task->run();
                         }
 
                         // Flush the data on the Micro-SD now all is well
-                        protocol.sd().flushCache();
+                        protocol->sd().flushCache();
                     } catch (ProtocolException &ex) {
                         task->setError(ex);
 
                         /* Flush here as well, but eat up any errors... */
                         try {
-                            protocol.sd().flushCache();
+                            protocol->sd().flushCache();
                         } catch (ProtocolException&) {
                         }
                     }
@@ -524,7 +528,7 @@ void stk500_ProcessThread::run() {
 
                     // Waited for the full interval time, ping with a signOn command
                     // Still alive?
-                    if ((protocol.state() == STK500::FIRMWARE) && !trySignOn(&protocol)) {
+                    if ((protocol->state() == STK500::FIRMWARE) && !trySignOn()) {
                         updateStatus("Session Lost");
                     } else if (wasIdling) {
                         updateStatus("Idle");
@@ -535,7 +539,7 @@ void stk500_ProcessThread::run() {
                      * Wait for a short time to keep the bootloader in the right mode
                      * If no connection was established, wait the full time to reduce spam
                      */
-                    if (protocol.state() == STK500::NONE) {
+                    if (protocol->state() == STK500::NONE) {
                         QThread::msleep(STK500_CMD_MIN_INTERVAL);
                     } else {
                         sync.lock();
@@ -550,12 +554,12 @@ void stk500_ProcessThread::run() {
         updateStatus("Closing port...");
 
         /* Close the serial port; this can hang in some cases */
-        protocol.setState(STK500::UNOPENED);
+        protocol->setState(STK500::UNOPENED);
 
         /* Notify owner that port has been closed */
         updateStatus("Port Closed");
     }
-
+    delete this->protocol;
     this->isRunning = false;
     this->isProcessing = false;
     this->protocol = NULL;
@@ -566,7 +570,7 @@ void stk500_ProcessThread::commandFinished() {
     updateStatus(this->stateStatus);
 }
 
-bool stk500_ProcessThread::trySignOn(stk500 *protocol) {
+bool stk500_ProcessThread::trySignOn() {
     for (int i = 0; i < 2; i++) {
         try {
             protocolName = protocol->signOn();
@@ -649,8 +653,8 @@ void stk500_ProcessThread::wake() {
     cond.wakeAll();
 }
 
-void stk500_ProcessThread::runTests(stk500 &protocol) {
-    qDebug() << "[STK500]" << protocol.getPort()->portName() << "Protocol:" << protocolName;
+void stk500_ProcessThread::runTests() {
+    qDebug() << "[STK500]" << protocol->getPort()->portName() << "Protocol:" << protocolName;
 
     /* SPI Communication test */
     /*
