@@ -315,7 +315,26 @@ void stk500_ProcessThread::run() {
         STK500::State currSerialMode = STK500::SKETCH;
         bool wasIdling = true;
         while (!this->closeRequested) {
-            if (this->isBaudChanged) {
+            /*
+             * Poll the next task to execute
+             * If tasks are pending, keep device in STK500 mode
+             */
+            stk500Task *task;
+            bool taskIsSync = false;
+            tasksLock.lock();
+            if (syncTasks.empty()) {
+                if (asyncTasks.empty()) {
+                    task = NULL;
+                } else {
+                    task = asyncTasks.head();
+                }
+            } else {
+                task = syncTasks.head();
+                taskIsSync = true;
+            }
+            tasksLock.unlock();
+
+            if (task == NULL && this->isBaudChanged) {
                 this->isBaudChanged = false;
                 currSerialBaud = this->serialBaud;
                 currSerialMode = this->serialMode;
@@ -362,7 +381,7 @@ void stk500_ProcessThread::run() {
                 }
             }
 
-            if (currSerialBaud) {
+            if ((task == NULL) && currSerialBaud) {
                 /* Serial mode: process serial I/O */
 
                 /* Write out data */
@@ -403,21 +422,10 @@ void stk500_ProcessThread::run() {
             } else {
                 /* Command mode: process bootloader I/O */
 
-                /* Poll the next task to execute */
-                stk500Task *task;
-                bool taskIsSync = false;
-                tasksLock.lock();
-                if (syncTasks.empty()) {
-                    if (asyncTasks.empty()) {
-                        task = NULL;
-                    } else {
-                        task = asyncTasks.head();
-                    }
-                } else {
-                    task = syncTasks.head();
-                    taskIsSync = true;
+                /* Serial baud rate setting needs to be updated here */
+                if (currSerialBaud) {
+                    this->isBaudChanged = true;
                 }
-                tasksLock.unlock();
 
                 /* If not signed on and a task is to be handled, sign on first */
                 if (task != NULL && task->usesFirmware() && !protocol->isSignedOn()) {

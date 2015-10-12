@@ -319,6 +319,20 @@
              </widget>
             </item>
             <item>
+             <widget class="MenuButton" name="serial_upload">
+              <property name="text">
+               <string>Upload</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/icons/uploadhex.png</normaloff>:/icons/uploadhex.png</iconset>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_6">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>

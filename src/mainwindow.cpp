@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < allButtons_len; i++) {
         allButtons[i]->setIsTab(true);
     }
-    setSelectedTab(3, true);
+    setSelectedTab(0, true);
 
     this->openSerial();
 
@@ -722,4 +722,9 @@ void MainWindow::on_serial_deviceMode_clicked()
         ui->serialmonitor->setMode(mode);
         ui->serial_deviceMode->setIcon(result->icon());
     }
+}
+
+void MainWindow::on_serial_upload_clicked()
+{
+    on_control_firmwareBtn_clicked();
 }
