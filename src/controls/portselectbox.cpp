@@ -8,6 +8,10 @@ PortSelectBox::PortSelectBox(QWidget *parent) :
     isMouseOver = false;
     isDropDown = false;
 
+    discoverTimer.setParent(this);
+    discoverTimer.setInterval(1000);
+    connect(&discoverTimer, SIGNAL(timeout()), this, SLOT(runDiscovery()), Qt::QueuedConnection);
+
     setStyleSheet("QWidget {"
                   "  border: 0px solid black;"
                   "  margin: 0px 0px 0px 0px;"
@@ -57,11 +61,151 @@ void PortSelectBox::mouseReleaseEvent(QMouseEvent *event) {
     }
 }
 
-void PortSelectBox::refreshPorts() {
+void PortSelectBox::startDiscovery() {
+
+    // Find all available broadcast addresses using the network sockets
+    QList<QNetworkInterface> allInterfaces = QNetworkInterface::allInterfaces();
+    QList<QNetworkInterface> interfaces;
+    QList<QNetworkAddressEntry> addresses;
+    for (int i = 0; i < allInterfaces.count(); i++) {
+        QNetworkInterface &interface = allInterfaces[i];
+
+        // Filter out loopback, inactive networks and non-broadcastable interfaces
+        QNetworkInterface::InterfaceFlags flags = interface.flags();
+        if (flags & QNetworkInterface::IsLoopBack) continue;
+        if (!(flags & QNetworkInterface::IsRunning)) continue;
+        if (!(flags & QNetworkInterface::CanBroadcast)) continue;
+
+        // Obtain the broadcast address entries for the IPv4 host addresses
+        QList<QNetworkAddressEntry> addrEntries = interface.addressEntries();
+        for (int i = 0; i < addrEntries.count(); i++) {
+            if (addrEntries[i].ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                interfaces.append(interface);
+                addresses.append(addrEntries[i]);
+                break;
+            }
+        }
+    }
+
+    // Open as many sockets as needed to receive packets
+    int count = interfaces.count();
+    while (count > discoverSockets.count()) {
+        discoverSockets.append(new QUdpSocket(this));
+    }
+    while (count < discoverSockets.count()) {
+        delete discoverSockets.takeLast();
+    }
+
+    // Create sockets and broadcast over all interfaces
+    for (int i = 0; i < count; i++) {
+        QUdpSocket *socket = discoverSockets[i];
+
+        // Re-initialize socket if needed
+        if (socket->state() != QAbstractSocket::UnconnectedState) {
+            socket->abort();
+            socket->close();
+            delete socket;
+            socket = new QUdpSocket(this);
+            discoverSockets[i] = socket;
+        }
+
+        // Bind and initialize the socket
+        socket->bind(addresses[i].ip(), 0);
+        socket->setMulticastInterface(interfaces[i]);
+
+        // Connect signals
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readDiscovery()));
+    }
+
+    // Start running discovery
+    discoverTimer.start();
+}
+
+void PortSelectBox::endDiscovery() {
+
+    // Remove created sockets
+    for (int i = 0; i < discoverSockets.count(); i++) {
+        delete discoverSockets[i];
+    }
+    discoverSockets.clear();
+
+    // Stop running discovery
+    discoverTimer.stop();
+}
+
+void PortSelectBox::runDiscovery() {
+    unsigned char payload[11] = {0x1B, 0x00, 0x00, 0x05, 0x0E, 0x06,
+                                 0x00, 0x00, 0x00, 0x00, 0x16};
+
+    // Broadcast packet over all interfaces
+    for (int i = 0; i < discoverSockets.count(); i++) {
+        discoverSockets[i]->writeDatagram((char*) payload, sizeof(payload),
+                                          QHostAddress::Broadcast, 7265);
+    }
+
+    // Increment ping counter on all ports and remove timed out connections
+    for (int i = 0; i < netEntries.count(); i++) {
+        NetPortEntry &entry = netEntries[i];
+        if (!entry.custom && (++entry.pingCtr > 10)) {
+            netEntries.removeAt(i--);
+        }
+    }
+
+    // Update the ports
+    portNames = stk500Port::getPortNames();
+
+    // Update all the names
+    updateNames();
+}
+
+void PortSelectBox::readDiscovery() {
+    for (int i = 0; i < discoverSockets.count(); i++) {
+        QUdpSocket *socket = discoverSockets[i];
+        if (socket->hasPendingDatagrams()) {
+
+            // Read the datagram host address, discard response for now
+            QHostAddress deviceAddress;
+            socket->readDatagram(NULL, 0, &deviceAddress);
+
+            // Add it to the list if it does not already exist
+            // Reset ping counter for the entry found
+            QString deviceName = QString("net:") + deviceAddress.toString();
+            bool foundEntry = false;
+            for (int i = 0; i < netEntries.count(); i++) {
+                if (netEntries[i].name == deviceName) {
+                    netEntries[i].pingCtr = 0;
+                    foundEntry = true;
+                    break;
+                }
+            }
+            if (!foundEntry) {
+                NetPortEntry newEntry;
+                newEntry.name = deviceName;
+                newEntry.custom = false;
+                newEntry.pingCtr = 0;
+                netEntries.append(newEntry);
+                updateNames();
+            }
+        }
+    }
+}
+
+void PortSelectBox::updateNames() {
+
+    // Generate the listing of items
+    QList<QString> items;
+    for (int i = 0; i < portNames.length(); i++) {
+        items.append(portNames[i]);
+    }
+    for (int i = 0; i < netEntries.length(); i++) {
+        items.append(netEntries[i].name);
+    }
+    int oldCount = this->count();
+
+    // Add or insert the items
     int index = 0;
-    QList<QString> portNames = stk500Port::getPortNames();
-    for (int pi = 0; pi < portNames.count(); pi++) {
-        QString name = portNames[pi];
+    for (int pi = 0; pi < items.count(); pi++) {
+        QString name = items[pi];
         if (index >= count()) {
             addItem(name);
         } else if (itemText(index) != name) {
@@ -75,7 +219,7 @@ void PortSelectBox::refreshPorts() {
             }
             if (foundIndex != -1) {
                 // Item was found; remove all items in between
-                while (index < foundIndex) {
+                while (index < foundIndex--) {
                     removeItem(index);
                 }
             } else {
@@ -91,9 +235,15 @@ void PortSelectBox::refreshPorts() {
         removeItem(index);
     }
 
-    // Add test ports for wifi
-    addItem("net:192.168.1.128");
-    addItem("net:192.168.2.128");
+    // Re-show drop down if needed
+    if (isDropDown && (oldCount != items.count())) {
+        QComboBox::showPopup();
+    }
+}
+
+void PortSelectBox::refreshPorts() {
+    portNames = stk500Port::getPortNames();
+    updateNames();
 }
 
 QString PortSelectBox::portName() {
@@ -102,6 +252,7 @@ QString PortSelectBox::portName() {
 }
 
 void PortSelectBox::showPopup() {
+    startDiscovery();
     refreshPorts();
     isDropDown = true;
     update();
@@ -111,4 +262,5 @@ void PortSelectBox::showPopup() {
 void PortSelectBox::hidePopup() {
   QComboBox::hidePopup();
   isDropDown = false;
+  endDiscovery();
 }

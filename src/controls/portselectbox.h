@@ -8,6 +8,15 @@
 #include <QAction>
 #include <QPainter>
 #include <QMouseEvent>
+#include <QUdpSocket>
+#include <QNetworkInterface>
+#include <QTimer>
+
+typedef struct NetPortEntry {
+    QString name;
+    bool custom;
+    int pingCtr;
+} NetPortEntry;
 
 class PortSelectBox : public QComboBox
 {
@@ -24,9 +33,22 @@ public:
     virtual void leaveEvent(QEvent *event);
     virtual void mouseReleaseEvent(QMouseEvent *event);
 
+protected:
+    void startDiscovery();
+    void endDiscovery();
+    void updateNames();
+
+protected slots:
+    void runDiscovery();
+    void readDiscovery();
+
 private:
+    QList<QString> portNames;
+    QList<NetPortEntry> netEntries;
     bool isMouseOver;
     bool isDropDown;
+    QList<QUdpSocket*> discoverSockets;
+    QTimer discoverTimer;
 };
 
 #endif // PORTSELECTBOX_H
