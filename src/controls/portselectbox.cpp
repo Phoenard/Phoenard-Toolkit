@@ -200,6 +200,9 @@ void PortSelectBox::updateNames() {
     for (int i = 0; i < netEntries.length(); i++) {
         items.append(netEntries[i].name);
     }
+    if (items.isEmpty()) {
+        items.append("");
+    }
     int oldCount = this->count();
 
     // Add or insert the items
