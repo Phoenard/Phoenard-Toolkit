@@ -37,8 +37,8 @@ void stk500Serial::close() {
             process->closeRequested = true;
             process->cancelTasks();
 
-            // Wait with 2s timeout for the process to exit
-            for (int i = 0; process->isRunning && i < ((1000+STK500_READ_TIMEOUT)/20); i++) {
+            // Wait with 6s timeout for the process to exit by itself
+            for (int i = 0; process->isRunning && i < ((6000)/20); i++) {
                 QThread::msleep(20);
             }
 
@@ -457,6 +457,14 @@ void stk500_ProcessThread::run() {
                                                         "handle standard STK commands.\nPlease "
                                                         "install the latest firmware by uploading "
                                                         "the bootloader hex file in the control tab.");
+                            } else if (protocol->state() == STK500::SKETCH_ONLY) {
+                                throw ProtocolException("Device failed to enter firmware mode and is locked into sketch mode. "
+                                                        "Please re-open the port to make another firmware communication "
+                                                        "attempt. This can be caused by many things:\n\n"
+                                                        "  - Incompatible firmware on the device\n"
+                                                        "  - Device is stuck in reset state\n"
+                                                        "  - Device Serial occupied (check RX/TX)\n"
+                                                        "  - Device Serial is disconnected");
                             } else {
                                 throw ProtocolException("Device failed to enter firmware mode: No communication");
                             }

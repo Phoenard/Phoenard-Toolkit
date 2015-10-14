@@ -80,6 +80,12 @@ void stk500::reset() {
     /* Reset the device and wait until it's ready, reading the data */
     port.reset();
 
+    /* If locked to sketch mode, stop here. */
+    if (currentState == STK500::SKETCH_ONLY) {
+        lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
+        return;
+    }
+
     /* For ports over WiFi no additional logic needed */
     if (port.isNet()) {
         lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
@@ -98,6 +104,7 @@ void stk500::reset() {
 
     /* Try to get some kind of communication going, */
     const int MAX_TRIALS = 2;
+    STK500::State oldState = currentState;
     currentState = STK500::NONE;
     for (int trial = 0; trial < MAX_TRIALS && (currentState == STK500::NONE); trial++) {
 
@@ -134,19 +141,17 @@ void stk500::reset() {
                 currentState = STK500::SERVICE;
                 break;
             }
-        } while ((QDateTime::currentMSecsSinceEpoch() - lastCmdTime) < STK500_READ_TIMEOUT);
+        } while ((QDateTime::currentMSecsSinceEpoch() - lastCmdTime) < port.readTimeout());
 
         /* Reset timeout to prevent successive resetting */
         lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
     }
-    if (currentState == STK500::NONE) {
-        QString errorMessage = QString("Failed to reset firmware: "
-                                       "Unable to establish connection");
-        throw ProtocolException(errorMessage);
-    }
 
-    /* Test alternative baud rate operation here */
-    //setBaudRate(300);
+    /* If this is the first reset, then we assume no firmware communication is possible */
+    if (currentState == STK500::NONE && oldState == STK500::UNOPENED) {
+        currentState = STK500::SKETCH_ONLY;
+        port.reset();
+    }
 }
 
 void stk500::setBaudRate(qint32 baud) {
@@ -208,6 +213,26 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         return;
     }
 
+    /* If locked to sketch mode, don't allow switching */
+    if (currentState == STK500::SKETCH_ONLY) {
+        if (newState == STK500::SKETCH) {
+            /* Reset and update baud */
+            reset();
+            port.setBaudRate(baudRate);
+            return;
+        } else if (newState == STK500::UNOPENED) {
+            /* Close port */
+            port.close();
+            currentState = STK500::UNOPENED;
+            return;
+        } else {
+            /* Impossible */
+            throw ProtocolException("Device is locked into sketch operation because no "
+                                    "communication with the firmware could be established. "
+                                    "Re-open the port to attempt communication again.");
+        }
+    }
+
     if (newState == STK500::UNOPENED) {
         // Close the port
         port.close();
@@ -248,16 +273,34 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
         }
 
     } else if (newState == STK500::SKETCH) {
+
         // If not currently in firmware mode, first reset
+        bool isFirstReset = (currentState == STK500::UNOPENED);
         if (currentState != STK500::FIRMWARE) {
             reset();
         }
 
         // Sign out to instantly go to the sketch
-        signOut();
+        if (currentState == STK500::FIRMWARE) {
+            try {
+                signOut();
+            } catch (ProtocolException &e) {
+                if (isFirstReset) {
+                    currentState = STK500::SKETCH_ONLY;
+                } else {
+                    throw e;
+                }
+            }
+        }
 
         // Switch baud rate
         port.setBaudRate(baudRate);
+
+        // If set to sketch only, set to that instead
+        if (currentState == STK500::SKETCH_ONLY) {
+            port.reset();
+            newState = STK500::SKETCH_ONLY;
+        }
 
     } else {
         // Simply sign on to verify current connection / put into firmware mode
@@ -342,6 +385,7 @@ QString stk500::stateName(STK500::State state) {
     case STK500::UNOPENED: return "-";
     case STK500::NONE: return "No Connection";
     case STK500::SKETCH: return "Sketch";
+    case STK500::SKETCH_ONLY: return "Sketch {!}";
     case STK500::FIRMWARE: return "STK500";
     case STK500::SERVICE: return "Service";
     case STK500::SIM_GSM: return "Sim908 GSM";
@@ -379,7 +423,7 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
     do {
 
         /* Read in received response data */
-        QByteArray newData = port.read(STK500_READ_TIMEOUT);
+        QByteArray newData = port.read(port.readTimeout());
         receivedData.append(newData);
 
         /* If no data is received at this point, we will not expect any */
@@ -389,7 +433,7 @@ int stk500::command(STK500::CMD command, const char* arguments, int argumentsLen
 
         /* Handle command read timeout if no response is received */
         lastCmdTime = QDateTime::currentMSecsSinceEpoch();
-        if (!hasResponse && ((lastCmdTime-cmdStartTime) > STK500_READ_TIMEOUT)) {
+        if (!hasResponse && ((lastCmdTime-cmdStartTime) > port.readTimeout())) {
             break;
         }
 

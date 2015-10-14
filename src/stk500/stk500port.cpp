@@ -188,6 +188,14 @@ int stk500Port::write(const char* buffer, int nrOfBytes) {
     return len;
 }
 
+int stk500Port::readTimeout() const {
+    if (isSerialPort()) {
+        return 2000;
+    } else {
+        return 5000;
+    }
+}
+
 QList<QString> stk500Port::getPortNames() {
     QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
     QList<QString> portNames;

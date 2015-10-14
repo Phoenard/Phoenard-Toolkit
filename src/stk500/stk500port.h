@@ -34,6 +34,7 @@ public:
     bool isOpen();
     bool isNet() const { return isNetMode; }
     bool isSerialPort() const;
+    int readTimeout() const;
 
     static QList<QString> getPortNames();
 
