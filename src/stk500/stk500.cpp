@@ -70,7 +70,6 @@ void stk500::open(const QString& portName) {
 }
 
 void stk500::reset(bool signOut) {
-    qDebug() << "RESET AND " << signOut;
     /* Reset state variables */
     sequenceNumber = 0;
     currentAddress = 0;
