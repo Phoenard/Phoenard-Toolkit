@@ -40,12 +40,12 @@ public:
 
     /* STK500 Device state and operation */
     void open(const QString& portName);
-    void reset();
+    void reset(bool signOut = false);
     STK500::State state();
     QString stateName();
     QString stateName(STK500::State state);
     void setBaudRate(qint32 baud);
-    void setState(STK500::State newState, qint32 baudRate = 115200);
+    bool setState(STK500::State newState, qint32 baudRate = 115200);
     uint seqNr() const { return sequenceNumber; }
 
     /* Firmware mode specific */

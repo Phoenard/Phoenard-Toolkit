@@ -48,12 +48,13 @@ stk500::~stk500() {
 void stk500::printData(char* title, char* data, int len) {
     QString msg = "";
     for (int i = 0; i < len; i++) {
-        QString num = QString::number((uint) (uchar) data[i]);
-        while (num.length() < 3) {
+        if (i != 0) msg.append(", ");
+        msg.append("0x");
+        QString num = QString::number((uint) (uchar) data[i], 16);
+        while (num.length() < 2) {
             num.insert(0, '0');
         }
-        msg.append(num);
-        msg.append(' ');
+        msg.append(num.toUpper());
     }
     qDebug() << title << msg;
 }
@@ -68,7 +69,8 @@ void stk500::open(const QString& portName) {
     }
 }
 
-void stk500::reset() {
+void stk500::reset(bool signOut) {
+    qDebug() << "RESET AND " << signOut;
     /* Reset state variables */
     sequenceNumber = 0;
     currentAddress = 0;
@@ -90,6 +92,7 @@ void stk500::reset() {
     if (port.isNet()) {
         lastResetTime = lastCmdTime = QDateTime::currentMSecsSinceEpoch();
         currentState = STK500::FIRMWARE;
+        if (signOut) this->signOut();
         return;
     }
 
@@ -100,6 +103,22 @@ void stk500::reset() {
                                        "Data was received unexpectedly\n\n"
                                        "Data: %1").arg(dataText);
         throw ProtocolException(errorMessage);
+    }
+
+    /* Firmware test command and expected response */
+    unsigned char test_command[11] = {0x1B, 0x00, 0x00, 0x05, 0x0E, 0x06,
+                                      0x00, 0x00, 0x00, 0x00, 0x16};
+    unsigned char test_response[8] = {0x1B, 0x00, 0x00, 0x02,
+                                       0x0E, 0x06, 0x00, 0x11};
+
+    /* If requested to sign out, replace the test command with the signout command */
+    if (signOut) {
+        unsigned char signout_command[11] = {0x1B, 0x00, 0x00, 0x01, 0x0E, 0x11,
+                                             0x05, 0x00, 0x00, 0x00, 0x00};
+        unsigned char signout_response[8] = {0x1B, 0x00, 0x00, 0x02,
+                                             0x0E, 0x11, 0x00, 0x06};
+        memcpy(test_command, signout_command, sizeof(test_command));
+        memcpy(test_response, signout_response, sizeof(test_response));
     }
 
     /* Try to get some kind of communication going, */
@@ -117,11 +136,6 @@ void stk500::reset() {
          * successfully entered firmware mode. If it is different, then something awful
          * happened and we did not reset the device into a workable state.
          */
-        unsigned char test_command[11] = {0x1B, 0x00, 0x00, 0x05, 0x0E, 0x06,
-                                          0x00, 0x00, 0x00, 0x00, 0x16};
-        unsigned char test_response[8] = {0x1B, 0x00, 0x00, 0x02,
-                                           0x0E, 0x06, 0x00, 0x11};
-
         port.clear();
         port.write((char*) test_command, sizeof(test_command));
         port.waitBaudCycles((int) sizeof(test_command));
@@ -134,7 +148,11 @@ void stk500::reset() {
 
             // Check momentarily what kind of response is received
             if (memcmp(response.data(), test_response, sizeof(test_response)) == 0) {
-                currentState = STK500::FIRMWARE;
+                if (signOut) {
+                    currentState = STK500::SKETCH;
+                } else {
+                    currentState = STK500::FIRMWARE;
+                }
                 break;
             }
             if (memcmp(response.data(), test_command, sizeof(test_command)) == 0) {
@@ -207,10 +225,10 @@ void stk500::setBaudRate(qint32 baud) {
     signOn();
 }
 
-void stk500::setState(STK500::State newState, qint32 baudRate) {
+bool stk500::setState(STK500::State newState, qint32 baudRate) {
     /* Check if there are any changes at all */
     if ((newState == currentState) && (baudRate == port.baudRate())) {
-        return;
+        return false;
     }
 
     /* If locked to sketch mode, don't allow switching */
@@ -219,12 +237,12 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
             /* Reset and update baud */
             reset();
             port.setBaudRate(baudRate);
-            return;
+            return true;
         } else if (newState == STK500::UNOPENED) {
             /* Close port */
             port.close();
             currentState = STK500::UNOPENED;
-            return;
+            return true;
         } else {
             /* Impossible */
             throw ProtocolException("Device is locked into sketch operation because no "
@@ -276,20 +294,17 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
 
         // If not currently in firmware mode, first reset
         bool isFirstReset = (currentState == STK500::UNOPENED);
-        if (currentState != STK500::FIRMWARE) {
-            reset();
-        }
-
-        // Sign out to instantly go to the sketch
-        if (currentState == STK500::FIRMWARE) {
-            try {
+        try {
+            if (currentState != STK500::FIRMWARE) {
+                reset(true);
+            } else {
                 signOut();
-            } catch (ProtocolException &e) {
-                if (isFirstReset) {
-                    currentState = STK500::SKETCH_ONLY;
-                } else {
-                    throw e;
-                }
+            }
+        } catch (ProtocolException &e) {
+            if (isFirstReset) {
+                currentState = STK500::SKETCH_ONLY;
+            } else {
+                throw e;
             }
         }
 
@@ -366,6 +381,7 @@ void stk500::setState(STK500::State newState, qint32 baudRate) {
 
     // Done!
     currentState = newState;
+    return true;
 }
 
 quint64 stk500::firmwareIdleTime() {

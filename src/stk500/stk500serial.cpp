@@ -357,14 +357,11 @@ void stk500_ProcessThread::run() {
                     // Update status while switching
                     updateStatus("Switching...");
 
-                    // Always reset if currently in Sketch mode
-                    if (protocol->state() == STK500::SKETCH) {
-                        protocol->reset();
-                    }
-
-                    // Put stk500 into sketch mode
+                    // Put stk500 into sketch mode at the requested baud rate
                     try {
-                        protocol->setState(currSerialMode, currSerialBaud);
+                        if (!protocol->setState(currSerialMode, currSerialBaud)) {
+                            protocol->reset(true);
+                        }
                         updateStatus("Active");
                     } catch (ProtocolException &err) {
                         qDebug() << err.what();
