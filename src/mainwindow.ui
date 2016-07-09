@@ -333,6 +333,20 @@
              </widget>
             </item>
             <item>
+             <widget class="MenuButton" name="serial_saveOutput">
+              <property name="text">
+               <string>Save</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/icons/Import.png</normaloff>:/icons/Import.png</iconset>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_6">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>

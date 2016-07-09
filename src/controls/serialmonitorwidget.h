@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QDebug>
+#include <QByteArray>
 #include "imageviewer.h"
 #include "mainmenutab.h"
 
@@ -35,6 +36,8 @@ public:
     void setScreenShare(bool enabled);
     void setMode(STK500::State mode);
     virtual void setSerial(stk500Serial *serial);
+    QByteArray &receivedData() { return recData; }
+    bool saveReceivedData(const QString &filePath);
 
 private:
     void resetScreen();
@@ -59,6 +62,7 @@ private slots:
 private:
     Ui::serialmonitorwidget *ui;
     QTimer *updateTimer;
+    QByteArray recData;
     ScreenRegisters screen;
     STK500::State mode;
     bool screenEnabled;

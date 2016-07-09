@@ -141,7 +141,20 @@ void serialmonitorwidget::on_sendButton_clicked()
 /* Clear output text - when serial opens */
 void serialmonitorwidget::clearOutputText() {
     ui->outputText->clear();
+    this->recData.clear();
     resetScreen();
+}
+
+/* Save all data in the receive buffer to a file */
+bool serialmonitorwidget::saveReceivedData(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+
+    file.write(this->recData);
+    file.close();
+    return true;
 }
 
 /* Read Serial output and display it in the text area */
@@ -150,6 +163,11 @@ void serialmonitorwidget::readSerialOutput()
     char buff[1024];
     int len = serial->read(buff, sizeof(buff));
     if (len) {
+
+        // Append data received to the output buffer, in case we want to save
+        this->recData.append(buff, len);
+
+        // Handle the incoming data
         if (this->screenEnabled) {
             for (int i = 0; i < len; i++) {
                 receiveScreen(buff[i]);
@@ -157,7 +175,7 @@ void serialmonitorwidget::readSerialOutput()
         } else {
             // First filter out invalid characters from the string
             for (int i = 0; i < len; i++) {
-                if (buff[i] == 0) buff[i] = '0';
+                if (buff[i] == 0) buff[i] = ' ';
             }
 
             QString myString = QString::fromLatin1(buff, len);

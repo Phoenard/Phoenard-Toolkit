@@ -92,6 +92,8 @@ private slots:
 
     void on_serial_upload_clicked();
 
+    void on_serial_saveOutput_clicked();
+
 private:
     Ui::MainWindow *ui;
     stk500Serial *serial;

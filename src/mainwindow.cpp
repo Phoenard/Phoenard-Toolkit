@@ -724,6 +724,24 @@ void MainWindow::on_serial_deviceMode_clicked()
     }
 }
 
+void MainWindow::on_serial_saveOutput_clicked()
+{
+    /* Browse a file on the local filesystem */
+    QString filter = "Text files (*.txt);; All files (*.*)";
+    QString filePath = QFileDialog::getSaveFileName(
+            this,
+            "Select the destination for the output log",
+            QDir::currentPath(),
+            filter
+    );
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    /* Save the output data to the file */
+    ui->serialmonitor->saveReceivedData(filePath);
+}
+
 void MainWindow::on_serial_upload_clicked()
 {
     on_control_firmwareBtn_clicked();
