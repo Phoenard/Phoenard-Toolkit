@@ -38,6 +38,8 @@ public:
     virtual void setSerial(stk500Serial *serial);
     QByteArray &receivedData() { return recData; }
     bool saveReceivedData(const QString &filePath);
+    void sendData(const QByteArray &data);
+    bool sendFileData(const QString &filePath);
 
 private:
     void resetScreen();

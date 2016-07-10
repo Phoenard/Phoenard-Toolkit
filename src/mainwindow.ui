@@ -319,13 +319,13 @@
              </widget>
             </item>
             <item>
-             <widget class="MenuButton" name="serial_upload">
+             <widget class="MenuButton" name="serial_sendData">
               <property name="text">
-               <string>Upload</string>
+               <string>Send in</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
-                <normaloff>:/icons/uploadhex.png</normaloff>:/icons/uploadhex.png</iconset>
+                <normaloff>:/icons/serial_write.png</normaloff>:/icons/serial_write.png</iconset>
               </property>
               <property name="checked">
                <bool>false</bool>
@@ -335,11 +335,25 @@
             <item>
              <widget class="MenuButton" name="serial_saveOutput">
               <property name="text">
-               <string>Save</string>
+               <string>Save out</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
-                <normaloff>:/icons/Import.png</normaloff>:/icons/Import.png</iconset>
+                <normaloff>:/icons/serial_read.png</normaloff>:/icons/serial_read.png</iconset>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="MenuButton" name="serial_upload">
+              <property name="text">
+               <string>Upload</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/icons/uploadhex.png</normaloff>:/icons/uploadhex.png</iconset>
               </property>
               <property name="checked">
                <bool>false</bool>

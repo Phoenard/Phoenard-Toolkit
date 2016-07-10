@@ -48,5 +48,7 @@
         <file>icons/serial_sim_gps.png</file>
         <file>icons/serial_wifi.png</file>
         <file>icons/serial_bluetooth.png</file>
+        <file>icons/serial_read.png</file>
+        <file>icons/serial_write.png</file>
     </qresource>
 </RCC>

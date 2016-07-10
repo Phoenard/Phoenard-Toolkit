@@ -730,8 +730,8 @@ void MainWindow::on_serial_saveOutput_clicked()
     QString filter = "Text files (*.txt);; All files (*.*)";
     QString filePath = QFileDialog::getSaveFileName(
             this,
-            "Select the destination for the output log",
-            QDir::currentPath(),
+            "Save the serial output log to a file",
+            "",
             filter
     );
     if (filePath.isEmpty()) {
@@ -740,6 +740,24 @@ void MainWindow::on_serial_saveOutput_clicked()
 
     /* Save the output data to the file */
     ui->serialmonitor->saveReceivedData(filePath);
+}
+
+void MainWindow::on_serial_sendData_clicked()
+{
+    /* Browse a file on the local filesystem */
+    QString filter = "Text files (*.txt);; All files (*.*)";
+    QString filePath = QFileDialog::getOpenFileName(
+            this,
+            "Open the file to send over serial",
+            "",
+            filter
+    );
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    /* Write the file to serial */
+    ui->serialmonitor->sendFileData(filePath);
 }
 
 void MainWindow::on_serial_upload_clicked()

@@ -157,6 +157,25 @@ bool serialmonitorwidget::saveReceivedData(const QString &filePath) {
     return true;
 }
 
+/* Writes raw data to the device */
+void serialmonitorwidget::sendData(const QByteArray &data) {
+    serial->write(data.data(), data.length());
+}
+
+/* Reads data contained in a file and writes it to the device */
+bool serialmonitorwidget::sendFileData(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    QByteArray data = file.readAll();
+    file.close();
+
+    sendData(data);
+    return true;
+}
+
 /* Read Serial output and display it in the text area */
 void serialmonitorwidget::readSerialOutput()
 {
