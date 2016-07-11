@@ -52,6 +52,7 @@ private slots:
     void readSerialOutput();
     void clearOutputText();
     void showImageContextMenu(const QPoint& pos);
+    void showOutputContextMenu(const QPoint& pos);
 
     void on_runSketchCheck_toggled(bool checked);
 

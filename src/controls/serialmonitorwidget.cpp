@@ -26,6 +26,11 @@ serialmonitorwidget::serialmonitorwidget(QWidget *parent) :
     ui->outputText->setFont(serialFont);
     ui->messageTxt->setFont(serialFont);
 
+    // Attach right-click menu to the output log text edit
+    ui->outputText->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->outputText, SIGNAL(customContextMenuRequested(QPoint)),
+        this, SLOT(showOutputContextMenu(const QPoint&)));
+
     // Attach right-click menu to the output image viewer
     ui->outputImage->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->outputImage, SIGNAL(customContextMenuRequested(const QPoint&)),
@@ -95,6 +100,22 @@ void serialmonitorwidget::showImageContextMenu(const QPoint& pos) {
         QClipboard *clipboard = QApplication::clipboard();
         QPixmap pixmap = ui->outputImage->image().pixmap();
         clipboard->setPixmap(pixmap);
+    }
+}
+
+void serialmonitorwidget::showOutputContextMenu(const QPoint& pos) {
+    // Map the point to a point on the screen
+    QPoint globalPos = ui->outputText->mapToGlobal(pos);
+
+    // Create a standard context menu, and append additional actions
+    QMenu* menu = ui->outputText->createStandardContextMenu();
+    menu->addSeparator();
+    QAction* clearAct = menu->addAction("Clear");
+    QAction* selected = menu->exec(globalPos);
+
+    // Execute selected actions
+    if (selected == clearAct) {
+        this->clearOutputText();
     }
 }
 
